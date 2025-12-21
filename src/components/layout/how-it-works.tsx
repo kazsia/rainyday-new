@@ -1,0 +1,92 @@
+"use client"
+
+import { motion } from "framer-motion"
+import { GooeyText } from "@/components/ui/gooey-text-morphing"
+
+const steps = [
+    {
+        number: "1",
+        title: "Select a product",
+        description: "Explore a wide range of products, tailored to meet your needs. Simply click on the item you desire to learn more about its features, read customer reviews, and add it to your cart with a single click."
+    },
+    {
+        number: "2",
+        title: "Pay the invoice",
+        description: "Proceed to checkout where you can review your selected items and total cost. Choose from multiple payment options to finalize your order. Our secure payment gateway ensures that your transaction is protected."
+    },
+    {
+        number: "3",
+        title: "Receive Product",
+        description: "Once your payment is confirmed, we'll process and ship your order promptly. You'll receive a tracking number so you can monitor your shipment's progress. Enjoy your new purchase and thank you for shopping with us!"
+    }
+]
+
+export function HowItWorks() {
+    return (
+        <section className="py-32 relative overflow-hidden bg-black">
+            <div className="container mx-auto px-4 max-w-6xl relative z-10">
+                <div className="text-center space-y-4 mb-24">
+                    <GooeyText
+                        texts={["How It Works", "Simple Process", "Easy Steps"]}
+                        morphTime={1.5}
+                        cooldownTime={2}
+                        className="h-20 md:h-28"
+                        textClassName="font-heading tracking-tight"
+                    />
+                    <p className="text-white/30 text-lg font-medium pt-8">
+                        Shopping made simple in three easy steps!
+                    </p>
+                </div>
+
+                <div className="relative">
+                    {/* Connection Line (SVG) */}
+                    <div className="absolute top-12 left-0 w-full hidden md:block pointer-events-none">
+                        <svg width="100%" height="100" viewBox="0 0 1000 100" fill="none" preserveAspectRatio="none">
+                            <motion.path
+                                d="M 100 50 Q 250 10, 400 50 T 700 50 T 900 50"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                                strokeDasharray="0 15"
+                                className="text-brand-primary/20"
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                whileInView={{ pathLength: 1, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 2, ease: "easeInOut" }}
+                            />
+                        </svg>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+                        {steps.map((step, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.2, duration: 0.8 }}
+                                className="flex flex-col items-center text-center space-y-8"
+                            >
+                                {/* Number Circle */}
+                                <div className="relative">
+                                    <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-black text-3xl font-black">
+                                        {step.number}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-2xl font-bold tracking-tight text-white/90">
+                                        {step.title}
+                                    </h3>
+                                    <p className="text-white/30 leading-relaxed font-medium text-sm md:text-base">
+                                        {step.description}
+                                    </p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
