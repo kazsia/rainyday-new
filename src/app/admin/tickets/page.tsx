@@ -164,7 +164,7 @@ export default function AdminTicketsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center shrink-0">
+                                                <div className="w-6 h-6 rounded-full bg-[#0a1628]/40 flex items-center justify-center shrink-0">
                                                     <User className="w-3.5 h-3.5 text-white/20" />
                                                 </div>
                                                 <span className="text-sm text-white">{ticket.profiles?.email || ticket.email}</span>
@@ -214,7 +214,7 @@ export default function AdminTicketsPage() {
 
                 {/* Reply Modal */}
                 {selectedTicket && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a1628]/80 backdrop-blur-sm">
                         <div className="bg-[#0a0e1a] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
                             <div className="p-6 border-b border-white/5 flex items-center justify-between">
                                 <div>

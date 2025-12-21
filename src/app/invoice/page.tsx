@@ -29,6 +29,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { SparklesText } from "@/components/ui/sparkles-text"
+import { QrCode, Wallet, Loader2, AlertCircle, LockKeyhole } from "lucide-react"
 
 function InvoiceContent() {
     const searchParams = useSearchParams()
@@ -36,6 +37,20 @@ function InvoiceContent() {
     const [order, setOrder] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isDeliveredItemsOpen, setIsDeliveredItemsOpen] = useState(true)
+
+    // Payment details state
+    const [paymentDetails, setPaymentDetails] = useState<{
+        address: string
+        amount: string
+        qrCodeUrl: string
+        expiresAt: number
+        payCurrency: string
+        payLink: string
+        trackId: string
+    } | null>(null)
+    const [isLoadingPayment, setIsLoadingPayment] = useState(false)
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed' | 'expired'>('pending')
+    const [timeLeft, setTimeLeft] = useState<string>("--:--")
 
     useEffect(() => {
         if (!orderId) {
@@ -99,6 +114,96 @@ function InvoiceContent() {
         toast.success("Copied to clipboard!")
     }
 
+    // Fetch payment details for pending orders
+    useEffect(() => {
+        if (!order?.id || order.status !== 'pending') return
+
+        const fetchPaymentDetails = async () => {
+            setIsLoadingPayment(true)
+            try {
+                const payment = order.payments?.[0]
+                if (payment?.track_id) {
+                    const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+                    const info = await getOxaPayPaymentInfo(payment.track_id)
+                    if (info) {
+                        setPaymentDetails({
+                            address: info.address || '',
+                            amount: info.payAmount || String(order.total),
+                            qrCodeUrl: info.qrCodeUrl || '',
+                            expiresAt: info.expiredAt ? new Date(info.expiredAt).getTime() : Date.now() + 3600000,
+                            payCurrency: info.currency || payment.provider || 'BTC',
+                            payLink: info.payLink || '',
+                            trackId: payment.track_id
+                        })
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch payment details:", error)
+            } finally {
+                setIsLoadingPayment(false)
+            }
+        }
+
+        fetchPaymentDetails()
+    }, [order?.id, order?.status])
+
+    // Countdown timer for payment expiration
+    useEffect(() => {
+        if (!paymentDetails?.expiresAt || order?.status !== 'pending') return
+
+        const updateTimer = () => {
+            const now = Date.now()
+            const remaining = paymentDetails.expiresAt - now
+
+            if (remaining <= 0) {
+                setTimeLeft("EXPIRED")
+                setPaymentStatus('expired')
+                return
+            }
+
+            const minutes = Math.floor(remaining / 60000)
+            const seconds = Math.floor((remaining % 60000) / 1000)
+            setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
+        }
+
+        updateTimer()
+        const interval = setInterval(updateTimer, 1000)
+        return () => clearInterval(interval)
+    }, [paymentDetails?.expiresAt, order?.status])
+
+    // Poll for payment status
+    useEffect(() => {
+        if (order?.status !== 'pending' || !paymentDetails?.trackId) return
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+                const info = await getOxaPayPaymentInfo(paymentDetails.trackId)
+                if (info) {
+                    if (info.status === 'Paid' || info.status === 'Confirming') {
+                        setPaymentStatus('processing')
+                    }
+                    if (info.status === 'Paid' && info.txID) {
+                        setPaymentStatus('completed')
+                        toast.success("Payment Confirmed!")
+                        clearInterval(pollInterval)
+                        loadOrder(false)
+                    }
+                    if (info.status === 'Expired' || info.status === 'Failed') {
+                        setPaymentStatus('expired')
+                        toast.error("Payment expired. Please create a new order.")
+                        clearInterval(pollInterval)
+                    }
+                }
+            } catch (error) {
+                console.error("Error polling payment status:", error)
+            }
+        }, 5000)
+
+        return () => clearInterval(pollInterval)
+    }, [order?.status, paymentDetails?.trackId])
+
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#020406]">
@@ -141,7 +246,7 @@ function InvoiceContent() {
             </div>
 
             <div className="relative flex flex-col lg:flex-row min-h-screen">
-                <div className="w-full lg:w-[35%] p-8 lg:p-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-black/20 backdrop-blur-3xl">
+                <div className="w-full lg:w-[35%] p-8 lg:p-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
                     <div className="space-y-12">
                         <div className="flex items-center justify-between">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -175,7 +280,7 @@ function InvoiceContent() {
                                         transition={{ delay: idx * 0.1 }}
                                         className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-5 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                     >
-                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-black/40 group-hover:border-brand-primary/30 transition-colors shadow-2xl">
+                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-[#0a1628]/40 group-hover:border-brand-primary/30 transition-colors shadow-2xl">
                                             <Image src={item.product?.image_url || "https://images.unsplash.com/photo-1614680376250-13f9f468202f?auto=format&fit=crop&q=80&w=200"} alt={item.product?.name} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -255,7 +360,7 @@ function InvoiceContent() {
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4 p-6 rounded-3xl bg-white/[0.03] border border-white/10 relative overflow-hidden group">
                                     <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/10 to-transparent" />
-                                    <div className="w-14 h-14 rounded-xl bg-black border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
+                                    <div className="w-14 h-14 rounded-xl bg-[#0a1628] border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
                                         <CreditCard className="w-6 h-6 text-brand-primary" />
                                     </div>
                                     <div className="relative z-10 space-y-0.5">
@@ -302,14 +407,148 @@ function InvoiceContent() {
                                         </div>
                                     </motion.div>
                                 ) : (
-                                    <div className="p-8 rounded-3xl bg-yellow-500/5 border border-yellow-500/10 flex flex-col items-center justify-center gap-4 text-center">
-                                        <Clock className="w-8 h-8 text-yellow-500 animate-pulse" />
-                                        <div className="space-y-1">
-                                            <p className="text-lg font-black italic tracking-tighter text-white uppercase">Awaiting payment verification...</p>
-                                            <p className="text-[8px] font-black text-yellow-500/60 uppercase tracking-[0.4em]">Please do not close this page</p>
+                                    <div className="space-y-6">
+                                        {/* Payment Timer */}
+                                        <div className="p-4 rounded-xl bg-brand-primary/5 border border-brand-primary/10 flex items-center justify-center gap-3 relative overflow-hidden group">
+                                            <motion.div
+                                                animate={{ x: [-20, 20, -20] }}
+                                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                                className="absolute inset-0 bg-brand-primary/5 pointer-events-none"
+                                            />
+                                            <Clock className="w-4 h-4 text-brand-primary animate-pulse relative z-10" />
+                                            <p className={cn(
+                                                "text-[9px] font-black italic tracking-widest relative z-10 uppercase transition-all group-hover:tracking-[0.2em]",
+                                                timeLeft === "EXPIRED" ? "text-red-500" : "text-brand-primary"
+                                            )}>Expires in {timeLeft}</p>
                                         </div>
+
+                                        {/* Payment Instructions */}
+                                        {isLoadingPayment ? (
+                                            <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center gap-4">
+                                                <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
+                                                <p className="text-sm text-white/40">Loading payment details...</p>
+                                            </div>
+                                        ) : paymentDetails?.address ? (
+                                            <div className="space-y-8">
+                                                {/* Step 1: QR & Address */}
+                                                <div className="flex gap-6">
+                                                    <div className="w-10 h-10 rounded-xl bg-brand-primary text-black flex items-center justify-center text-sm font-black italic shrink-0 shadow-[0_0_20px_rgba(38,188,196,0.3)]">01</div>
+                                                    <div className="space-y-6 flex-1">
+                                                        <div className="space-y-1">
+                                                            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Send to Address</h3>
+                                                            <p className="text-[10px] text-white/30 font-medium">Scan QR or manually copy the destination.</p>
+                                                        </div>
+
+                                                        {paymentDetails.qrCodeUrl && (
+                                                            <motion.div
+                                                                whileHover={{ scale: 1.02 }}
+                                                                className="w-40 h-40 bg-white p-4 rounded-[2rem] shrink-0 shadow-[0_0_50px_rgba(255,255,255,0.05)] mx-auto lg:mx-0 group cursor-pointer relative"
+                                                            >
+                                                                <div className="absolute inset-0 border-[2px] border-brand-primary/30 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+                                                                <div className="w-full h-full relative">
+                                                                    <img src={paymentDetails.qrCodeUrl} alt="Payment QR Code" className="w-full h-full rounded-xl" />
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Payment Wallet</label>
+                                                            </div>
+                                                            <div className="flex gap-3">
+                                                                <div
+                                                                    onClick={() => copyToClipboard(paymentDetails.address)}
+                                                                    className="flex-1 h-14 px-5 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl flex items-center justify-between group/addr cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all"
+                                                                >
+                                                                    <code className="text-xs font-mono text-brand-primary font-bold truncate max-w-[200px]">{paymentDetails.address}</code>
+                                                                    <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover/addr:bg-brand-primary group-hover/addr:text-black transition-all">
+                                                                        <Copy className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                </div>
+                                                                {paymentDetails.payLink && (
+                                                                    <button
+                                                                        onClick={() => window.open(paymentDetails.payLink, '_blank')}
+                                                                        className="h-14 px-6 bg-white/[0.03] border border-white/10 rounded-2xl text-[8px] font-black text-white/40 hover:text-white hover:bg-white/[0.06] hover:border-white/20 transition-all uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-1 group"
+                                                                    >
+                                                                        <Wallet className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                                                        Open
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Step 2: Amount */}
+                                                <div className="flex gap-6">
+                                                    <div className="w-10 h-10 rounded-xl bg-brand-primary text-black flex items-center justify-center text-sm font-black italic shrink-0 shadow-[0_0_20px_rgba(38,188,196,0.3)]">02</div>
+                                                    <div className="space-y-4 flex-1">
+                                                        <div className="space-y-1">
+                                                            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Exact Amount</h3>
+                                                            <p className="text-[10px] text-white/30 font-medium">Send exactly this amount to the address above.</p>
+                                                        </div>
+                                                        <div
+                                                            onClick={() => copyToClipboard(paymentDetails.amount)}
+                                                            className="inline-flex h-14 px-8 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl items-center gap-4 group/amt cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all"
+                                                        >
+                                                            <SparklesText
+                                                                text={`${paymentDetails.amount} ${paymentDetails.payCurrency}`}
+                                                                className="text-xl font-black text-brand-primary tracking-tighter italic"
+                                                                sparklesCount={10}
+                                                            />
+                                                            <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover/amt:bg-brand-primary group-hover/amt:text-black transition-all">
+                                                                <Copy className="w-3.5 h-3.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 rounded-3xl bg-yellow-500/5 border border-yellow-500/10 flex flex-col items-center justify-center gap-4 text-center">
+                                                <AlertCircle className="w-8 h-8 text-yellow-500" />
+                                                <div className="space-y-1">
+                                                    <p className="text-lg font-black italic tracking-tighter text-white uppercase">Payment details unavailable</p>
+                                                    <p className="text-[10px] font-bold text-yellow-500/60">Please contact support if this persists</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Payment Status Button */}
+                                        <Button
+                                            disabled={paymentStatus === 'completed'}
+                                            className={cn(
+                                                "w-full h-16 font-black uppercase tracking-[0.3em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden italic",
+                                                paymentStatus === 'completed'
+                                                    ? "bg-green-500 text-black shadow-[0_20px_40px_-10px_rgba(34,197,94,0.4)]"
+                                                    : paymentStatus === 'processing'
+                                                        ? "bg-yellow-500 text-black shadow-[0_20px_40px_-10px_rgba(234,179,8,0.4)]"
+                                                        : "bg-brand-primary text-black shadow-[0_20px_40px_-10px_rgba(38,188,196,0.4)]"
+                                            )}
+                                        >
+                                            {paymentStatus === 'completed' ? (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <CheckCircle2 className="w-6 h-6" />
+                                                    <span className="text-[8px] tracking-[0.4em]">Payment Confirmed!</span>
+                                                </div>
+                                            ) : paymentStatus === 'processing' ? (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                                    <span className="text-[8px] tracking-[0.4em]">Confirming on Blockchain...</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
+                                                    <span className="text-base relative z-10 flex items-center gap-3">
+                                                        Waiting for Payment
+                                                        <ShieldCheck className="w-5 h-5" />
+                                                    </span>
+                                                    <span className="text-[8px] font-black opacity-60">Auto-checking every 5 seconds</span>
+                                                </>
+                                            )}
+                                        </Button>
                                     </div>
                                 )}
+
 
                                 {deliverables.length > 0 && (
                                     <div className="space-y-6">
@@ -324,7 +563,7 @@ function InvoiceContent() {
                                                 className="w-full p-6 flex items-center justify-between text-left group"
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center shrink-0">
+                                                    <div className="w-12 h-12 rounded-xl bg-[#0a1628]/40 border border-white/5 flex items-center justify-center shrink-0">
                                                         <Search className="w-6 h-6 text-white/20" />
                                                     </div>
                                                     <div className="space-y-0.5">
@@ -355,7 +594,7 @@ function InvoiceContent() {
                                                                 </div>
                                                                 <div className="grid grid-cols-1 gap-2">
                                                                     {deliverables.map((d: any, i: number) => (
-                                                                        <div key={i} className="p-4 rounded-xl bg-black border border-white/5 flex items-center justify-between group/code hover:border-brand-primary/20 transition-all">
+                                                                        <div key={i} className="p-4 rounded-xl bg-[#0a1628] border border-white/5 flex items-center justify-between group/code hover:border-brand-primary/20 transition-all">
                                                                             <code className="text-sm font-mono text-white/80 tracking-tight group-hover:text-white transition-colors">{d}</code>
                                                                             <button
                                                                                 onClick={() => copyToClipboard(d)}

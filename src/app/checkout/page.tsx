@@ -244,12 +244,13 @@ export default function CheckoutPage() {
                     returnUrl: `${window.location.origin}/invoice?id=${order.id}`,
                 })
 
-                // 3. Create the Payment record
+                // 3. Create the Payment record with OxaPay track ID
                 await createPayment({
                     order_id: order.id,
                     provider: payCurrencyMap[selectedMethod] || "Crypto",
                     amount: total,
-                    currency: "USD"
+                    currency: "USD",
+                    track_id: response.trackId
                 })
 
                 // 4. Check if we need to redirect (white-label not available)
@@ -278,27 +279,16 @@ export default function CheckoutPage() {
                 }
 
 
-                // 5. Set crypto details for display and go to step 2
-                setCryptoDetails({
-                    address: response.address,
-                    amount: finalCryptoAmount,
-                    invoiceId: response.trackId,
-                    qrCodeUrl: response.qrCodeUrl,
-                    expiresAt: response.expiresAt,
-                    payCurrency: selectedCrypto,
-                    payLink: response.payLink,
-                    exchangeRate: exchangeRate || undefined
-                })
-
-                // Save total before clearing cart so Step 2 displays correct amount
-                setSavedTotal(total)
+                // 5. Clear cart and redirect to invoice page for payment
                 clearCart()
-                setStep(2)
+                toast.success("Order created! Redirecting to payment...")
+                router.push(`/invoice?id=${order.id}`)
                 return
             }
 
             // Normal flow for other methods if any
-            setStep(2)
+            clearCart()
+            router.push(`/invoice?id=${orderId}`)
         } catch (error) {
             console.error("Payment Error:", error)
             toast.error("Failed to initialize payment. Please try again.")
@@ -393,7 +383,7 @@ export default function CheckoutPage() {
 
             <div className="relative flex flex-col lg:flex-row min-h-screen">
                 {/* Left Panel - Order Summary */}
-                <div className="w-full lg:w-[35%] p-8 lg:p-12 space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-black/20 backdrop-blur-3xl">
+                <div className="w-full lg:w-[35%] p-8 lg:p-12 space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
                     <div className="space-y-12">
                         <div className="flex items-center justify-between">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -433,7 +423,7 @@ export default function CheckoutPage() {
                                             transition={{ delay: idx * 0.1 }}
                                             className="p-4 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-4 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                         >
-                                            <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-black/40 group-hover:border-brand-primary/30 transition-colors">
+                                            <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-[#0a1628]/40 group-hover:border-brand-primary/30 transition-colors">
                                                 <Image src={item.image || "https://images.unsplash.com/photo-1614680376250-13f9f468202f?auto=format&fit=crop&q=80&w=200"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -674,7 +664,7 @@ export default function CheckoutPage() {
                                                         <div className="flex items-center gap-3 relative z-10">
                                                             <div className={cn(
                                                                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                                                                selectedMethod === method.name ? "bg-brand-primary/20" : "bg-black/40 border border-white/5"
+                                                                selectedMethod === method.name ? "bg-brand-primary/20" : "bg-[#0a1628]/40 border border-white/5"
                                                             )}>
                                                                 <img src={method.icon} alt={method.name} className="w-6 h-6" />
                                                             </div>
@@ -748,7 +738,7 @@ export default function CheckoutPage() {
                                     <div className="space-y-6">
                                         <div className="flex items-center gap-4 p-6 rounded-3xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:bg-white/[0.05] transition-all">
                                             <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="w-14 h-14 rounded-xl bg-black border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
+                                            <div className="w-14 h-14 rounded-xl bg-[#0a1628] border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
                                                 <img
                                                     src={
                                                         selectedMethod.toLowerCase() === 'bitcoin' ? "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/btc.svg" :

@@ -225,7 +225,7 @@ export default function AdminAccountPage() {
                     {/* Left Column: Profile & Overview */}
                     <div className="lg:col-span-1 space-y-8">
                         {/* Profile Card */}
-                        <div className="bg-[#0b1016] border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center relative overflow-hidden group">
+                        <div className="bg-[#0a1628] border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center relative overflow-hidden group">
                             <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                             <div className="relative w-24 h-24 rounded-full border-4 border-white/5 bg-white/5 mb-6 overflow-hidden flex items-center justify-center group/avatar">
@@ -234,7 +234,7 @@ export default function AdminAccountPage() {
                                 ) : (
                                     <User className="w-10 h-10 text-white/20" />
                                 )}
-                                <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                <label className="absolute inset-0 bg-[#0a1628]/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                                     <Plus className="w-6 h-6 text-white" />
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={isSaving} />
                                 </label>
@@ -256,7 +256,7 @@ export default function AdminAccountPage() {
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="bg-[#0b1016] border border-white/5 rounded-3xl p-6 grid grid-cols-2 gap-4">
+                        <div className="bg-[#0a1628] border border-white/5 rounded-3xl p-6 grid grid-cols-2 gap-4">
                             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
                                 <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Sessions</p>
                                 <p className="text-lg font-black text-white">1 Active</p>
@@ -271,7 +271,7 @@ export default function AdminAccountPage() {
                     {/* Right Column: Detailed Sections */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Profile Settings */}
-                        <section className="bg-[#0b1016] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <section className="bg-[#0a1628] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <User className="w-5 h-5 text-brand-primary" />
@@ -286,7 +286,7 @@ export default function AdminAccountPage() {
                                             name="display_name"
                                             defaultValue={profile?.full_name}
                                             placeholder="Your Name"
-                                            className="h-12 bg-black/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-brand-primary/30 transition-all"
+                                            className="h-12 bg-[#0a1628]/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-brand-primary/30 transition-all"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -294,7 +294,7 @@ export default function AdminAccountPage() {
                                         <Input
                                             value={user?.email}
                                             readOnly
-                                            className="h-12 bg-black/20 border-white/5 rounded-xl text-white/40 cursor-not-allowed italic font-bold"
+                                            className="h-12 bg-[#0a1628]/20 border-white/5 rounded-xl text-white/40 cursor-not-allowed italic font-bold"
                                         />
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@ export default function AdminAccountPage() {
                         </section>
 
                         {/* Security Section */}
-                        <section className="bg-[#0b1016] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <section className="bg-[#0a1628] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
                                 <Shield className="w-5 h-5 text-orange-400" />
                                 <h3 className="font-black text-white italic tracking-tight uppercase">Security & Password</h3>
@@ -321,7 +321,7 @@ export default function AdminAccountPage() {
                                                 name="new_password"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                className="h-12 bg-black/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
+                                                className="h-12 bg-[#0a1628]/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
                                                 required
                                             />
                                             <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
@@ -334,7 +334,7 @@ export default function AdminAccountPage() {
                                                 name="confirm_password"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                className="h-12 bg-black/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
+                                                className="h-12 bg-[#0a1628]/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
                                                 required
                                             />
                                             <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
@@ -359,7 +359,7 @@ export default function AdminAccountPage() {
                         </section>
 
                         {/* Preferences */}
-                        <section className="bg-[#0b1016] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <section className="bg-[#0a1628] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
                                 <Settings className="w-5 h-5 text-purple-400" />
                                 <h3 className="font-black text-white italic tracking-tight uppercase">Admin Preferences</h3>
@@ -392,7 +392,7 @@ export default function AdminAccountPage() {
                         </section>
 
                         {/* API Keys */}
-                        <section className="bg-[#0b1016] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <section className="bg-[#0a1628] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Key className="w-5 h-5 text-brand-primary" />
@@ -411,7 +411,7 @@ export default function AdminAccountPage() {
                                 {apiKeys.length > 0 ? (
                                     <div className="space-y-3">
                                         {apiKeys.map(key => (
-                                            <div key={key.id} className="flex items-center justify-between p-4 rounded-xl bg-black/40 border border-white/5">
+                                            <div key={key.id} className="flex items-center justify-between p-4 rounded-xl bg-[#0a1628]/40 border border-white/5">
                                                 <div className="space-y-1">
                                                     <p className="text-sm font-bold text-white">{key.label}</p>
                                                     <code className="text-[10px] text-white/20 font-black uppercase">{key.prefix}••••••••••••</code>
@@ -436,7 +436,7 @@ export default function AdminAccountPage() {
                         </section>
 
                         {/* Recent Activity */}
-                        <section className="bg-[#0b1016] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <section className="bg-[#0a1628] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
                                 <History className="w-5 h-5 text-green-400" />
                                 <h3 className="font-black text-white italic tracking-tight uppercase">Account Activity</h3>

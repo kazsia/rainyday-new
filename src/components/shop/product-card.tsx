@@ -23,9 +23,15 @@ export function ProductCard({ id, title, price, category, image, productCount = 
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
 
+    const isOutOfStock = productCount <= 0
+
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
+        if (isOutOfStock) {
+            toast.error("This product is out of stock")
+            return
+        }
         addToCart({
             id,
             title,
@@ -65,13 +71,19 @@ export function ProductCard({ id, title, price, category, image, productCount = 
                         {/* Green Glow Vignette (inspired by reference) */}
                         <div className="absolute inset-0 bg-brand-primary/5 group-hover:bg-brand-primary/10 transition-colors duration-500" />
 
-                        {/* Quick Add Button */}
-                        <button
-                            onClick={handleQuickAdd}
-                            className="absolute bottom-4 right-4 z-20 w-11 h-11 bg-brand-primary text-black rounded-xl flex items-center justify-center shadow-lg lg:translate-y-12 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100 transition-all duration-500 hover:scale-110 active:scale-95"
-                        >
-                            <ShoppingCart className="w-5 h-5" />
-                        </button>
+                        {/* Quick Add Button / Sold Out Badge */}
+                        {isOutOfStock ? (
+                            <div className="absolute bottom-4 right-4 z-20 px-4 py-2 bg-red-500/90 text-white rounded-xl flex items-center justify-center shadow-lg">
+                                <span className="text-xs font-black uppercase tracking-wider">Sold Out</span>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleQuickAdd}
+                                className="absolute bottom-4 right-4 z-20 w-11 h-11 bg-brand-primary text-black rounded-xl flex items-center justify-center shadow-lg lg:translate-y-12 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100 transition-all duration-500 hover:scale-110 active:scale-95"
+                            >
+                                <ShoppingCart className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
 
                     {/* Metadata Section */}
@@ -79,8 +91,8 @@ export function ProductCard({ id, title, price, category, image, productCount = 
                         <h3 className="text-xl font-black text-white tracking-tight group-hover:text-brand-primary transition-colors duration-300">
                             {title}
                         </h3>
-                        <p className="text-[13px] font-bold text-white/20 uppercase tracking-widest">
-                            {productCount} In Stock
+                        <p className={`text-[13px] font-bold uppercase tracking-widest ${isOutOfStock ? 'text-red-400' : 'text-white/20'}`}>
+                            {isOutOfStock ? 'Out of Stock' : `${productCount} In Stock`}
                         </p>
                         <SparklesText
                             text={priceRange || formatPrice(price)}

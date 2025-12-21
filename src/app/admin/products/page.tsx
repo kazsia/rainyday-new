@@ -154,7 +154,7 @@ export default function AdminProductsPage() {
                 />
 
                 {/* Filters */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#0b1016] border border-white/5 p-4 rounded-xl">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#0a1628] border border-white/5 p-4 rounded-xl">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" className="text-white/40 hover:text-white hover:bg-white/5 gap-2 text-sm font-medium">
                             <Edit2 className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Table */}
-                <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden">
+                <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -274,7 +274,7 @@ export default function AdminProductsPage() {
                                                         <MoreHorizontal className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[#0b1016] border-white/10 text-white">
+                                                <DropdownMenuContent align="end" className="bg-[#0a1628] border-white/10 text-white">
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
                                                             <Edit2 className="w-4 h-4" /> Edit

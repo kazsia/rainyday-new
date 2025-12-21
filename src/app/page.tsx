@@ -2,6 +2,7 @@
 
 import { ProximaLayout } from "@/components/layout/proxima-layout"
 import { BackgroundPaths } from "@/components/ui/background-paths"
+
 import { WhyChoose } from "@/components/layout/why-choose"
 import { HowItWorks } from "@/components/layout/how-it-works"
 import { CTASection } from "@/components/ui/cta-with-rectangle"
@@ -16,8 +17,10 @@ export default function HomePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
+        className="bg-[#0a1628]"
       >
         <BackgroundPaths title="Digital Products, Redefined." />
+
         <WhyChoose />
         <HowItWorks />
         <FAQSection />
@@ -28,7 +31,7 @@ export default function HomePage() {
           title="Join Rainyday Today"
           description="Experience the future of digital assets with our secure and intuitive platform."
           action={{
-            text: "Get Started Now",
+            text: "Get Started",
             href: "/store",
             variant: "glow"
           }}

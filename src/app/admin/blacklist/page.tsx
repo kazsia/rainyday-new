@@ -129,7 +129,7 @@ export default function AdminBlacklistPage() {
                                 Create Entry
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-[#0b1016] border-white/5 text-white max-w-2xl">
+                        <DialogContent className="bg-[#0a1628] border-white/5 text-white max-w-2xl">
                             <DialogHeader>
                                 <DialogTitle>Create Blacklist Entry</DialogTitle>
                                 <DialogDescription className="text-white/40">
@@ -239,7 +239,7 @@ export default function AdminBlacklistPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                         <Input
                             placeholder="Search blacklisted entries..."
-                            className="pl-10 bg-black/20 border-white/10"
+                            className="pl-10 bg-[#0a1628]/20 border-white/10"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />

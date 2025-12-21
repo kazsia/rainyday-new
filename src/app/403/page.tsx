@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 
 export default function ForbiddenPage() {
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black">
+        <div className="min-h-screen bg-[#0a1628] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black">
             <div className="max-w-md w-full text-center space-y-8">
                 <div className="relative inline-block">
                     <div className="absolute inset-0 bg-red-500 blur-[60px] opacity-20" />
-                    <div className="relative bg-black/40 border border-red-500/20 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
+                    <div className="relative bg-[#0a1628]/40 border border-red-500/20 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
                         <ShieldAlert className="w-12 h-12 text-red-500" />
                     </div>
                 </div>

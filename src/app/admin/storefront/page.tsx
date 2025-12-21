@@ -175,7 +175,7 @@ export default function AdminStorefrontPage() {
                                         <Input
                                             value={settings.general.name}
                                             onChange={e => setSettings({ ...settings, general: { ...settings.general, name: e.target.value } })}
-                                            className="bg-[#0b1016] border-white/10 h-11"
+                                            className="bg-[#0a1628] border-white/10 h-11"
                                             placeholder="Your Shop Name"
                                         />
                                     </div>
@@ -191,7 +191,7 @@ export default function AdminStorefrontPage() {
                                                     <label className="text-sm font-bold text-white">{item.label}</label>
                                                 </div>
                                                 <p className="text-xs text-white/40 min-h-[20px]">{item.desc}</p>
-                                                <div className="relative group aspect-video rounded-xl bg-[#0b1016] border border-white/10 overflow-hidden hover:border-brand/40 transition-colors">
+                                                <div className="relative group aspect-video rounded-xl bg-[#0a1628] border border-white/10 overflow-hidden hover:border-brand/40 transition-colors">
                                                     {(settings[item.section as 'branding' | 'seo' || 'branding'] as any)?.[item.field] ? (
                                                         <>
                                                             <Image
@@ -203,7 +203,7 @@ export default function AdminStorefrontPage() {
                                                             />
                                                             <button
                                                                 onClick={() => { /* Add delete logic */ }}
-                                                                className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg text-white/60 hover:text-white hover:bg-red-500/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                                className="absolute top-2 right-2 p-1.5 bg-[#0a1628]/60 rounded-lg text-white/60 hover:text-white hover:bg-red-500/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                                                             >
                                                                 <X className="w-3 h-3" />
                                                             </button>
@@ -214,7 +214,7 @@ export default function AdminStorefrontPage() {
                                                             <span className="text-xs font-bold uppercase tracking-wider">Upload</span>
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                                                    <div className="absolute inset-0 bg-[#0a1628]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
                                                         <div className="relative">
                                                             <Input
                                                                 type="file"
@@ -242,7 +242,7 @@ export default function AdminStorefrontPage() {
                                         <Textarea
                                             value={settings.general.description}
                                             onChange={e => setSettings({ ...settings, general: { ...settings.general, description: e.target.value } })}
-                                            className="bg-[#0b1016] border-white/10 min-h-[100px]"
+                                            className="bg-[#0a1628] border-white/10 min-h-[100px]"
                                             placeholder="Describe your store..."
                                         />
                                     </div>
@@ -270,7 +270,7 @@ export default function AdminStorefrontPage() {
                                             <Input
                                                 value={settings.socials[item.field as keyof typeof settings.socials] || ""}
                                                 onChange={e => setSettings({ ...settings, socials: { ...settings.socials, [item.field]: e.target.value } })}
-                                                className="bg-[#0b1016] border-white/10 h-11"
+                                                className="bg-[#0a1628] border-white/10 h-11"
                                                 placeholder={`https://${item.label.toLowerCase().split(' ')[0]}.com/...`}
                                             />
                                         </div>
@@ -286,7 +286,7 @@ export default function AdminStorefrontPage() {
                                     <h2 className="text-lg font-bold text-white mb-1">Checkout</h2>
                                     <p className="text-sm text-white/40">Customize the checkout page.</p>
                                 </div>
-                                <div className="space-y-8 bg-[#0b1016] p-6 rounded-xl border border-white/5">
+                                <div className="space-y-8 bg-[#0a1628] p-6 rounded-xl border border-white/5">
                                     {[
                                         { label: "Show Coupon Code Textbox", desc: "If enabled, a textbox will be shown on the checkout page to allow customers to enter a coupon code.", field: "show_coupon" },
                                         { label: "Show Terms Checkbox", desc: "If enabled, a checkbox saying \"have read and agree the Terms of Service\" will be shown on the checkout page.", field: "show_terms" },
@@ -317,7 +317,7 @@ export default function AdminStorefrontPage() {
                                     <p className="text-sm text-white/40">Customize how feedbacks are handled on your shop.</p>
                                 </div>
 
-                                <div className="bg-[#0b1016] p-6 rounded-xl border border-white/5 space-y-8">
+                                <div className="bg-[#0a1628] p-6 rounded-xl border border-white/5 space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
@@ -389,7 +389,7 @@ export default function AdminStorefrontPage() {
                                             <label className="text-sm font-bold text-white">{item.label}</label>
                                             <p className="text-xs text-white/40 mt-1">{item.desc}</p>
                                         </div>
-                                        <div className="bg-[#0b1016] border border-white/10 rounded-lg overflow-hidden">
+                                        <div className="bg-[#0a1628] border border-white/10 rounded-lg overflow-hidden">
                                             {/* Dummy Toolbar */}
                                             <div className="flex items-center gap-1 p-2 border-b border-white/10 bg-white/5">
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-white/40 hover:text-white"><Bold className="w-4 h-4" /></Button>
@@ -435,7 +435,7 @@ export default function AdminStorefrontPage() {
                                             <Input
                                                 value={settings.integrations[item.field as keyof typeof settings.integrations] || ""}
                                                 onChange={e => setSettings({ ...settings, integrations: { ...settings.integrations, [item.field]: e.target.value } })}
-                                                className="bg-[#0b1016] border-white/10 h-11"
+                                                className="bg-[#0a1628] border-white/10 h-11"
                                                 placeholder={item.placeholder}
                                             />
                                         </div>
@@ -451,14 +451,14 @@ export default function AdminStorefrontPage() {
                                     <h2 className="text-lg font-bold text-white mb-1">Notifications</h2>
                                     <p className="text-sm text-white/40">Integrate webhooks to receive real-time updates.</p>
                                 </div>
-                                <div className="space-y-8 bg-[#0b1016] p-6 rounded-xl border border-white/5">
+                                <div className="space-y-8 bg-[#0a1628] p-6 rounded-xl border border-white/5">
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-white">Discord Webhook URL</label>
                                         <p className="text-xs text-white/40 mb-2">Receive notifications about sales and tickets directly in your Discord channel.</p>
                                         <Input
                                             value={settings.notifications.webhook_url}
                                             onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, webhook_url: e.target.value } })}
-                                            className="bg-[#0b1016] border-white/10 h-11 font-mono text-xs"
+                                            className="bg-[#0a1628] border-white/10 h-11 font-mono text-xs"
                                             placeholder="https://discord.com/api/webhooks/..."
                                         />
                                     </div>
@@ -503,11 +503,11 @@ export default function AdminStorefrontPage() {
                 </div>
 
                 {/* Save Toolbar */}
-                <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#06080d]/80 backdrop-blur-md border-t border-white/5 z-50">
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#0a1628]/80 backdrop-blur-md border-t border-white/5 z-50">
                     <div className="max-w-[100rem] mx-auto flex items-center justify-center gap-4">
                         <Button
                             variant="ghost"
-                            className="bg-[#0b1016] text-white/60 hover:text-white hover:bg-[#10161e] h-12 px-6 rounded-xl border border-white/5"
+                            className="bg-[#0a1628] text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5"
                             onClick={() => window.location.href = '/admin/dashboard'}
                         >
                             <X className="w-4 h-4 mr-2" />

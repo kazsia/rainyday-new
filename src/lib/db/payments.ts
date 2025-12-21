@@ -7,6 +7,7 @@ export async function createPayment(payment: {
     provider: string
     amount: number
     currency?: string
+    track_id?: string
 }) {
     const supabase = await createClient()
 
@@ -18,6 +19,7 @@ export async function createPayment(payment: {
             amount: payment.amount,
             currency: payment.currency || "USD",
             status: "pending",
+            track_id: payment.track_id || null,
         })
         .select()
         .single()
@@ -25,6 +27,7 @@ export async function createPayment(payment: {
     if (error) throw error
     return data
 }
+
 
 export async function updatePaymentStatus(
     id: string,

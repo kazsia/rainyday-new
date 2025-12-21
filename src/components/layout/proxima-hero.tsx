@@ -57,7 +57,7 @@ export function ProximaHero() {
                             <NeonButton
                                 size="lg"
                                 variant="solid"
-                                className="h-20 px-20 rounded-full text-2xl font-black bg-black border-2 border-brand/20 text-white hover:bg-brand/5 hover:border-brand/40 transition-all duration-500 tracking-widest uppercase group relative z-10"
+                                className="h-20 px-20 rounded-full text-2xl font-black bg-[#0a1628] border-2 border-brand/20 text-white hover:bg-brand/5 hover:border-brand/40 transition-all duration-500 tracking-widest uppercase group relative z-10"
                             >
                                 EXPLORE STORE
                             </NeonButton>

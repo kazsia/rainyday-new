@@ -44,8 +44,18 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
         loadProduct()
     }, [id])
 
+    const isOutOfStock = product?.stock_count <= 0
+
     const handleAddToCart = () => {
         if (!product) return
+        if (isOutOfStock) {
+            toast.error("This product is out of stock")
+            return
+        }
+        if (quantity > product.stock_count) {
+            toast.error(`Only ${product.stock_count} items available in stock`)
+            return
+        }
         addToCart({
             id: product.id,
             title: product.name,
@@ -58,6 +68,14 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
 
     const handleBuyNow = () => {
         if (!product) return
+        if (isOutOfStock) {
+            toast.error("This product is out of stock")
+            return
+        }
+        if (quantity > product.stock_count) {
+            toast.error(`Only ${product.stock_count} items available in stock`)
+            return
+        }
         addToCart({
             id: product.id,
             title: product.name,
@@ -113,7 +131,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - Product Image & Tabs */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-[#0b1016] rounded-3xl border border-white/5 overflow-hidden">
+                        <div className="bg-[#0a1628] rounded-3xl border border-white/5 overflow-hidden">
                             <div className="p-8 pb-4 flex items-center justify-between">
                                 <h1 className="text-2xl font-black text-white">{product.name}</h1>
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
@@ -138,7 +156,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
 
                                     {/* Purchase Overlay */}
-                                    <div className="absolute bottom-4 left-4 bg-black/40 backdrop-blur-md border border-white/5 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-left duration-700">
+                                    <div className="absolute bottom-4 left-4 bg-[#0a1628]/40 backdrop-blur-md border border-white/5 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-left duration-700">
                                         <div className="w-10 h-10 rounded-lg overflow-hidden relative">
                                             <Image src={product.image_url || "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=1200"} alt={product.name} fill sizes="40px" className="object-cover" />
                                         </div>
@@ -265,17 +283,29 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                 <div className="space-y-4">
                                     <Button
                                         onClick={handleAddToCart}
-                                        className="w-full h-16 bg-brand-primary hover:bg-brand-accent text-black font-black text-sm uppercase tracking-[0.2em] gap-3 rounded-2xl shadow-xl shadow-brand-primary/20 transition-all active:scale-[0.98]"
+                                        disabled={isOutOfStock}
+                                        className={cn(
+                                            "w-full h-16 font-black text-sm uppercase tracking-[0.2em] gap-3 rounded-2xl shadow-xl transition-all active:scale-[0.98]",
+                                            isOutOfStock
+                                                ? "bg-white/10 text-white/40 cursor-not-allowed shadow-none"
+                                                : "bg-brand-primary hover:bg-brand-accent text-black shadow-brand-primary/20"
+                                        )}
                                     >
-                                        Add to Cart
+                                        {isOutOfStock ? "Out of Stock" : "Add to Cart"}
                                         <ShoppingCart className="w-5 h-5" />
                                     </Button>
                                     <Button
                                         onClick={handleBuyNow}
+                                        disabled={isOutOfStock}
                                         variant="outline"
-                                        className="w-full h-16 bg-white/[0.02] border border-white/5 text-white/60 hover:text-white hover:bg-white/[0.05] font-black text-sm uppercase tracking-[0.2em] gap-3 rounded-2xl transition-all active:scale-[0.98]"
+                                        className={cn(
+                                            "w-full h-16 font-black text-sm uppercase tracking-[0.2em] gap-3 rounded-2xl transition-all active:scale-[0.98]",
+                                            isOutOfStock
+                                                ? "bg-white/5 border-white/5 text-white/20 cursor-not-allowed"
+                                                : "bg-white/[0.02] border border-white/5 text-white/60 hover:text-white hover:bg-white/[0.05]"
+                                        )}
                                     >
-                                        Buy Now
+                                        {isOutOfStock ? "Unavailable" : "Buy Now"}
                                         <ArrowRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </div>

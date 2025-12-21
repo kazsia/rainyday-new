@@ -68,7 +68,7 @@ export function BackgroundPaths({
     title?: string;
 }) {
     return (
-        <div className="relative min-h-[400px] pt-0 pb-12 w-full flex items-start justify-center overflow-hidden bg-white dark:bg-neutral-950">
+        <div className="relative min-h-[50vh] md:min-h-[60vh] pt-24 md:pt-32 pb-8 md:pb-12 w-full flex items-center justify-center overflow-hidden bg-[#0a1628]">
             <div className="absolute inset-0">
                 <FloatingPaths position={1} />
                 <FloatingPaths position={-1} />
@@ -79,12 +79,12 @@ export function BackgroundPaths({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 2 }}
-                    className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center mt-8"
+                    className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center gap-8"
                 >
                     <AnimatedShinyText className="w-full">
                         <SparklesText
                             text={title}
-                            className="text-5xl sm:text-7xl md:text-8xl font-bold mb-12 tracking-tighter block w-full"
+                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter block w-full"
                             colors={{ first: "#a4f8ff", second: "#ffffff" }}
                         />
                     </AnimatedShinyText>
@@ -98,7 +98,7 @@ export function BackgroundPaths({
                             <Button
                                 variant="ghost"
                                 className="rounded-[1.15rem] px-8 py-6 text-lg font-semibold backdrop-blur-md 
-                                bg-white/95 hover:bg-white/100 dark:bg-black/95 dark:hover:bg-black/100 
+                                bg-white/95 hover:bg-white/100 dark:bg-[#0a1628]/95 dark:hover:bg-[#0a1628]/100 
                                 text-black dark:text-white transition-all duration-300 
                                 group-hover:-translate-y-0.5 border border-black/10 dark:border-white/10
                                 hover:shadow-md dark:hover:shadow-neutral-800/50"

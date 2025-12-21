@@ -23,17 +23,17 @@ const steps = [
 
 export function HowItWorks() {
     return (
-        <section className="py-32 relative overflow-hidden bg-black">
+        <section className="py-16 md:py-24 relative overflow-hidden bg-[#0a1628]">
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
-                <div className="text-center space-y-4 mb-24">
+                <div className="text-center space-y-4 mb-16">
                     <GooeyText
                         texts={["How It Works", "Simple Process", "Easy Steps"]}
                         morphTime={1.5}
                         cooldownTime={2}
-                        className="h-20 md:h-28"
+                        className="h-16 md:h-20"
                         textClassName="font-heading tracking-tight"
                     />
-                    <p className="text-white/30 text-lg font-medium pt-8">
+                    <p className="text-white/30 text-base font-medium pt-4">
                         Shopping made simple in three easy steps!
                     </p>
                 </div>

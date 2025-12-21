@@ -198,7 +198,7 @@ export default function CreateProductPage() {
                                     <Input
                                         required
                                         placeholder="Product Name"
-                                        className="bg-black/40 border-white/10 h-12"
+                                        className="bg-[#0a1628]/40 border-white/10 h-12"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     />
@@ -213,7 +213,7 @@ export default function CreateProductPage() {
                                         </div>
                                         <Input
                                             placeholder="product-name"
-                                            className="bg-black/40 border-white/10 h-12 rounded-l-none"
+                                            className="bg-[#0a1628]/40 border-white/10 h-12 rounded-l-none"
                                             value={formData.slug}
                                             onChange={e => setFormData({ ...formData, slug: e.target.value })}
                                         />
@@ -221,7 +221,7 @@ export default function CreateProductPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
-                                    <div className="bg-black/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
+                                    <div className="bg-[#0a1628]/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
                                         <div className="p-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-1 flex-wrap">
                                             <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><History className="w-4 h-4" /></Button>
                                             <div className="w-px h-4 bg-white/10 mx-1" />
@@ -256,7 +256,7 @@ export default function CreateProductPage() {
                             </div>
                             <div className="p-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="aspect-video bg-black/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-brand-primary/20 transition-colors cursor-pointer relative overflow-hidden">
+                                    <div className="aspect-video bg-[#0a1628]/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-brand-primary/20 transition-colors cursor-pointer relative overflow-hidden">
                                         {formData.image_url ? (
                                             <img src={formData.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
                                         ) : (
@@ -272,7 +272,7 @@ export default function CreateProductPage() {
                                         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Or provide image URL</label>
                                         <Input
                                             placeholder="https://example.com/image.png"
-                                            className="bg-black/40 border-white/10 h-12"
+                                            className="bg-[#0a1628]/40 border-white/10 h-12"
                                             value={formData.image_url}
                                             onChange={e => setFormData({ ...formData, image_url: e.target.value })}
                                         />
@@ -294,7 +294,7 @@ export default function CreateProductPage() {
                                 </div>
                             </div>
                             <div className="p-6">
-                                <div className="bg-black/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
+                                <div className="bg-[#0a1628]/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
                                     <div className="p-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-1 flex-wrap">
                                         <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><History className="w-4 h-4" /></Button>
                                         <div className="w-px h-4 bg-white/10 mx-1" />
@@ -376,7 +376,7 @@ export default function CreateProductPage() {
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
-                                            className="bg-black/40 border-white/10 h-10"
+                                            className="bg-[#0a1628]/40 border-white/10 h-10"
                                             value={formData.price}
                                             onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                                         />
@@ -387,7 +387,7 @@ export default function CreateProductPage() {
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
-                                            className="bg-black/40 border-white/10 h-10"
+                                            className="bg-[#0a1628]/40 border-white/10 h-10"
                                             value={formData.slashed_price}
                                             onChange={e => setFormData({ ...formData, slashed_price: parseFloat(e.target.value) })}
                                         />
@@ -397,7 +397,7 @@ export default function CreateProductPage() {
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Currency</label>
                                     <div className="relative">
                                         <select
-                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-black/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
+                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-[#0a1628]/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
                                             value={formData.currency}
                                             onChange={e => setFormData({ ...formData, currency: e.target.value })}
                                         >
@@ -422,7 +422,7 @@ export default function CreateProductPage() {
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Visibility</label>
                                     <div className="relative">
                                         <select
-                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-black/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
+                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-[#0a1628]/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
                                             value={formData.is_active ? "public" : "hidden"}
                                             onChange={e => setFormData({ ...formData, is_active: e.target.value === "public" })}
                                         >
@@ -436,7 +436,7 @@ export default function CreateProductPage() {
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Group (Category)</label>
                                     <div className="relative">
                                         <select
-                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-black/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
+                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-[#0a1628]/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
                                             value={formData.category_id}
                                             onChange={e => setFormData({ ...formData, category_id: e.target.value })}
                                         >
@@ -450,7 +450,7 @@ export default function CreateProductPage() {
                                 </div>
                                 <div className="space-y-2 pt-4 border-t border-white/5">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-4">Stock Count Visibility</label>
-                                    <div className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl">
+                                    <div className="flex items-center justify-between p-3 bg-[#0a1628]/20 border border-white/5 rounded-xl">
                                         <span className="text-xs text-white/60">Hide Stock Count</span>
                                         <button
                                             type="button"
@@ -475,7 +475,7 @@ export default function CreateProductPage() {
                                     <Input
                                         type="number"
                                         placeholder="0"
-                                        className="bg-black/40 border-white/10 h-10"
+                                        className="bg-[#0a1628]/40 border-white/10 h-10"
                                         value={formData.stock_count}
                                         onChange={e => setFormData({ ...formData, stock_count: parseInt(e.target.value) })}
                                     />
@@ -495,7 +495,7 @@ export default function CreateProductPage() {
                                     { id: "show_sales_count", label: "Show Sales Count", icon: Monitor },
                                     { id: "show_sales_notifications", label: "Sales Notifications", icon: BellRing }
                                 ].map(toggle => (
-                                    <div key={toggle.id} className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl">
+                                    <div key={toggle.id} className="flex items-center justify-between p-3 bg-[#0a1628]/20 border border-white/5 rounded-xl">
                                         <div className="flex items-center gap-3">
                                             <toggle.icon className="w-4 h-4 text-white/40" />
                                             <span className="text-[11px] text-white/60 font-bold uppercase tracking-wider">{toggle.label}</span>
@@ -580,7 +580,7 @@ export default function CreateProductPage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Status Label</label>
                                     <Input
-                                        className="bg-black/40 border-white/10 h-10"
+                                        className="bg-[#0a1628]/40 border-white/10 h-10"
                                         value={formData.status_label}
                                         onChange={e => setFormData({ ...formData, status_label: e.target.value })}
                                     />

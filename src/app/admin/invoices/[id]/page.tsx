@@ -108,7 +108,7 @@ export default function AdminInvoiceDetailsPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-white/5 bg-[#0b1016] text-white/40 hover:text-white" onClick={() => router.push('/admin/invoices')}>
+                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-white/5 bg-[#0a1628] text-white/40 hover:text-white" onClick={() => router.push('/admin/invoices')}>
                             <ChevronLeft className="w-4 h-4" />
                         </Button>
                         <div>
@@ -119,11 +119,11 @@ export default function AdminInvoiceDetailsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="border-white/5 bg-[#0b1016] text-white/60 hover:text-white hover:bg-white/5">
+                        <Button variant="outline" className="border-white/5 bg-[#0a1628] text-white/60 hover:text-white hover:bg-white/5">
                             <Ban className="w-4 h-4 mr-2" />
                             Block User
                         </Button>
-                        <Button variant="outline" className="border-white/5 bg-[#0b1016] text-white/60 hover:text-white hover:bg-white/5">
+                        <Button variant="outline" className="border-white/5 bg-[#0a1628] text-white/60 hover:text-white hover:bg-white/5">
                             <Download className="w-4 h-4 mr-2" />
                             Download PDF
                         </Button>
@@ -138,7 +138,7 @@ export default function AdminInvoiceDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     {/* Order Information */}
-                    <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden">
+                    <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
                         <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
                                 <CreditCard className="w-4 h-4 text-brand-primary" />
@@ -188,7 +188,7 @@ export default function AdminInvoiceDetailsPage() {
                     </div>
 
                     {/* Customer Information */}
-                    <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden">
+                    <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
                         <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
                                 <User className="w-4 h-4 text-orange-400" />
@@ -236,7 +236,7 @@ export default function AdminInvoiceDetailsPage() {
                 </div>
 
                 {/* Items */}
-                <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden">
+                <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
                     <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                             <ShoppingCart className="w-4 h-4 text-purple-400" />
@@ -285,7 +285,7 @@ export default function AdminInvoiceDetailsPage() {
                 </div>
 
                 {/* Payment History */}
-                <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden">
+                <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
                     <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                             <CreditCard className="w-4 h-4 text-emerald-400" />
@@ -334,7 +334,7 @@ export default function AdminInvoiceDetailsPage() {
                 </div>
 
                 {/* Invoice Note */}
-                <div className="bg-[#0b1016] border border-white/5 rounded-xl overflow-hidden mb-10">
+                <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden mb-10">
                     <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
                             <StickyNote className="w-4 h-4 text-indigo-400" />
@@ -346,7 +346,7 @@ export default function AdminInvoiceDetailsPage() {
                         <p className="text-xs text-white/20 mb-4">This note will be visible to shop administrators only. You can use this to keep track of important information about the invoice.</p>
                         <Textarea
                             placeholder="Add a note..."
-                            className="bg-black/20 border-white/5 min-h-[100px] text-white focus:border-indigo-500/50"
+                            className="bg-[#0a1628]/20 border-white/5 min-h-[100px] text-white focus:border-indigo-500/50"
                         />
                         <div className="mt-4">
                             <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">

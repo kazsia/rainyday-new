@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { NeonButton } from "@/components/ui/neon-button"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { SparklesText } from "@/components/ui/sparkles-text"
+import { motion } from "framer-motion"
+import { Vortex } from "@/components/ui/vortex"
 
 interface CTAProps {
     badge?: {
@@ -16,7 +19,6 @@ interface CTAProps {
         href: string
         variant?: "default" | "glow"
     }
-    withGlow?: boolean
     className?: string
 }
 
@@ -25,51 +27,81 @@ export function CTASection({
     title,
     description,
     action,
-    withGlow = true,
     className,
 }: CTAProps) {
     return (
-        <section className={cn("relative overflow-hidden pt-0 md:pt-0 bg-background", className)}>
-            <div className="relative mx-auto flex max-w-container flex-col items-center gap-6 px-8 py-12 text-center sm:gap-8 md:py-24" suppressHydrationWarning>
-                {/* Badge */}
-                {badge && (
-                    <Badge
-                        variant="outline"
-                        className="opacity-0 animate-fade-in-up delay-100"
-                    >
-                        <span className="text-[#a4f8ff]">{badge.text}</span>
-                    </Badge>
-                )}
+        <section className={cn("relative overflow-hidden bg-[#0a1628]", className)}>
+            <Vortex
+                backgroundColor="#0a1628"
+                rangeY={120}
+                particleCount={150}
+                baseHue={180}
+                baseSpeed={0.1}
+                rangeSpeed={0.5}
+                containerClassName="py-24 md:py-32"
+                className="flex flex-col items-center justify-center px-4 md:px-10 w-full h-full"
+            >
+                {/* Border Frame - "The Rectangle thing" */}
+                <div className="absolute inset-4 md:inset-8 rounded-[2.5rem] border border-[#a4f8ff]/10 pointer-events-none z-20" />
 
-                {/* Title */}
-                <h2 className="text-4xl font-black sm:text-7xl opacity-0 animate-fade-in-up delay-200 tracking-tighter uppercase italic text-white leading-tight">
-                    {title.split(' ').map((word, i) => (
-                        <span key={i} className={i > 2 ? "text-[#a4f8ff]" : ""}>{word} </span>
-                    ))}
-                </h2>
+                <div className="relative z-10 container mx-auto px-4 max-w-4xl">
+                    <div className="flex flex-col items-center gap-10 text-center" suppressHydrationWarning>
+                        {/* Badge */}
+                        {badge && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                            >
+                                <Badge
+                                    variant="outline"
+                                    className="bg-[#a4f8ff]/5 border-[#a4f8ff]/20 text-[#a4f8ff] px-4 py-1.5 h-auto text-[10px] font-black uppercase tracking-[0.25em] rounded-full"
+                                >
+                                    {badge.text}
+                                </Badge>
+                            </motion.div>
+                        )}
 
-                {/* Description */}
-                {description && (
-                    <p className="text-white/40 max-w-2xl text-lg font-medium opacity-0 animate-fade-in-up delay-300 leading-relaxed">
-                        {description}
-                    </p>
-                )}
+                        {/* Title */}
+                        <div className="space-y-6">
+                            <SparklesText
+                                text={title.toUpperCase()}
+                                className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-tight italic"
+                                colors={{ first: "#a4f8ff", second: "#ffffff" }}
+                            />
 
-                {/* Action Button */}
-                <Button
-                    variant={(action.variant === "glow" ? "default" : action.variant) as any || "default"}
-                    size="lg"
-                    className="opacity-0 animate-fade-in-up delay-500 h-16 px-10 rounded-2xl text-lg font-black uppercase tracking-widest bg-[#a4f8ff] text-black hover:bg-[#a4f8ff]/90 transition-all hover:scale-105"
-                    asChild
-                >
-                    <a href={action.href}>{action.text}</a>
-                </Button>
+                            {/* Description */}
+                            {description && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: 10 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.1 }}
+                                    className="text-white/40 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed"
+                                >
+                                    {description}
+                                </motion.p>
+                            )}
+                        </div>
 
-                {/* Glow Effect */}
-                {withGlow && (
-                    <div className="fade-top-lg pointer-events-none absolute inset-0 rounded-2xl shadow-glow opacity-0 animate-scale-in delay-700" />
-                )}
-            </div>
+                        {/* Action Button */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="h-16 md:h-20 px-10 md:px-14 rounded-2xl text-base md:text-lg font-black uppercase tracking-[0.2em] bg-white/[0.02] text-white border-white/10 hover:bg-white/5 hover:border-[#a4f8ff]/30 hover:text-[#a4f8ff] transition-all hover:scale-105 shadow-2xl hover:shadow-[#a4f8ff]/10"
+                            >
+                                <Link href={action.href}>{action.text}</Link>
+                            </Button>
+                        </motion.div>
+                    </div>
+                </div>
+            </Vortex>
         </section>
     )
 }

@@ -51,7 +51,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                     />
                     <Tooltip
                         contentStyle={{
-                            backgroundColor: "#0b1016",
+                            backgroundColor: "#0a1628",
                             borderColor: "rgba(255,255,255,0.05)",
                             borderRadius: "8px",
                             fontSize: "12px",

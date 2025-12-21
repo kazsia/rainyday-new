@@ -350,8 +350,8 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "RAINYDAY"
 
     return (
-        <footer id="footer" className="w-full pb-0 bg-black border-t border-white/5 mt-24">
-            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-10 gap-10">
+        <footer id="footer" className="w-full pb-0 bg-[#0a1628] border-t border-white/5">
+            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8">
                 <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0">
                     <Logo variant="footer" />
                     <p className="tracking-tight text-white/40 font-medium leading-relaxed">
@@ -381,8 +381,8 @@ export const FlickeringFooter = () => {
                     </div>
                 </div>
             </div>
-            <div className="w-full h-48 md:h-64 relative mt-12 z-0 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/50 to-black z-10" />
+            <div className="w-full h-48 md:h-64 relative z-0 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#0a1628]/50 to-[#0a1628] z-10" />
                 <div className="absolute inset-0 mx-6">
                     <FlickeringGrid
                         text={siteName.toUpperCase()}

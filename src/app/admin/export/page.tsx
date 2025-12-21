@@ -111,7 +111,7 @@ export default function AdminExportPage() {
                 {/* Security Audit Log Export - Advanced Section */}
                 <div className="relative group">
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-brand/20 to-purple-500/20 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                    <div className="relative bg-[#0b1016] border border-white/5 p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="relative bg-[#0a1628] border border-white/5 p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8">
                         <div className="flex items-start gap-6">
                             <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center border border-brand/20 shrink-0">
                                 <ShieldCheck className="w-8 h-8 text-brand" />
@@ -138,7 +138,7 @@ export default function AdminExportPage() {
 
 function ExportCard({ title, description, icon: Icon, onExport, isLoading }: { title: string, description: string, icon: any, onExport: () => void, isLoading?: boolean }) {
     return (
-        <div className="bg-[#0b1016] border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center group hover:border-brand/20 transition-all hover:bg-white/[0.01]">
+        <div className="bg-[#0a1628] border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center group hover:border-brand/20 transition-all hover:bg-white/[0.01]">
             <div className="w-20 h-20 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Icon className="w-10 h-10 text-white/20 group-hover:text-brand transition-colors" />
             </div>
