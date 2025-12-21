@@ -60,16 +60,18 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.oxapay.com https://api.qrserver.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.oxapay.com https://api.qrserver.com https://vercel.live wss://ws-us3.pusher.com",
+              "frame-src https://vercel.live",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join('; '),
           },
+
         ],
       },
       {
