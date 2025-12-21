@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/client"
+"use server"
+import { createClient } from "@/lib/supabase/server"
 
 export type BlacklistType = 'email' | 'ip' | 'user_agent' | 'discord' | 'asn' | 'country'
 export type MatchType = 'exact' | 'regex'
@@ -13,35 +14,53 @@ export type BlacklistEntry = {
 }
 
 export async function getBlacklist() {
-    const supabase = createClient()
-    const { data, error } = await supabase
-        .from('blacklist')
-        .select('*')
-        .order('created_at', { ascending: false })
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('blacklist')
+            .select('*')
+            .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data as BlacklistEntry[]
+        if (error) {
+            console.error("[GET_BLACKLIST] Fetch error:", error)
+            return []
+        }
+        return data as BlacklistEntry[]
+    } catch (e) {
+        console.error("[GET_BLACKLIST_CRITICAL]", e)
+        return []
+    }
 }
 
 export async function createBlacklistEntry(entry: Omit<BlacklistEntry, 'id' | 'created_at'>) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-        .from('blacklist')
-        .insert(entry)
-        .select()
-        .single()
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('blacklist')
+            .insert(entry)
+            .select()
+            .single()
 
-    if (error) throw error
-    return data as BlacklistEntry
+        if (error) throw error
+        return data as BlacklistEntry
+    } catch (e) {
+        console.error("[CREATE_BLACKLIST_ENTRY_CRITICAL]", e)
+        throw e
+    }
 }
 
 export async function deleteBlacklistEntry(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('blacklist')
-        .delete()
-        .eq('id', id)
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('blacklist')
+            .delete()
+            .eq('id', id)
 
-    if (error) throw error
-    return true
+        if (error) throw error
+        return true
+    } catch (e) {
+        console.error("[DELETE_BLACKLIST_ENTRY_CRITICAL]", e)
+        throw e
+    }
 }

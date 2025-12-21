@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/client"
+"use server"
+import { createClient } from "@/lib/supabase/server"
 
 export type SiteSettings = {
     general: {
@@ -51,7 +52,7 @@ export type SiteSettings = {
 
 export async function getSiteSettings(): Promise<SiteSettings> {
     try {
-        const supabase = createClient()
+        const supabase = await createClient()
         const { data, error } = await supabase.from('site_settings').select('key, value')
 
         if (error) {
@@ -96,53 +97,76 @@ const defaultSiteSettings: SiteSettings = {
 }
 
 export async function updateSiteSettings(section: keyof SiteSettings, value: any) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('site_settings')
-        .upsert({ key: section, value })
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('site_settings')
+            .upsert({ key: section, value })
 
-    if (error) throw error
+        if (error) throw error
+    } catch (e) {
+        console.error("[UPDATE_SITE_SETTINGS_CRITICAL]", e)
+    }
 }
 
 export async function uploadAsset(file: File): Promise<string> {
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const filename = `${Math.random().toString(36).substring(2)}.${ext}`
+    try {
+        const supabase = await createClient()
+        const ext = file.name.split('.').pop()
+        const filename = `${Math.random().toString(36).substring(2)}.${ext}`
 
-    const { error: uploadError } = await supabase.storage
-        .from('assets')
-        .upload(filename, file)
+        const { error: uploadError } = await supabase.storage
+            .from('assets')
+            .upload(filename, file)
 
-    if (uploadError) throw uploadError
+        if (uploadError) throw uploadError
 
-    const { data } = supabase.storage
-        .from('assets')
-        .getPublicUrl(filename)
+        const { data } = supabase.storage
+            .from('assets')
+            .getPublicUrl(filename)
 
-    return data.publicUrl
+        return data.publicUrl
+    } catch (e) {
+        console.error("[UPLOAD_ASSET_CRITICAL]", e)
+        return ""
+    }
 }
 
 // Generic helpers for individual settings (legacy/flat support)
 export async function getAllSettings() {
-    const supabase = createClient()
-    const { data } = await supabase.from('site_settings').select('key, value')
-    return (data || []).reduce((acc, curr) => {
-        acc[curr.key] = curr.value
-        return acc
-    }, {} as Record<string, any>)
+    try {
+        const supabase = await createClient()
+        const { data } = await supabase.from('site_settings').select('key, value')
+        return (data || []).reduce((acc, curr) => {
+            acc[curr.key] = curr.value
+            return acc
+        }, {} as Record<string, any>)
+    } catch (e) {
+        console.error("[GET_ALL_SETTINGS_CRITICAL]", e)
+        return {}
+    }
 }
 
 export async function getSetting(key: string) {
-    const supabase = createClient()
-    const { data } = await supabase.from('site_settings').select('value').eq('key', key).limit(1)
-    return data?.[0]?.value
+    try {
+        const supabase = await createClient()
+        const { data } = await supabase.from('site_settings').select('value').eq('key', key).limit(1)
+        return data?.[0]?.value
+    } catch (e) {
+        console.error("[GET_SETTING_CRITICAL]", e)
+        return null
+    }
 }
 
 export async function updateSetting(key: string, value: any) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('site_settings')
-        .upsert({ key, value })
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('site_settings')
+            .upsert({ key, value })
 
-    if (error) throw error
+        if (error) throw error
+    } catch (e) {
+        console.error("[UPDATE_SETTING_CRITICAL]", e)
+    }
 }

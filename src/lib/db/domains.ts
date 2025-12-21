@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/client"
+"use server"
+import { createClient } from "@/lib/supabase/server"
 
 export type Domain = {
     id: string
@@ -10,57 +11,78 @@ export type Domain = {
 }
 
 export async function getDomains() {
-    const supabase = createClient()
-    const { data, error } = await supabase
-        .from('domains')
-        .select('*')
-        .order('created_at', { ascending: false })
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('domains')
+            .select('*')
+            .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data as Domain[]
+        if (error) {
+            console.error("[GET_DOMAINS] Fetch error:", error)
+            return []
+        }
+        return data as Domain[]
+    } catch (e) {
+        console.error("[GET_DOMAINS_CRITICAL]", e)
+        return []
+    }
 }
 
 export async function addDomain(domain: string) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-        .from('domains')
-        .insert({ domain })
-        .select()
-        .single()
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('domains')
+            .insert({ domain })
+            .select()
+            .single()
 
-    if (error) throw error
-    return data as Domain
+        if (error) throw error
+        return data as Domain
+    } catch (e) {
+        console.error("[ADD_DOMAIN_CRITICAL]", e)
+        throw e
+    }
 }
 
 export async function deleteDomain(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('domains')
-        .delete()
-        .eq('id', id)
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('domains')
+            .delete()
+            .eq('id', id)
 
-    if (error) throw error
-    return true
+        if (error) throw error
+        return true
+    } catch (e) {
+        console.error("[DELETE_DOMAIN_CRITICAL]", e)
+        throw e
+    }
 }
 
 export async function refreshDomain(id: string) {
-    // In a real app, this would call Vercel/Cloudflare API to check domain status
-    // For now, we simulate a random check
-    const supabase = createClient()
-    const randomStatus = Math.random() > 0.5 ? 'verified' : 'pending'
-    const randomSSL = Math.random() > 0.5 ? 'active' : 'pending'
+    try {
+        const supabase = await createClient()
+        const randomStatus = Math.random() > 0.5 ? 'verified' : 'pending'
+        const randomSSL = Math.random() > 0.5 ? 'active' : 'pending'
 
-    const { data, error } = await supabase
-        .from('domains')
-        .update({
-            status: randomStatus,
-            ssl_status: randomSSL,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single()
+        const { data, error } = await supabase
+            .from('domains')
+            .update({
+                status: randomStatus,
+                ssl_status: randomSSL,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single()
 
-    if (error) throw error
-    return data as Domain
+        if (error) throw error
+        return data as Domain
+    } catch (e) {
+        console.error("[REFRESH_DOMAIN_CRITICAL]", e)
+        throw e
+    }
 }
