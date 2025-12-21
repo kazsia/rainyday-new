@@ -76,19 +76,19 @@ export function ProximaNavbar() {
                         {/* Stats Section */}
                         <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-black/40 backdrop-blur-md" suppressHydrationWarning>
                             <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-black text-white tracking-tighter transition-colors group-hover/stat:text-brand-primary font-heading">
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
                                     {formatNumber(stats.sales)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Sales</p>
                             </div>
                             <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-black text-white tracking-tighter transition-colors group-hover/stat:text-brand-primary font-heading" suppressHydrationWarning>
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {formatNumber(stats.buyers)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Buyers</p>
                             </div>
                             <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-black text-white tracking-tighter transition-colors group-hover/stat:text-brand-primary font-heading" suppressHydrationWarning>
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {stats.rating}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Rating</p>
