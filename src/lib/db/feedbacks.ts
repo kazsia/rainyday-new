@@ -27,38 +27,54 @@ export async function submitFeedback(feedback: {
 }
 
 export async function getApprovedFeedback(productId?: string) {
-    const supabase = await createClient()
-    let query = supabase
-        .from("feedbacks")
-        .select(`
-            *,
-            profiles:user_id (email)
-        `)
-        .eq("is_approved", true)
+    try {
+        const supabase = await createClient()
+        let query = supabase
+            .from("feedbacks")
+            .select(`
+                *,
+                profiles:user_id (email)
+            `)
+            .eq("is_approved", true)
 
-    if (productId) {
-        query = query.eq("product_id", productId)
+        if (productId) {
+            query = query.eq("product_id", productId)
+        }
+
+        const { data, error } = await query.order("created_at", { ascending: false })
+
+        if (error) {
+            console.error("[GET_APPROVED_FEEDBACK] Fetch error:", error)
+            return []
+        }
+        return data
+    } catch (e) {
+        console.error("[GET_APPROVED_FEEDBACK_CRITICAL]", e)
+        return []
     }
-
-    const { data, error } = await query.order("created_at", { ascending: false })
-
-    if (error) throw error
-    return data
 }
 
 export async function adminGetFeedbacks() {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from("feedbacks")
-        .select(`
-            *,
-            profiles:user_id (email),
-            products:product_id (name)
-        `)
-        .order("created_at", { ascending: false })
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from("feedbacks")
+            .select(`
+                *,
+                profiles:user_id (email),
+                products:product_id (name)
+            `)
+            .order("created_at", { ascending: false })
 
-    if (error) throw error
-    return data
+        if (error) {
+            console.error("[ADMIN_GET_FEEDBACKS] Fetch error:", error)
+            return []
+        }
+        return data
+    } catch (e) {
+        console.error("[ADMIN_GET_FEEDBACKS_CRITICAL]", e)
+        return []
+    }
 }
 
 export async function approveFeedback(id: string) {

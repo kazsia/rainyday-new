@@ -115,43 +115,59 @@ export async function updateOrderStatus(
 }
 
 export async function adminGetOrders() {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from("orders")
-        .select(`
-            *,
-            profiles:user_id (email),
-            order_items (
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from("orders")
+            .select(`
                 *,
-                product:products (name)
-            ),
-            payments (*)
-        `)
-        .order("created_at", { ascending: false })
+                profiles:user_id (email),
+                order_items (
+                    *,
+                    product:products (name)
+                ),
+                payments (*)
+            `)
+            .order("created_at", { ascending: false })
 
-    if (error) throw error
-    return data
+        if (error) {
+            console.error("[ADMIN_GET_ORDERS] Fetch error:", error)
+            return []
+        }
+        return data
+    } catch (e) {
+        console.error("[ADMIN_GET_ORDERS_CRITICAL]", e)
+        return []
+    }
 }
 
 export async function adminGetOrder(id: string) {
-    const supabase = await createAdminClient()
+    try {
+        const supabase = await createAdminClient()
 
-    const { data, error } = await supabase
-        .from("orders")
-        .select(`
-            *,
-            profiles:user_id (email),
-            order_items (
+        const { data, error } = await supabase
+            .from("orders")
+            .select(`
                 *,
-                product:products (name, image_url)
-            ),
-            payments (*),
-            deliveries (*),
-            invoices (*)
-        `)
-        .eq("id", id)
-        .single()
+                profiles:user_id (email),
+                order_items (
+                    *,
+                    product:products (name, image_url)
+                ),
+                payments (*),
+                deliveries (*),
+                invoices (*)
+            `)
+            .eq("id", id)
+            .single()
 
-    if (error) throw error
-    return data
+        if (error) {
+            console.error("[ADMIN_GET_ORDER] Fetch error:", error)
+            return null
+        }
+        return data
+    } catch (e) {
+        console.error("[ADMIN_GET_ORDER_CRITICAL]", e)
+        return null
+    }
 }

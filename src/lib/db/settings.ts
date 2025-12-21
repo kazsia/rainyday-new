@@ -50,26 +50,49 @@ export type SiteSettings = {
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-    const supabase = createClient()
-    const { data } = await supabase.from('site_settings').select('key, value')
+    try {
+        const supabase = createClient()
+        const { data, error } = await supabase.from('site_settings').select('key, value')
 
-    const settingsMap = (data || []).reduce((acc, curr) => {
-        acc[curr.key] = curr.value
-        return acc
-    }, {} as Record<string, any>)
+        if (error) {
+            console.error("Error fetching site settings:", error)
+            return defaultSiteSettings
+        }
 
-    return {
-        general: settingsMap.general || { name: 'Rainyday', description: '' },
-        branding: settingsMap.branding || {},
-        seo: settingsMap.seo || { title_template: '%s | Rainyday' },
-        socials: settingsMap.socials || {},
-        checkout: settingsMap.checkout || { show_coupon: true, show_terms: true, show_newsletter: false },
-        feedbacks: settingsMap.feedbacks || { enable_automatic: true, hide_on_main: false },
-        legal: settingsMap.legal || { terms_of_service: '', privacy_policy: '' },
-        integrations: settingsMap.integrations || {},
-        notifications: settingsMap.notifications || { webhook_url: '', notify_on_sale: true, notify_on_ticket: true },
-        dns: settingsMap.dns || { records: [{ type: 'A', name: '@', value: '76.76.21.21' }] }
+        const settingsMap = (data || []).reduce((acc, curr) => {
+            acc[curr.key] = curr.value
+            return acc
+        }, {} as Record<string, any>)
+
+        return {
+            general: settingsMap.general || defaultSiteSettings.general,
+            branding: settingsMap.branding || defaultSiteSettings.branding,
+            seo: settingsMap.seo || defaultSiteSettings.seo,
+            socials: settingsMap.socials || defaultSiteSettings.socials,
+            checkout: settingsMap.checkout || defaultSiteSettings.checkout,
+            feedbacks: settingsMap.feedbacks || defaultSiteSettings.feedbacks,
+            legal: settingsMap.legal || defaultSiteSettings.legal,
+            integrations: settingsMap.integrations || defaultSiteSettings.integrations,
+            notifications: settingsMap.notifications || defaultSiteSettings.notifications,
+            dns: settingsMap.dns || defaultSiteSettings.dns
+        }
+    } catch (error) {
+        console.error("Critical error in getSiteSettings:", error)
+        return defaultSiteSettings
     }
+}
+
+const defaultSiteSettings: SiteSettings = {
+    general: { name: 'Rainyday', description: '' },
+    branding: {},
+    seo: { title_template: '%s | Rainyday' },
+    socials: {},
+    checkout: { show_coupon: true, show_terms: true, show_newsletter: false },
+    feedbacks: { enable_automatic: true, hide_on_main: false },
+    legal: { terms_of_service: '', privacy_policy: '' },
+    integrations: {},
+    notifications: { webhook_url: '', notify_on_sale: true, notify_on_ticket: true },
+    dns: { records: [{ type: 'A', name: '@', value: '76.76.21.21' }] }
 }
 
 export async function updateSiteSettings(section: keyof SiteSettings, value: any) {

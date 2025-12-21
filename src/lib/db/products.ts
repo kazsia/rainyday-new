@@ -3,54 +3,72 @@
 import { createClient as createServerClient, createAdminClient } from "@/lib/supabase/server"
 import { createClient as createDirectClient } from "@supabase/supabase-js"
 
-const supabaseAdmin = createDirectClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Helper to get admin client lazily
+async function getAdminClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error("Supabase admin credentials missing")
+    }
+
+    return createDirectClient(supabaseUrl, supabaseServiceKey)
+}
 
 export async function getProducts(options?: { categoryId?: string; activeOnly?: boolean }) {
-    const supabase = await createServerClient()
+    try {
+        const supabase = await createServerClient()
 
-    let query = supabase
-        .from("products")
-        .select(`
-            *,
-            category:product_categories (*)
-        `)
+        let query = supabase
+            .from("products")
+            .select(`
+                *,
+                category:product_categories (*)
+            `)
 
-    if (options?.activeOnly !== false) {
-        query = query.eq("is_active", true)
+        if (options?.activeOnly !== false) {
+            query = query.eq("is_active", true)
+        }
+
+        if (options?.categoryId) {
+            query = query.eq("category_id", options.categoryId)
+        }
+
+        // Default to created_at
+        const { data, error } = await query
+            .order("created_at", { ascending: false })
+
+        if (error) throw error
+        return data
+    } catch (e) {
+        console.error("[GET_PRODUCTS_CRITICAL]", e)
+        return []
     }
-
-    if (options?.categoryId) {
-        query = query.eq("category_id", options.categoryId)
-    }
-
-    // Default to created_at
-    const { data, error } = await query
-        .order("created_at", { ascending: false })
-
-    if (error) throw error
-    return data
 }
 
 export async function getProduct(id: string) {
-    const supabase = await createServerClient()
+    try {
+        const supabase = await createServerClient()
 
-    const { data, error } = await supabase
-        .from("products")
-        .select(`
-            *,
-            category:product_categories (*)
-        `)
-        .eq("id", id)
-        .single()
+        const { data, error } = await supabase
+            .from("products")
+            .select(`
+                *,
+                category:product_categories (*)
+            `)
+            .eq("id", id)
+            .single()
 
-    if (error) throw error
-    return data
+        if (error) throw error
+        return data
+    } catch (e) {
+        console.error("[GET_PRODUCT_CRITICAL]", e)
+        return null
+    }
 }
 
 export async function createProduct(product: any) {
+    const supabaseAdmin = await getAdminClient()
     const insertData: any = {
         name: product.name,
         price: Number(product.price) || 0,
@@ -82,6 +100,7 @@ export async function createProduct(product: any) {
 }
 
 export async function updateProduct(id: string, updates: any) {
+    const supabaseAdmin = await getAdminClient()
     const { data, error } = await supabaseAdmin
         .from("products")
         .update(updates)
@@ -93,6 +112,7 @@ export async function updateProduct(id: string, updates: any) {
 }
 
 export async function deleteProduct(id: string) {
+    const supabaseAdmin = await getAdminClient()
     const { error } = await supabaseAdmin
         .from("products")
         .delete()
@@ -118,6 +138,7 @@ export async function cloneProduct(id: string) {
 }
 
 export async function updateProductOrder(orders: { id: string, sort_order: number }[]) {
+    const supabaseAdmin = await getAdminClient()
     // We use a Promise.all with upserts for simplicity in small sets
     // For large sets, a dedicated RPC would be better
     const updates = orders.map(item =>
@@ -133,17 +154,23 @@ export async function updateProductOrder(orders: { id: string, sort_order: numbe
 }
 
 export async function getCategories() {
-    const supabase = await createServerClient()
-    const { data, error } = await supabase
-        .from("product_categories")
-        .select("*")
-        .order("name", { ascending: true })
+    try {
+        const supabase = await createServerClient()
+        const { data, error } = await supabase
+            .from("product_categories")
+            .select("*")
+            .order("name", { ascending: true })
 
-    if (error) throw error
-    return data
+        if (error) throw error
+        return data
+    } catch (e) {
+        console.error("[GET_CATEGORIES_CRITICAL]", e)
+        return []
+    }
 }
 
 export async function updateCategoryOrder(orders: { id: string, sort_order: number }[]) {
+    const supabaseAdmin = await getAdminClient()
     const updates = orders.map(item =>
         supabaseAdmin
             .from("product_categories")
@@ -157,6 +184,7 @@ export async function updateCategoryOrder(orders: { id: string, sort_order: numb
 }
 
 export async function createCategory(name: string) {
+    const supabaseAdmin = await getAdminClient()
     const slug = name.toLowerCase().replace(/ /g, '-')
     const { data, error } = await supabaseAdmin
         .from('product_categories')
@@ -168,6 +196,7 @@ export async function createCategory(name: string) {
 }
 
 export async function deleteCategory(id: string) {
+    const supabaseAdmin = await getAdminClient()
     const { error } = await supabaseAdmin
         .from('product_categories')
         .delete()
