@@ -11,31 +11,39 @@ export interface AuthUser {
 
 /**
  * Get the authenticated user without throwing.
- * Returns null if not authenticated.
+ * Returns null if not authenticated or if Supabase is unavailable.
  */
 export async function getAuthUser(): Promise<AuthUser | null> {
-    const supabase = await createClient()
-    const { data: { user }, error } = await supabase.auth.getUser()
+    try {
+        const supabase = await createClient()
+        const { data: { user }, error } = await supabase.auth.getUser()
 
-    if (error || !user) {
+        if (error || !user) {
+            return null
+        }
+
+        // Fetch profile to get role
+        const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("role, email")
+            .eq("id", user.id)
+            .single()
+
+        if (profileError || !profile) {
+            // User exists but profile not found - treat as non-authenticated
+            console.warn("[AUTH] User found but profile missing:", user.id)
+            return null
+        }
+
+        return {
+            id: user.id,
+            email: profile.email || user.email || "",
+            role: profile.role || "user"
+        }
+    } catch (error) {
+        // Supabase client failed to initialize or query failed
+        console.error("[AUTH_CRITICAL] getAuthUser failed:", error)
         return null
-    }
-
-    // Fetch profile to get role
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, email")
-        .eq("id", user.id)
-        .single()
-
-    if (!profile) {
-        return null
-    }
-
-    return {
-        id: user.id,
-        email: profile.email || user.email || "",
-        role: profile.role || "user"
     }
 }
 
@@ -58,18 +66,25 @@ export async function requireAuth(): Promise<AuthUser> {
  * Use in Server Components and Server Actions.
  */
 export async function requireAdmin(): Promise<AuthUser> {
-    const user = await getAuthUser()
+    try {
+        const user = await getAuthUser()
 
-    if (!user) {
+        if (!user) {
+            redirect("/auth")
+        }
+
+        if (user.role !== "admin") {
+            redirect("/")
+        }
+
+        return user
+    } catch (error) {
+        // If anything fails, redirect to auth page
+        console.error("[AUTH_CRITICAL] requireAdmin failed:", error)
         redirect("/auth")
     }
-
-    if (user.role !== "admin") {
-        redirect("/")
-    }
-
-    return user
 }
+
 
 /**
  * Check if current user is admin (non-throwing).
