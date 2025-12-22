@@ -16,8 +16,6 @@ export async function POST(req: NextRequest) {
         const data = JSON.parse(bodyText)
         const { order_id, status, trackId } = data
 
-        console.log(`OxaPay Webhook received for Order ${order_id}: ${status}`)
-
         // OxaPay statuses: paying, confirming, paid, failed, expired, canceled
         // We only care about success for now
         if (status === "paid") {
@@ -36,7 +34,6 @@ export async function POST(req: NextRequest) {
                     payload: data,
                     provider: data.payCurrency || "Crypto"
                 })
-                console.log(`Order ${order_id} marked as paid.`)
             }
         } else if (status === "failed" || status === "expired" || status === "canceled") {
             const supabase = await createClient()

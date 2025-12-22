@@ -32,7 +32,7 @@ export async function createOxaPayWhiteLabelInvoice(params: CreateInvoiceParams)
         throw new Error("OXAPAY_API_KEY is not configured")
     }
 
-    console.log("Creating OxaPay White-Label invoice with params:", params)
+
 
     try {
         // Try legacy merchants/request/whitelabel endpoint
@@ -58,12 +58,12 @@ export async function createOxaPayWhiteLabelInvoice(params: CreateInvoiceParams)
         })
 
         const data = await response.json()
-        console.log("OxaPay White-Label Response:", data)
+
 
         if (data.result !== 100) {
             console.error("OxaPay White-Label API Error:", data)
             // Fall back to regular invoice (redirects to OxaPay)
-            console.log("Falling back to regular OxaPay invoice...")
+
             const regularInvoice = await createOxaPayInvoice(params)
             return {
                 trackId: regularInvoice.trackId,
@@ -138,7 +138,7 @@ export async function generateOxaPayStaticAddress(params: {
 
     const payCurrency = currencyMap[params.currency] || params.currency
 
-    console.log("Generating OxaPay Static Address for:", payCurrency)
+
 
     try {
         const response = await fetch(`${OXAPAY_API_URL}/merchants/request/staticaddress`, {
@@ -158,7 +158,7 @@ export async function generateOxaPayStaticAddress(params: {
         })
 
         const data = await response.json()
-        console.log("OxaPay Static Address Response:", data)
+
 
         if (data.result !== 100) {
             console.error("OxaPay Static Address Error:", data)
@@ -183,13 +183,7 @@ export async function createOxaPayInvoice(params: CreateInvoiceParams) {
         throw new Error("OXAPAY_API_KEY is not configured")
     }
 
-    console.log("Creating OxaPay invoice with params:", {
-        amount: params.amount,
-        currency: params.currency,
-        payCurrency: params.payCurrency,
-        orderId: params.orderId,
-        email: params.email
-    })
+
 
     try {
         const response = await fetch(`${OXAPAY_API_URL}/merchants/request`, {
@@ -214,8 +208,7 @@ export async function createOxaPayInvoice(params: CreateInvoiceParams) {
         })
 
         const data = await response.json()
-        // Log FULL response to see all available fields
-        console.log("OxaPay Full Response:", JSON.stringify(data, null, 2))
+
 
         if (data.result !== 100) {
             console.error("OxaPay API Error:", data)
@@ -259,7 +252,7 @@ export async function getOxaPayPaymentInfo(trackId: string) {
         })
 
         const data = await response.json()
-        console.log("OxaPay Payment Info Response:", data)
+
 
         if (data.result !== 100) {
             console.error("OxaPay Payment Info Error:", data)
@@ -291,12 +284,12 @@ export async function getOxaPayPaymentInfo(trackId: string) {
  */
 export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoiceParams): Promise<WhiteLabelPaymentDetails> {
     // Step 1: Create invoice - may include address directly
-    console.log("Creating invoice with payCurrency:", params.payCurrency)
+
     const invoice = await createOxaPayInvoice(params)
 
     // Check if invoice response already contains address
     if (invoice.address) {
-        console.log("SUCCESS: Got address from invoice response:", invoice.address)
+
         return {
             trackId: invoice.trackId,
             address: invoice.address,
@@ -311,7 +304,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     }
 
     // Step 2: Try static address as backup
-    console.log("No address in invoice, trying static address...")
+
     const staticAddress = await generateOxaPayStaticAddress({
         currency: params.payCurrency || "BTC",
         orderId: params.orderId,
@@ -321,7 +314,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     })
 
     if (staticAddress && staticAddress.address) {
-        console.log("SUCCESS: Got static address:", staticAddress.address)
+
         return {
             trackId: staticAddress.trackId || invoice.trackId,
             address: staticAddress.address,
@@ -336,13 +329,13 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     }
 
     // Step 3: Query inquiry endpoint with retries (3s delay between)
-    console.log("Static address failed, trying inquiry with retries...")
+
     for (let attempt = 0; attempt < 5; attempt++) {
         await new Promise(resolve => setTimeout(resolve, 3000))
-        console.log(`Inquiry attempt ${attempt + 1}/5...`)
+
         const paymentInfo = await getOxaPayPaymentInfo(invoice.trackId)
         if (paymentInfo && paymentInfo.address) {
-            console.log(`SUCCESS: Got address from inquiry on attempt ${attempt + 1}:`, paymentInfo.address)
+
             return {
                 trackId: paymentInfo.trackId,
                 address: paymentInfo.address,
@@ -358,7 +351,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     }
 
     // Step 4: Last resort - display QR code for payLink (user scans and goes to OxaPay)
-    console.log("All methods failed. Displaying payLink as QR code.")
+
     return {
         trackId: invoice.trackId,
         address: "", // No crypto address available

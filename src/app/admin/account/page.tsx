@@ -80,8 +80,8 @@ export default function AdminAccountPage() {
         setUser(user)
 
         const [profileRes, prefRes, keysRes] = await Promise.all([
-            supabase.from("profiles").select("*").eq("id", user.id).single(),
-            supabase.from("admin_preferences").select("*").eq("admin_id", user.id).single(),
+            supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+            supabase.from("admin_preferences").select("*").eq("admin_id", user.id).maybeSingle(),
             supabase.from("admin_api_keys").select("*").eq("admin_id", user.id)
         ])
 

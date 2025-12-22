@@ -70,7 +70,6 @@ function PaymentWaitingContent() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'payments', filter: `order_id=eq.${orderId}` },
                 (payload) => {
-                    console.log("Payment update:", payload)
                     if (payload.new && (payload.new as any).status) {
                         const newStatus = (payload.new as any).status
                         setStatus(newStatus)

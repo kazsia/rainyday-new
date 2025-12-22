@@ -77,7 +77,6 @@ export function AddCustomerModal({ isOpen, onClose, onSuccess }: AddCustomerModa
                         <Input
                             id="email"
                             type="email"
-                            placeholder="customer@example.com"
                             value={formData.email}
                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                             className="bg-white/5 border-white/10 h-11 focus:ring-brand/20"
@@ -89,7 +88,6 @@ export function AddCustomerModal({ isOpen, onClose, onSuccess }: AddCustomerModa
                         <Label htmlFor="full_name" className="text-xs font-black uppercase tracking-widest text-white/40">Full Name (Optional)</Label>
                         <Input
                             id="full_name"
-                            placeholder="John Doe"
                             value={formData.full_name}
                             onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                             className="bg-white/5 border-white/10 h-11 focus:ring-brand/20"

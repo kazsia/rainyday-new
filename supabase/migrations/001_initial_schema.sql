@@ -33,7 +33,8 @@ create table public.orders (
   total decimal(10, 2) not null,
   currency text not null default 'USD',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestam
+ptz not null default now()
 );
 
 -- Order items (junction table)

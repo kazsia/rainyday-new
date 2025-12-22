@@ -133,9 +133,8 @@ export async function updatePaymentStatus(
                 const token = await generateDeliveryToken(payment.order_id, order.email)
                 const deliveryUrl = generateDeliveryUrl(token)
 
-                // Store the delivery URL in the order or send via email
-                // For now, log it and update order with delivery_url
-                console.log(`[DELIVERY] Token generated for order ${payment.order_id}`)
+                // Store the delivery URL in the order
+
 
                 await supabase
                     .from("orders")

@@ -281,7 +281,7 @@ function InvoiceContent() {
                                         className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-5 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                     >
                                         <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-[#0a1628]/40 group-hover:border-brand-primary/30 transition-colors shadow-2xl">
-                                            <Image src={item.product?.image_url || "https://images.unsplash.com/photo-1614680376250-13f9f468202f?auto=format&fit=crop&q=80&w=200"} alt={item.product?.name} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <Image src={item.product?.image_url || "/logo.png"} alt={item.product?.name} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-sm font-black text-white italic truncate group-hover:text-brand-primary transition-colors">{item.product?.name}</h3>

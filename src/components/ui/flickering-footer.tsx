@@ -113,62 +113,69 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
         return getRGBA(color);
     }, [color]);
 
-    const drawGrid = useCallback(
-        (
-            ctx: CanvasRenderingContext2D,
-            width: number,
-            height: number,
-            cols: number,
-            rows: number,
-            squares: Float32Array,
-            dpr: number,
-        ) => {
-            ctx.clearRect(0, 0, width, height);
+    const drawGrid = useCallback((
+        ctx: CanvasRenderingContext2D,
+        width: number,
+        height: number,
+        cols: number,
+        rows: number,
+        squares: Float32Array,
+        dpr: number,
+    ) => {
+        ctx.clearRect(0, 0, width, height);
 
-            const maskCanvas = document.createElement("canvas");
-            maskCanvas.width = width;
-            maskCanvas.height = height;
-            const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
-            if (!maskCtx) return;
+        const maskCanvas = document.createElement("canvas");
+        maskCanvas.width = width;
+        maskCanvas.height = height;
+        const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+        if (!maskCtx) return;
 
-            if (text) {
-                maskCtx.save();
-                maskCtx.scale(dpr, dpr);
-                maskCtx.fillStyle = "white";
-                maskCtx.font = `${fontWeight} ${fontSize}px var(--font-heading), "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-                maskCtx.textAlign = "center";
-                maskCtx.textBaseline = "middle";
-                maskCtx.fillText(text, width / (2 * dpr), height / (2 * dpr));
-                maskCtx.restore();
+        if (text) {
+            maskCtx.save();
+            maskCtx.scale(dpr, dpr);
+            maskCtx.fillStyle = "white";
+            maskCtx.font = `${fontWeight} ${fontSize}px var(--font-heading), "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+            maskCtx.textAlign = "center";
+            maskCtx.textBaseline = "middle";
+            maskCtx.fillText(text, width / (2 * dpr), height / (2 * dpr));
+            maskCtx.restore();
+        }
+
+        // Optimization: Get the mask data once for the entire canvas
+        const maskData = maskCtx.getImageData(0, 0, width, height).data;
+
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < rows; j++) {
+                const x = i * (squareSize + gridGap) * dpr;
+                const y = j * (squareSize + gridGap) * dpr;
+                const squareWidth = squareSize * dpr;
+                const squareHeight = squareSize * dpr;
+
+                // Sample the center pixel of the square to check for text
+                // This is much faster than checking every pixel or calling getImageData per square
+                const centerX = Math.floor(x + squareWidth / 2);
+                const centerY = Math.floor(y + squareHeight / 2);
+
+                // Ensure bounds
+                if (centerX >= width || centerY >= height) continue;
+
+                // Calculate index in the Uint8ClampedArray (RGBA)
+                const index = (centerY * width + centerX) * 4;
+
+                // Check alpha or color channel (white text has 255 in R, G, B)
+                // We check if red channel > 0
+                const hasText = maskData[index] > 0;
+
+                const opacity = squares[i * rows + j];
+                const finalOpacity = hasText
+                    ? Math.min(1, opacity * 3 + 0.4)
+                    : opacity;
+
+                ctx.fillStyle = colorWithOpacity(memoizedColor, finalOpacity);
+                ctx.fillRect(x, y, squareWidth, squareHeight);
             }
-
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    const x = i * (squareSize + gridGap) * dpr;
-                    const y = j * (squareSize + gridGap) * dpr;
-                    const squareWidth = squareSize * dpr;
-                    const squareHeight = squareSize * dpr;
-
-                    const maskData = maskCtx.getImageData(
-                        x,
-                        y,
-                        squareWidth,
-                        squareHeight,
-                    ).data;
-                    const hasText = maskData.some(
-                        (value, index) => index % 4 === 0 && value > 0,
-                    );
-
-                    const opacity = squares[i * rows + j];
-                    const finalOpacity = hasText
-                        ? Math.min(1, opacity * 3 + 0.4)
-                        : opacity;
-
-                    ctx.fillStyle = colorWithOpacity(memoizedColor, finalOpacity);
-                    ctx.fillRect(x, y, squareWidth, squareHeight);
-                }
-            }
-        },
+        }
+    },
         [memoizedColor, squareSize, gridGap, text, fontSize, fontWeight],
     );
 
@@ -337,7 +344,6 @@ export const siteConfig = {
                 { id: 9, title: "F.A.Q", url: "/faq" },
                 { id: 10, title: "Support", url: "/support" },
                 { id: 11, title: "Cart", url: "/cart" },
-                { id: 12, title: "Order Lookup", url: "/order-lookup" },
             ],
         },
     ],

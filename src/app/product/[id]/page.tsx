@@ -147,7 +147,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                 </Link>
                                 <div className="relative aspect-[16/9] rounded-2xl overflow-hidden border-[1.5px] border-white/5 group shadow-2xl">
                                     <Image
-                                        src={product.image_url || "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=1200"}
+                                        src={product.image_url || "/logo.png"}
                                         alt={product.name}
                                         fill
                                         sizes="(max-width: 1024px) 100vw, 66vw"
@@ -156,16 +156,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
 
                                     {/* Purchase Overlay */}
-                                    <div className="absolute bottom-4 left-4 bg-[#0a1628]/40 backdrop-blur-md border border-white/5 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-left duration-700">
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden relative">
-                                            <Image src={product.image_url || "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=1200"} alt={product.name} fill sizes="40px" className="object-cover" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-white/60">Someone from <span className="text-white">🇺🇸 purchased</span></p>
-                                            <p className="text-[11px] font-bold text-white">{product.name}</p>
-                                            <p className="text-[9px] text-white/30">Just now</p>
-                                        </div>
-                                    </div>
+
                                 </div>
                             </div>
 
@@ -310,12 +301,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     </Button>
                                 </div>
 
-                                <div className="flex items-center justify-center gap-3 text-white/20 pt-4">
-                                    <div className="w-8 h-px bg-white/5" />
-                                    <ShoppingCart className="w-4 h-4" />
-                                    <span className="text-[10px] font-bold tracking-widest uppercase">170 SOLD</span>
-                                    <div className="w-8 h-px bg-white/5" />
-                                </div>
+
                             </div>
                         </Card>
                     </div>

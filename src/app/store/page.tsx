@@ -69,7 +69,7 @@ export default function StorePage() {
                                 title={product.name}
                                 price={product.price}
                                 category={product.category?.name || "General"}
-                                image={product.image_url || "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=800"}
+                                image={product.image_url || "/logo.png"}
                                 productCount={product.stock_count}
                             />
                         ))}

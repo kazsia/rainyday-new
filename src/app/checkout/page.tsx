@@ -79,6 +79,7 @@ export default function CheckoutPage() {
     const [selectedMethod, setSelectedMethod] = React.useState("Bitcoin")
     const [isProcessing, setIsProcessing] = React.useState(false)
     const [agreeToTerms, setAgreeToTerms] = React.useState(false)
+    const [agreeToPromo, setAgreeToPromo] = React.useState(false)
     const [email, setEmail] = React.useState("")
     const [orderId, setOrderId] = React.useState("")
     const [savedTotal, setSavedTotal] = React.useState(0) // Store total before clearing cart
@@ -274,7 +275,6 @@ export default function CheckoutPage() {
                     if (conversion) {
                         finalCryptoAmount = conversion.cryptoAmount
                         exchangeRate = conversion.usdPrice
-                        console.log(`Converted $${total} to ${finalCryptoAmount} ${selectedCrypto} at $${exchangeRate}`)
                     }
                 }
 
@@ -423,9 +423,7 @@ export default function CheckoutPage() {
                                             transition={{ delay: idx * 0.1 }}
                                             className="p-4 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-4 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                         >
-                                            <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-[#0a1628]/40 group-hover:border-brand-primary/30 transition-colors">
-                                                <Image src={item.image || "https://images.unsplash.com/photo-1614680376250-13f9f468202f?auto=format&fit=crop&q=80&w=200"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                                            </div>
+                                            <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors">{item.title}</h3>
                                                 <div className="flex items-center gap-3 mt-2">
@@ -690,7 +688,7 @@ export default function CheckoutPage() {
                                         <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
                                             {[
                                                 { label: "Terms of Service", state: agreeToTerms, setter: setAgreeToTerms },
-                                                { label: "Promotional Updates", state: false, setter: () => { } }
+                                                { label: "Promotional Updates", state: agreeToPromo, setter: setAgreeToPromo }
                                             ].map((check, i) => (
                                                 <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
                                                     <div className="relative">

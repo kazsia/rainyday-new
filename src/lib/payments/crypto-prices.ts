@@ -70,7 +70,6 @@ export async function getCryptoPrice(symbol: string): Promise<number | null> {
     // Check cache first
     const cached = priceCache[coingeckoId]
     if (cached && Date.now() - cached.lastUpdated.getTime() < CACHE_TTL) {
-        console.log(`Using cached price for ${symbol}: $${cached.usdPrice}`)
         return cached.usdPrice
     }
 
@@ -100,7 +99,6 @@ export async function getCryptoPrice(symbol: string): Promise<number | null> {
                 usdPrice: price,
                 lastUpdated: new Date(),
             }
-            console.log(`Fetched price for ${symbol}: $${price}`)
             return price
         }
 
