@@ -64,8 +64,8 @@ export function ProximaNavbar() {
     }, [])
 
     return (
-        <header className="w-full bg-[#0a1628] z-50">
-            <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl">
+        <header className="w-full bg-[#0a1628] z-50" suppressHydrationWarning>
+            <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl" suppressHydrationWarning>
                 {/* Brand & Stats Section */}
                 <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl">
                     <div className="flex flex-col lg:flex-row items-stretch">
@@ -79,19 +79,19 @@ export function ProximaNavbar() {
                         {/* Stats Section */}
                         <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md">
                             <div className="text-center group/stat">
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {formatNumber(stats.sales)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Sales</p>
                             </div>
                             <div className="text-center group/stat">
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {formatNumber(stats.buyers)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Buyers</p>
                             </div>
                             <div className="text-center group/stat">
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {stats.rating}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Rating</p>
@@ -124,20 +124,20 @@ export function ProximaNavbar() {
                     </div>
 
                     {/* Mobile Menu Trigger */}
-                    <div className="flex md:hidden">
+                    <div className="flex md:hidden" suppressHydrationWarning>
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-11 w-11 bg-[#0a1628] border border-white/5 rounded-xl text-white/40 hover:text-white">
-                                    <Menu className="w-6 h-6" />
+                                <Button variant="ghost" size="icon" className="h-11 w-11 bg-[#0a1628] border border-white/5 rounded-xl text-white/40 hover:text-white" suppressHydrationWarning>
+                                    <Menu className="w-6 h-6" suppressHydrationWarning />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="bg-[#0a1628] border-white/5 p-0 w-80">
-                                <SheetHeader className="p-6 border-b border-white/5">
-                                    <SheetTitle>
+                            <SheetContent side="left" className="bg-[#0a1628] border-white/5 p-0 w-80" suppressHydrationWarning>
+                                <SheetHeader className="p-6 border-b border-white/5" suppressHydrationWarning>
+                                    <SheetTitle suppressHydrationWarning>
                                         <Logo />
                                     </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col p-4 gap-2">
+                                <div className="flex flex-col p-4 gap-2" suppressHydrationWarning>
                                     {navLinks.map((link) => {
                                         const isActive = pathname === link.href
                                         return (
@@ -161,12 +161,12 @@ export function ProximaNavbar() {
                         </Sheet>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" suppressHydrationWarning>
                         {/* Currency Selector */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <div className="h-11 px-4 md:px-6 bg-[#0a1628] border border-white/5 rounded-xl flex items-center gap-2 md:gap-3 cursor-pointer hover:border-white/10 transition-all hover:bg-white/[0.02] group/currency">
-                                    <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors">
+                                <div className="h-11 px-4 md:px-6 bg-[#0a1628] border border-white/5 rounded-xl flex items-center gap-2 md:gap-3 cursor-pointer hover:border-white/10 transition-all hover:bg-white/[0.02] group/currency" suppressHydrationWarning>
+                                    <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors" suppressHydrationWarning>
                                         {(mounted && currencyHydrated) ? `${symbol} ${currency}` : "$ USD"}
                                     </span>
                                     <div className="w-px h-3 bg-white/10" />

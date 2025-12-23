@@ -19,8 +19,8 @@ export function Logo({ className, variant = "default" }: LogoProps) {
     const siteName = settings?.general.name || "Rainyday"
 
     return (
-        <Link href="/" className={cn("flex items-center gap-3 group", className)}>
-            <div className="relative w-10 h-10 shrink-0">
+        <Link href="/" className={cn("flex items-center gap-3 group", className)} suppressHydrationWarning>
+            <div className="relative w-10 h-10 shrink-0" suppressHydrationWarning>
                 {logoUrl ? (
                     <Image
                         src={logoUrl}
@@ -28,6 +28,7 @@ export function Logo({ className, variant = "default" }: LogoProps) {
                         fill
                         sizes="40px"
                         className="object-contain transition-transform group-hover:scale-110 duration-500"
+                        suppressHydrationWarning
                     />
                 ) : (
                     <Image
@@ -36,11 +37,12 @@ export function Logo({ className, variant = "default" }: LogoProps) {
                         fill
                         sizes="40px"
                         className="object-contain transition-transform group-hover:scale-110 duration-500"
+                        suppressHydrationWarning
                     />
                 )}
-                <div className="absolute inset-0 bg-brand-primary/20 blur-2xl rounded-full -z-10 group-hover:bg-brand-primary/40 transition-colors" />
+                <div className="absolute inset-0 bg-brand-primary/20 blur-2xl rounded-full -z-10 group-hover:bg-brand-primary/40 transition-colors" suppressHydrationWarning />
             </div>
-            <span className="text-2xl font-black tracking-tighter uppercase text-[#a4f8ff] truncate max-w-[200px]">
+            <span className="text-2xl font-black tracking-tighter uppercase text-[#a4f8ff] truncate max-w-[200px]" suppressHydrationWarning>
                 {siteName}
             </span>
         </Link>
