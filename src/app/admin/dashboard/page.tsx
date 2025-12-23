@@ -28,10 +28,10 @@ export default async function AdminDashboardPage(props: {
         <AdminLayout>
             <div className="space-y-6 max-w-[100rem] mx-auto">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
                     <div>
                         <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
-                        <p className="text-sm text-[var(--sa-fg-muted)] mt-1">Discover the latest updates and insights.</p>
+                        <p className="text-sm text-[var(--sa-fg-muted)] mt-1">Real-time performance overview</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <DateRangePicker />
@@ -39,7 +39,7 @@ export default async function AdminDashboardPage(props: {
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <StatCard
                         title="Revenue"
                         value={`$${stats.revenue.value}`}
@@ -92,10 +92,10 @@ export default async function AdminDashboardPage(props: {
                             <Link href="/admin/orders">View All</Link>
                         </Button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <div className="overflow-x-auto custom-scrollbar relative">
+                        <table className="w-full text-left text-sm min-w-[700px]">
                             <thead>
-                                <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-muted)] text-[11px] uppercase font-bold tracking-wider bg-white/[0.01]">
+                                <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-muted)] text-[10px] uppercase font-bold tracking-widest bg-white/[0.01]">
                                     <th className="px-6 py-4">Product</th>
                                     <th className="px-6 py-4">Price</th>
                                     <th className="px-6 py-4">Status</th>
@@ -135,28 +135,30 @@ export default async function AdminDashboardPage(props: {
                 </div>
 
                 {/* Top Lists Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Top Products */}
                     <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
-                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center">
-                            <h3 className="text-sm font-bold text-white">Top 5 Products</h3>
-                            <div className="flex gap-4 text-[10px] font-bold text-[var(--sa-fg-muted)] uppercase tracking-wider">
-                                <span>Total Sales</span>
-                                <span>Total Revenue</span>
-                            </div>
+                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center bg-white/[0.01]">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Top 5 Products</h3>
                         </div>
                         <div className="p-2 space-y-1">
                             {topProducts.map((prod, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors">
+                                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors gap-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-white/[0.02] border border-[var(--sa-border)] flex items-center justify-center text-[var(--sa-fg-dim)] text-xs font-bold">
+                                        <div className="w-8 h-8 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center text-brand text-xs font-black">
                                             #{i + 1}
                                         </div>
-                                        <span className="text-sm font-medium text-[var(--sa-fg-bright)]">{prod.name}</span>
+                                        <span className="text-sm font-bold text-[var(--sa-fg-bright)]">{prod.name}</span>
                                     </div>
-                                    <div className="flex gap-8 text-sm">
-                                        <span className="text-[var(--sa-fg-muted)] w-16 text-right">{prod.sales}</span>
-                                        <span className="text-[var(--sa-fg-bright)] font-bold w-20 text-right">${prod.revenue.toFixed(2)}</span>
+                                    <div className="flex items-center justify-between sm:justify-end gap-8 text-sm sm:flex-1">
+                                        <div className="flex flex-col items-end sm:items-end">
+                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Sales</span>
+                                            <span className="text-[var(--sa-fg-muted)] font-bold">{prod.sales}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end sm:items-end w-24">
+                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Revenue</span>
+                                            <span className="text-brand font-black">${prod.revenue.toFixed(2)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -165,25 +167,27 @@ export default async function AdminDashboardPage(props: {
 
                     {/* Top Customers */}
                     <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
-                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center">
-                            <h3 className="text-sm font-bold text-white">Top 5 Customers</h3>
-                            <div className="flex gap-4 text-[10px] font-bold text-[var(--sa-fg-muted)] uppercase tracking-wider">
-                                <span>Total Orders</span>
-                                <span>Total Spent</span>
-                            </div>
+                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center bg-white/[0.01]">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Top 5 Customers</h3>
                         </div>
                         <div className="p-2 space-y-1">
                             {topCustomers.map((cust, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors">
+                                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors gap-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-white/[0.02] border border-[var(--sa-border)] flex items-center justify-center text-[var(--sa-fg-dim)] text-[10px] font-black">
                                             {cust.email.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="text-sm font-medium text-[var(--sa-fg-bright)]">{cust.email}</span>
+                                        <span className="text-sm font-bold text-[var(--sa-fg-bright)] truncate max-w-[200px]">{cust.email}</span>
                                     </div>
-                                    <div className="flex gap-8 text-sm">
-                                        <span className="text-[var(--sa-fg-muted)] w-16 text-right">{cust.orders}</span>
-                                        <span className="text-[var(--sa-fg-bright)] font-bold w-20 text-right">${cust.spent.toFixed(2)}</span>
+                                    <div className="flex items-center justify-between sm:justify-end gap-8 text-sm sm:flex-1">
+                                        <div className="flex flex-col items-end sm:items-end">
+                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Orders</span>
+                                            <span className="text-[var(--sa-fg-muted)] font-bold">{cust.orders}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end sm:items-end w-24">
+                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Spent</span>
+                                            <span className="text-brand font-black">${cust.spent.toFixed(2)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

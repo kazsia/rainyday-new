@@ -5,7 +5,7 @@ import { FlickeringFooter } from "@/components/ui/flickering-footer"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="relative min-h-screen flex flex-col bg-proxima-gradient">
+        <div className="relative min-h-screen flex flex-col bg-proxima-gradient" suppressHydrationWarning>
             <ProximaNavbar />
             <main className="flex-grow">
                 {children}

@@ -6,11 +6,12 @@ alter table public.deliveries add column if not exists delivery_assets jsonb;
 alter table public.deliveries alter column content drop not null;
 
 -- 2. RPC function for atomic stock claiming
--- Usage: supabase.rpc('claim_stock', { p_product_id: '...', p_quantity: 1, p_order_id: '...' })
+-- Usage: supabase.rpc('claim_stock', { p_product_id: '...', p_variant_id: '...', p_quantity: 1, p_order_id: '...' })
 create or replace function claim_stock(
     p_product_id uuid,
     p_quantity integer,
-    p_order_id uuid
+    p_order_id uuid,
+    p_variant_id uuid default null
 )
 returns table (content text, type text)
 language plpgsql
@@ -26,6 +27,7 @@ begin
         select id 
         from public.delivery_assets
         where product_id = p_product_id 
+          and (p_variant_id is null or variant_id = p_variant_id)
           and is_used = false
         limit p_quantity
         for update skip locked
@@ -42,6 +44,13 @@ begin
     update public.products
     set stock_count = stock_count - v_count
     where id = p_product_id;
+
+    -- Update variant stock count if applicable
+    if p_variant_id is not null then
+        update public.product_variants
+        set stock_count = stock_count - v_count
+        where id = p_variant_id;
+    end if;
 
     -- Update assets and return them
     return query

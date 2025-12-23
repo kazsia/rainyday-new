@@ -8,12 +8,14 @@ export interface CartItem {
     price: number
     quantity: number
     image: string
+    variantId?: string
+    variantName?: string
 }
 
 interface CartContextType {
     cart: CartItem[]
     addToCart: (item: CartItem) => void
-    removeFromCart: (id: string) => void
+    removeFromCart: (id: string, variantId?: string) => void
     clearCart: () => void
     cartCount: number
     cartTotal: number
@@ -48,18 +50,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const addToCart = (item: CartItem) => {
         setCart((prev) => {
-            const existing = prev.find((i) => i.id === item.id)
+            const existing = prev.find((i) => i.id === item.id && i.variantId === item.variantId)
             if (existing) {
                 return prev.map((i) =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+                    (i.id === item.id && i.variantId === item.variantId)
+                        ? { ...i, quantity: i.quantity + item.quantity }
+                        : i
                 )
             }
             return [...prev, item]
         })
     }
 
-    const removeFromCart = (id: string) => {
-        setCart((prev) => prev.filter((i) => i.id !== id))
+    const removeFromCart = (id: string, variantId?: string) => {
+        setCart((prev) => prev.filter((i) => !(i.id === id && i.variantId === variantId)))
     }
 
     const clearCart = () => {

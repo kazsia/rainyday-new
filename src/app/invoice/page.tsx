@@ -285,6 +285,9 @@ function InvoiceContent() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-sm font-black text-white italic truncate group-hover:text-brand-primary transition-colors">{item.product?.name}</h3>
+                                            {item.variant?.name && (
+                                                <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variant.name}</p>
+                                            )}
                                             <div className="flex items-center gap-3 mt-1">
                                                 <span className="text-[10px] text-white/20 font-black uppercase tracking-widest">{item.quantity}x</span>
                                                 <span className="text-[10px] text-white/40 font-bold">${item.price.toFixed(2)}</span>

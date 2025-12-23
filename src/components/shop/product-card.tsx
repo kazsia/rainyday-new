@@ -4,10 +4,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ShoppingCart } from "lucide-react"
+import * as Icons from "lucide-react"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { useCart } from "@/context/cart-context"
 import { toast } from "sonner"
 import { useCurrency } from "@/context/currency-context"
+import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
     id: string
@@ -17,9 +19,10 @@ interface ProductCardProps {
     image: string
     productCount?: number
     priceRange?: string
+    badge_links?: any[]
 }
 
-export function ProductCard({ id, title, price, category, image, productCount = 1, priceRange }: ProductCardProps) {
+export function ProductCard({ id, title, price, category, image, productCount = 1, priceRange, badge_links }: ProductCardProps) {
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
 
@@ -70,6 +73,27 @@ export function ProductCard({ id, title, price, category, image, productCount = 
 
                         {/* Green Glow Vignette (inspired by reference) */}
                         <div className="absolute inset-0 bg-brand-primary/5 group-hover:bg-brand-primary/10 transition-colors duration-500" />
+
+                        {/* Real Badges */}
+                        <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2">
+                            {badge_links?.map((link, idx) => {
+                                const badge = link?.badge
+                                if (!badge) return null
+                                const Icon = (Icons as any)[badge.icon] || Icons.Zap
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={cn(
+                                            "px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter flex items-center gap-1.5 border shadow-lg backdrop-blur-md",
+                                            badge.color
+                                        )}
+                                    >
+                                        <Icon className="w-2.5 h-2.5" />
+                                        {badge.name}
+                                    </div>
+                                )
+                            })}
+                        </div>
 
                         {/* Quick Add Button / Sold Out Badge */}
                         {isOutOfStock ? (

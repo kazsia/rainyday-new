@@ -127,39 +127,41 @@ export default function AdminStorefrontPage() {
     return (
         <AdminLayout>
             <div className="space-y-6 max-w-[100rem] mx-auto">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Configure Storefront</h1>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">Configure Storefront</h1>
                         <p className="text-sm text-white/40">Manage your shop settings.</p>
                     </div>
-                    <Button onClick={handleSave} className="bg-brand text-black font-bold hover:bg-brand/90">
+                    <Button onClick={handleSave} className="bg-brand text-black font-bold hover:bg-brand/90 sm:w-auto w-full">
                         <Save className="w-4 h-4 mr-2" />
                         Save
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-12 gap-8 pb-24">
-                    {/* Sidebar */}
-                    <div className="col-span-12 md:col-span-3 lg:col-span-2 space-y-2">
-                        {TABS.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium",
-                                    activeTab === tab.id
-                                        ? "bg-brand/10 text-brand border border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
-                                        : "text-white/40 hover:text-white hover:bg-white/5"
-                                )}
-                            >
-                                <tab.icon className="w-4 h-4" />
-                                {tab.label}
-                            </button>
-                        ))}
+                <div className="flex flex-col md:grid md:grid-cols-12 gap-6 lg:gap-8 pb-32">
+                    {/* Sidebar / Tabs */}
+                    <div className="col-span-12 md:col-span-3 lg:col-span-2">
+                        <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+                            {TABS.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "whitespace-nowrap flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium border shrink-0",
+                                        activeTab === tab.id
+                                            ? "bg-brand/10 text-brand border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
+                                            : "text-white/40 hover:text-white hover:bg-white/5 border-transparent"
+                                    )}
+                                >
+                                    <tab.icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Content Area */}
-                    <div className="col-span-12 md:col-span-9 lg:col-span-10 bg-[#080c10] border border-white/5 rounded-2xl p-8 min-h-[600px]">
+                    <div className="col-span-12 md:col-span-9 lg:col-span-10 bg-[#080c10] border border-white/5 rounded-2xl p-4 sm:p-8 min-h-[600px]">
 
                         {/* IDENTITY TAB */}
                         {activeTab === "identity" && (
@@ -440,6 +442,38 @@ export default function AdminStorefrontPage() {
                                             />
                                         </div>
                                     ))}
+                                    {/* Webhook Secret */}
+                                    <div className="pt-6 border-t border-white/5 space-y-4">
+                                        <div className="space-y-1">
+                                            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Global Webhook Secret</h3>
+                                            <p className="text-xs text-white/40">This secret is used to sign Dynamic Delivery requests. Keep it private.</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                readOnly
+                                                value={settings.integrations.webhook_secret || ""}
+                                                className="bg-[#0a1628] border-white/10 h-11 font-mono text-xs text-brand"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                className="border-white/10 hover:bg-white/5 text-white/60 hover:text-white shrink-0"
+                                                onClick={() => {
+                                                    const newSecret = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                                                        .map(b => b.toString(16).padStart(2, '0'))
+                                                        .join('');
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        integrations: {
+                                                            ...prev.integrations,
+                                                            webhook_secret: newSecret
+                                                        }
+                                                    }));
+                                                }}
+                                            >
+                                                Regenerate
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -503,11 +537,11 @@ export default function AdminStorefrontPage() {
                 </div>
 
                 {/* Save Toolbar */}
-                <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#0a1628]/80 backdrop-blur-md border-t border-white/5 z-50">
-                    <div className="max-w-[100rem] mx-auto flex items-center justify-center gap-4">
+                <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 sm:p-6 bg-[#0a1628]/80 backdrop-blur-md border-t border-white/5 z-50">
+                    <div className="max-w-[100rem] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
                         <Button
                             variant="ghost"
-                            className="bg-[#0a1628] text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5"
+                            className="bg-[#0a1628] text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5 sm:flex-1 md:max-w-[200px]"
                             onClick={() => window.location.href = '/admin/dashboard'}
                         >
                             <X className="w-4 h-4 mr-2" />
@@ -515,7 +549,7 @@ export default function AdminStorefrontPage() {
                         </Button>
                         <Button
                             variant="outline"
-                            className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent"
+                            className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent sm:flex-1 md:max-w-[200px]"
                             onClick={async () => {
                                 await handleSave()
                                 window.location.href = '/admin/dashboard'
@@ -526,7 +560,7 @@ export default function AdminStorefrontPage() {
                         </Button>
                         <Button
                             onClick={handleSave}
-                            className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20"
+                            className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20 sm:flex-1 md:max-w-[200px]"
                         >
                             <Save className="w-4 h-4 mr-2" />
                             Save

@@ -23,7 +23,9 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
             .from("products")
             .select(`
                 *,
-                category:product_categories (*)
+                category:product_categories (*),
+                variants:product_variants (*),
+                badge_links:product_badge_links(badge:product_badges(*))
             `)
 
         if (options?.activeOnly !== false) {
@@ -46,20 +48,32 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
     }
 }
 
+import { revalidatePath, unstable_noStore } from "next/cache"
+
 export async function getProduct(id: string) {
+    unstable_noStore()
     try {
         const supabase = await createServerClient()
+        revalidatePath(`/product/${id}`)
 
         const { data, error } = await supabase
             .from("products")
             .select(`
                 *,
-                category:product_categories (*)
+                category:product_categories (*),
+                variants:product_variants (*),
+                badge_links:product_badge_links(badge:product_badges(*))
             `)
             .eq("id", id)
             .single()
 
         if (error) throw error
+        console.error(`[DIAGNOSTIC] PRODUCT_ID: ${id}`, {
+            name: data?.name,
+            product_stock: data?.stock_count,
+            badges_count: data?.badge_links?.length,
+            variants: data?.variants?.map((v: any) => ({ name: v.name, stock: v.stock_count }))
+        })
         return data
     } catch (e) {
         console.error("[GET_PRODUCT_CRITICAL]", e)
@@ -87,7 +101,8 @@ export async function createProduct(product: any) {
         slashed_price: product.slashed_price ? Number(product.slashed_price) : null,
         min_quantity: Number(product.min_quantity) || 1,
         max_quantity: Number(product.max_quantity) || 10,
-        category_id: product.category_id || null
+        category_id: product.category_id && product.category_id !== "" ? product.category_id : null,
+        webhook_url: product.webhook_url && product.webhook_url !== "" ? product.webhook_url : null
     }
 
     const { data, error } = await supabaseAdmin
@@ -101,14 +116,33 @@ export async function createProduct(product: any) {
 
 export async function updateProduct(id: string, updates: any) {
     const supabaseAdmin = await getAdminClient()
+
+    // Defensive cleanup of common fields
+    const cleanUpdates = { ...updates }
+    delete cleanUpdates.badges // Relation, not a column
+    if (cleanUpdates.category_id === "") cleanUpdates.category_id = null
+    if (cleanUpdates.image_url === "") cleanUpdates.image_url = null
+    if (cleanUpdates.webhook_url === "") cleanUpdates.webhook_url = null
+    if (cleanUpdates.price !== undefined) cleanUpdates.price = Number(cleanUpdates.price)
+    if (cleanUpdates.slashed_price !== undefined) cleanUpdates.slashed_price = cleanUpdates.slashed_price ? Number(cleanUpdates.slashed_price) : null
+    if (cleanUpdates.stock_count !== undefined) cleanUpdates.stock_count = Number(cleanUpdates.stock_count)
+    if (cleanUpdates.min_quantity !== undefined) cleanUpdates.min_quantity = Number(cleanUpdates.min_quantity)
+    if (cleanUpdates.max_quantity !== undefined) cleanUpdates.max_quantity = Number(cleanUpdates.max_quantity)
+    if (cleanUpdates.hide_stock !== undefined) cleanUpdates.hide_stock = !!cleanUpdates.hide_stock
+    if (cleanUpdates.is_active !== undefined) cleanUpdates.is_active = !!cleanUpdates.is_active
+    if (cleanUpdates.show_view_count !== undefined) cleanUpdates.show_view_count = !!cleanUpdates.show_view_count
+    if (cleanUpdates.show_sales_count !== undefined) cleanUpdates.show_sales_count = !!cleanUpdates.show_sales_count
+    if (cleanUpdates.show_sales_notifications !== undefined) cleanUpdates.show_sales_notifications = !!cleanUpdates.show_sales_notifications
+
     const { data, error } = await supabaseAdmin
         .from("products")
-        .update(updates)
+        .update(cleanUpdates)
         .eq("id", id)
         .select()
+        .single()
 
     if (error) throw error
-    return data?.[0]
+    return data
 }
 
 export async function deleteProduct(id: string) {
@@ -199,6 +233,60 @@ export async function deleteCategory(id: string) {
     const supabaseAdmin = await getAdminClient()
     const { error } = await supabaseAdmin
         .from('product_categories')
+        .delete()
+        .eq('id', id)
+
+    if (error) throw error
+}
+
+// VARIANT MANAGEMENT
+export async function getVariants(productId: string) {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+        .from('product_variants')
+        .select('*')
+        .eq('product_id', productId)
+        .order('sort_order', { ascending: true })
+
+    if (error) throw error
+    return data
+}
+
+export async function createVariant(productId: string, variant: any) {
+    const supabaseAdmin = await getAdminClient()
+    const { data, error } = await supabaseAdmin
+        .from('product_variants')
+        .insert({
+            product_id: productId,
+            name: variant.name,
+            price: Number(variant.price),
+            slashed_price: variant.slashed_price ? Number(variant.slashed_price) : null,
+            stock_count: Number(variant.stock_count) || 0,
+            is_active: variant.is_active !== undefined ? variant.is_active : true,
+            sort_order: variant.sort_order || 0
+        })
+        .select()
+
+    if (error) throw error
+    return data?.[0]
+}
+
+export async function updateVariant(id: string, updates: any) {
+    const supabaseAdmin = await getAdminClient()
+    const { data, error } = await supabaseAdmin
+        .from('product_variants')
+        .update(updates)
+        .eq('id', id)
+        .select()
+
+    if (error) throw error
+    return data?.[0]
+}
+
+export async function deleteVariant(id: string) {
+    const supabaseAdmin = await getAdminClient()
+    const { error } = await supabaseAdmin
+        .from('product_variants')
         .delete()
         .eq('id', id)
 

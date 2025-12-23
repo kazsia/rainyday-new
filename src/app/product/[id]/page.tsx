@@ -11,6 +11,7 @@ import { ShoppingCart, ShieldCheck, Zap, ArrowLeft, CheckCircle2, ArrowRight } f
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
+import * as Icons from "lucide-react"
 
 import { useCart } from "@/context/cart-context"
 import { useRouter } from "next/navigation"
@@ -25,6 +26,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     const [quantity, setQuantity] = React.useState(1)
     const [activeTab, setActiveTab] = React.useState("description")
     const [product, setProduct] = React.useState<any>(null)
+    const [selectedVariant, setSelectedVariant] = React.useState<any>(null)
     const [isLoading, setIsLoading] = React.useState(true)
     const { addToCart } = useCart()
     const router = useRouter()
@@ -33,7 +35,21 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
         async function loadProduct() {
             try {
                 const data = await getProduct(id)
+                console.log("[CLIENT_DIAGNOSTIC] Product data:", data)
                 setProduct(data)
+
+                // If product has variants, select the first one by default
+                if (data?.variants && data.variants.length > 0) {
+                    const activeVariants = data.variants
+                        .filter((v: any) => v.is_active)
+                        .sort((a: any, b: any) => a.sort_order - b.sort_order)
+
+                    if (activeVariants.length > 0) {
+                        // Priority: first variant with stock, otherwise the first one
+                        const withStock = activeVariants.find((v: any) => v.stock_count > 0)
+                        setSelectedVariant(withStock || activeVariants[0])
+                    }
+                }
             } catch (error) {
                 console.error("Failed to load product:", error)
                 toast.error("Failed to load product details")
@@ -44,7 +60,9 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
         loadProduct()
     }, [id])
 
-    const isOutOfStock = product?.stock_count <= 0
+    const currentPrice = selectedVariant ? selectedVariant.price : product?.price
+    const currentStock = selectedVariant ? selectedVariant.stock_count : product?.stock_count
+    const isOutOfStock = currentStock <= 0
 
     const handleAddToCart = () => {
         if (!product) return
@@ -52,18 +70,20 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
             toast.error("This product is out of stock")
             return
         }
-        if (quantity > product.stock_count) {
-            toast.error(`Only ${product.stock_count} items available in stock`)
+        if (quantity > currentStock) {
+            toast.error(`Only ${currentStock} items available in stock`)
             return
         }
         addToCart({
             id: product.id,
             title: product.name,
-            price: product.price,
+            price: currentPrice,
             quantity: quantity,
-            image: product.image_url
+            image: product.image_url,
+            variantId: selectedVariant?.id,
+            variantName: selectedVariant?.name
         })
-        toast.success(`Added ${quantity}x ${product.name} to cart`)
+        toast.success(`Added ${quantity}x ${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''} to cart`)
     }
 
     const handleBuyNow = () => {
@@ -72,16 +92,18 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
             toast.error("This product is out of stock")
             return
         }
-        if (quantity > product.stock_count) {
-            toast.error(`Only ${product.stock_count} items available in stock`)
+        if (quantity > currentStock) {
+            toast.error(`Only ${currentStock} items available in stock`)
             return
         }
         addToCart({
             id: product.id,
             title: product.name,
-            price: product.price,
+            price: currentPrice,
             quantity: quantity,
-            image: product.image_url
+            image: product.image_url,
+            variantId: selectedVariant?.id,
+            variantName: selectedVariant?.name
         })
         router.push("/checkout")
     }
@@ -89,9 +111,9 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     if (isLoading) {
         return (
             <MainLayout>
-                <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-                    <Loader2 className="w-10 h-10 text-brand-primary animate-spin" />
-                    <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Loading Product...</p>
+                <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4" suppressHydrationWarning>
+                    <Loader2 className="w-10 h-10 text-brand-primary animate-spin" suppressHydrationWarning />
+                    <p className="text-white/40 font-bold uppercase tracking-widest text-xs" suppressHydrationWarning>Loading Product...</p>
                 </div>
             </MainLayout>
         )
@@ -134,9 +156,18 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         <div className="bg-[#0a1628] rounded-3xl border border-white/5 overflow-hidden">
                             <div className="p-8 pb-4 flex items-center justify-between">
                                 <h1 className="text-2xl font-black text-white">{product.name}</h1>
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="text-[11px] font-bold text-green-400">{product.stock_count > 0 ? 'In Stock!' : 'Out of Stock'}</span>
+                                <div className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors",
+                                    currentStock > 0 ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"
+                                )}>
+                                    <div className={cn(
+                                        "w-2 h-2 rounded-full animate-pulse",
+                                        currentStock > 0 ? "bg-green-500" : "bg-red-500"
+                                    )} />
+                                    <span className={cn(
+                                        "text-[11px] font-bold",
+                                        currentStock > 0 ? "text-green-400" : "text-red-400"
+                                    )}>{currentStock > 0 ? 'In Stock!' : 'Out of Stock'}</span>
                                 </div>
                             </div>
 
@@ -218,7 +249,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
 
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                 <SparklesText
-                                    text={`$${product.price.toFixed(2)}`}
+                                    text={`$${currentPrice.toFixed(2)}`}
                                     className="text-4xl font-black text-white tracking-tighter"
                                     sparklesCount={8}
                                 />
@@ -226,25 +257,82 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     <span className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.2em] block mb-1">Status</span>
                                     <span className={cn(
                                         "text-xs font-black",
-                                        product.stock_count > 0 ? "text-green-400" : "text-red-400"
-                                    )}>{product.stock_count} In Stock</span>
+                                        currentStock > 0 ? "text-green-400" : "text-red-400"
+                                    )}>{currentStock} In Stock</span>
                                 </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2.5 mb-10 relative z-10">
-                                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                                    <span className="w-1 h-1 bg-yellow-500 rounded-full animate-pulse" />
-                                    BEST SELLER
-                                </Badge>
-                                <Badge className="bg-brand-primary/10 text-brand-primary border-brand-primary/20 font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest shadow-glow">
-                                    <span className="w-1 h-1 bg-brand-primary rounded-full" />
-                                    ULTRA HQ
-                                </Badge>
-                                <Badge className="bg-[#1cc29f]/10 text-[#1cc29f] border-[#1cc29f]/20 font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    VERIFIED
-                                </Badge>
+                                {product.badge_links?.map((link: any, idx: number) => {
+                                    const badge = link?.badge
+                                    if (!badge) return null
+                                    const Icon = (Icons as any)[badge.icon] || Icons.Zap
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={cn(
+                                                "font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest shadow-lg border flex items-center transition-all hover:scale-105",
+                                                badge.color
+                                            )}
+                                        >
+                                            <Icon className="w-3 h-3" />
+                                            {badge.name}
+                                        </div>
+                                    )
+                                })}
+                                {(!product.badge_links || product.badge_links.length === 0) && (
+                                    <div className="bg-brand-primary/10 text-brand-primary border-brand-primary/20 font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest border flex items-center shadow-lg">
+                                        <ShieldCheck className="w-3 h-3" />
+                                        AUTHENTIC PRODUCT
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Variant Selection */}
+                            {product.variants && product.variants.length > 0 && (
+                                <div className="mb-10 relative z-10">
+                                    <p className="text-[10px] font-black text-white/20 mb-4 ml-1 uppercase tracking-[0.3em]">Select Option</p>
+                                    <div className="grid grid-cols-1 gap-2.5">
+                                        {product.variants
+                                            .filter((v: any) => v.is_active)
+                                            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+                                            .map((variant: any) => (
+                                                <button
+                                                    key={variant.id}
+                                                    onClick={() => setSelectedVariant(variant)}
+                                                    className={cn(
+                                                        "w-full p-4 rounded-2xl border transition-all text-left group/var relative overflow-hidden",
+                                                        selectedVariant?.id === variant.id
+                                                            ? "bg-brand-primary/10 border-brand-primary shadow-[0_0_20px_rgba(var(--brand-rgb),0.1)]"
+                                                            : "bg-white/[0.02] border-white/5 hover:bg-white/[0.05] hover:border-white/10"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center justify-between relative z-10">
+                                                        <div className="space-y-0.5">
+                                                            <p className={cn(
+                                                                "text-xs font-black uppercase tracking-wider",
+                                                                selectedVariant?.id === variant.id ? "text-brand-primary" : "text-white/60"
+                                                            )}>{variant.name}</p>
+                                                            <p className="text-[10px] text-white/20 font-bold">{variant.stock_count} in stock</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className={cn(
+                                                                "text-sm font-black",
+                                                                selectedVariant?.id === variant.id ? "text-white" : "text-white/40"
+                                                            )}>${variant.price.toFixed(2)}</p>
+                                                        </div>
+                                                    </div>
+                                                    {selectedVariant?.id === variant.id && (
+                                                        <motion.div
+                                                            layoutId="variant-glow"
+                                                            className="absolute inset-0 bg-brand-primary/5 blur-xl pointer-events-none"
+                                                        />
+                                                    )}
+                                                </button>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-8 relative z-10">
                                 <div>

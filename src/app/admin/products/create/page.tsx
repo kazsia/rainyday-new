@@ -27,11 +27,21 @@ import {
     ImageIcon,
     FileText,
     DollarSign,
-    Eye
+    Eye,
+    Loader2
 } from "lucide-react"
 import { createProduct, getCategories } from "@/lib/db/products"
+import { uploadAsset } from "@/lib/db/settings"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { StockInput } from "@/components/ui/stock-input"
 import Link from "next/link"
 
 export default function CreateProductPage() {
@@ -39,6 +49,7 @@ export default function CreateProductPage() {
     const [categories, setCategories] = useState<any[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [isUploading, setIsUploading] = useState(false)
 
     const [formData, setFormData] = useState({
         name: "",
@@ -48,12 +59,13 @@ export default function CreateProductPage() {
         price: 0,
         slashed_price: 0,
         currency: "USD",
-        category_id: "",
+        category_id: "none",
         stock_count: 0,
         is_active: true,
         image_url: "",
         hide_stock: false,
         delivery_type: "serials", // serials, service, dynamic
+        webhook_url: "",
         status_label: "In Stock!",
         status_color: "green",
         show_view_count: false,
@@ -70,6 +82,8 @@ export default function CreateProductPage() {
                 setCategories(data)
                 if (data.length > 0) {
                     setFormData(prev => ({ ...prev, category_id: data[0].id }))
+                } else {
+                    setFormData(prev => ({ ...prev, category_id: "none" }))
                 }
             } catch (error) {
                 toast.error("Failed to load categories")
@@ -79,6 +93,23 @@ export default function CreateProductPage() {
         }
         loadCategories()
     }, [])
+
+    async function handleUpload(file: File) {
+        setIsUploading(true)
+        try {
+            const url = await uploadAsset(file)
+            if (url) {
+                setFormData(prev => ({ ...prev, image_url: url }))
+                toast.success("Image uploaded successfully")
+            } else {
+                toast.error("Failed to upload image")
+            }
+        } catch (error) {
+            toast.error("Error uploading image")
+        } finally {
+            setIsUploading(false)
+        }
+    }
 
     async function handleSubmit(e: React.FormEvent, exitAfter = true) {
         e.preventDefault()
@@ -99,7 +130,8 @@ export default function CreateProductPage() {
                 slashed_price: formData.slashed_price ? Number(formData.slashed_price) : undefined,
                 stock_count: Number(formData.stock_count),
                 min_quantity: Number(formData.min_quantity),
-                max_quantity: Number(formData.max_quantity)
+                max_quantity: Number(formData.max_quantity),
+                category_id: (formData.category_id === "none" || formData.category_id === "") ? null : formData.category_id,
             })
             toast.success("Product created successfully")
             if (exitAfter) {
@@ -113,12 +145,13 @@ export default function CreateProductPage() {
                     price: 0,
                     slashed_price: 0,
                     currency: "USD",
-                    category_id: categories[0]?.id || "",
+                    category_id: categories[0]?.id || "none",
                     stock_count: 0,
                     is_active: true,
                     image_url: "",
                     hide_stock: false,
                     delivery_type: "serials",
+                    webhook_url: "",
                     status_label: "In Stock!",
                     status_color: "green",
                     show_view_count: false,
@@ -128,9 +161,8 @@ export default function CreateProductPage() {
                     max_quantity: 10
                 })
             }
-        } catch (error: any) {
-            console.error("DEBUG: Create Product Error:", error)
-            toast.error(error.message || "Failed to create product")
+        } catch (error) {
+            toast.error("Failed to create product")
         } finally {
             setIsSubmitting(false)
         }
@@ -140,39 +172,40 @@ export default function CreateProductPage() {
         <AdminLayout>
             <form onSubmit={(e) => handleSubmit(e)} className="max-w-[1200px] mx-auto space-y-8 pb-20">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Link href="/admin/products" className="text-white/40 hover:text-white transition-colors">
+                            <Link href="/admin/products" className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors">
                                 <ChevronLeft className="w-4 h-4" />
                             </Link>
-                            <h1 className="text-2xl font-bold text-white">Create Product</h1>
+                            <h1 className="text-2xl font-bold text-white tracking-tight">Create Product</h1>
                         </div>
-                        <p className="text-sm text-white/40">Fill in the details below to create a new product.</p>
+                        <p className="text-sm text-white/40">Configure your new product listing</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <Button
                             type="button"
                             variant="ghost"
-                            className="text-white/40 hover:text-white hover:bg-white/5 gap-2"
+                            className="flex-1 sm:flex-none h-11 sm:h-9 text-[10px] font-bold text-white/40 hover:text-white hover:bg-white/5 gap-2 uppercase tracking-widest"
                             onClick={() => router.push("/admin/products")}
                         >
                             <X className="w-4 h-4" />
-                            Cancel
+                            <span className="sm:inline">Cancel</span>
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
-                            className="border-white/10 bg-white/5 hover:bg-white/10 text-white gap-2"
+                            className="flex-1 sm:flex-none h-11 sm:h-9 border-white/10 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold gap-2 uppercase tracking-widest"
                             onClick={(e) => handleSubmit(e as any, true)}
                             disabled={isSubmitting}
                         >
                             <Save className="w-4 h-4" />
-                            Create & Exit
+                            <span className="hidden sm:inline">Save & Exit</span>
+                            <span className="sm:hidden">Exit</span>
                         </Button>
                         <Button
                             type="submit"
-                            className="bg-brand-primary text-white font-bold hover:opacity-90 transition-opacity gap-2 min-w-[100px]"
+                            className="flex-1 sm:flex-none h-11 sm:h-9 bg-brand text-black font-black hover:opacity-90 transition-opacity gap-2 min-w-[100px] text-[10px] uppercase tracking-widest border-none"
                             disabled={isSubmitting}
                         >
                             <Plus className="w-4 h-4" />
@@ -256,9 +289,29 @@ export default function CreateProductPage() {
                             </div>
                             <div className="p-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="aspect-video bg-[#0a1628]/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-brand-primary/20 transition-colors cursor-pointer relative overflow-hidden">
+                                    <div
+                                        className="aspect-video bg-[#0a1628]/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-brand-primary/20 transition-colors cursor-pointer relative overflow-hidden"
+                                        onClick={() => document.getElementById('gallery-upload')?.click()}
+                                    >
+                                        <input
+                                            type="file"
+                                            id="gallery-upload"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0]
+                                                if (file) handleUpload(file)
+                                            }}
+                                        />
                                         {formData.image_url ? (
-                                            <img src={formData.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                                            <>
+                                                <img src={formData.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <p className="text-white text-xs font-bold uppercase tracking-widest">Change Image</p>
+                                                </div>
+                                            </>
+                                        ) : isUploading ? (
+                                            <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
                                         ) : (
                                             <>
                                                 <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-brand-primary/10 transition-colors">
@@ -320,7 +373,7 @@ export default function CreateProductPage() {
                                 </div>
                                 <h2 className="text-lg font-bold text-white">Deliverables Type</h2>
                             </div>
-                            <div className="p-6 space-y-4">
+                            <div className="p-6 space-y-6">
                                 <div className="grid grid-cols-1 gap-4">
                                     {[
                                         { id: "serials", title: "Serials", desc: "Automatically delivers serial keys. Stock count is based on the number of entered serials.", icon: Layers },
@@ -356,6 +409,21 @@ export default function CreateProductPage() {
                                         </div>
                                     ))}
                                 </div>
+
+                                {formData.delivery_type === 'dynamic' && (
+                                    <div className="space-y-4 pt-4 border-t border-white/5">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Webhook URL</label>
+                                            <Input
+                                                placeholder="https://your-api.com/callback"
+                                                value={formData.webhook_url}
+                                                onChange={(e) => setFormData({ ...formData, webhook_url: e.target.value })}
+                                                className="bg-[#0a1628]/40 border-white/10 h-12"
+                                            />
+                                            <p className="text-[10px] text-white/20">We will send a POST request to this URL when a purchase is made.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -415,38 +483,40 @@ export default function CreateProductPage() {
                         <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                             <div className="p-6 border-b border-white/5 flex items-center gap-3">
                                 <Eye className="w-5 h-5 text-white/40" />
-                                <h2 className="text-sm font-bold text-white uppercase tracking-widest">Visibility & Group</h2>
+                                <h1 className="text-sm font-bold text-white uppercase tracking-widest">Visibility & Group</h1>
                             </div>
                             <div className="p-6 space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Visibility</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-[#0a1628]/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
-                                            value={formData.is_active ? "public" : "hidden"}
-                                            onChange={e => setFormData({ ...formData, is_active: e.target.value === "public" })}
-                                        >
-                                            <option value="public">Public</option>
-                                            <option value="hidden">Hidden</option>
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
-                                    </div>
+                                    <Select
+                                        value={formData.is_active ? "public" : "hidden"}
+                                        onValueChange={(val) => setFormData({ ...formData, is_active: val === "public" })}
+                                    >
+                                        <SelectTrigger className="w-full h-10 bg-[#0a1628]/40 border-white/10 rounded-xl px-4 text-sm text-white focus:ring-0 focus:ring-offset-0">
+                                            <SelectValue placeholder="Select visibility" />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper" className="bg-[#0a1628] border-white/10 text-white">
+                                            <SelectItem value="public">Public</SelectItem>
+                                            <SelectItem value="hidden">Hidden</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Group (Category)</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full h-10 px-3 pr-10 rounded-lg bg-[#0a1628]/40 border border-white/10 text-sm text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-colors"
-                                            value={formData.category_id}
-                                            onChange={e => setFormData({ ...formData, category_id: e.target.value })}
-                                        >
-                                            <option value="">Select...</option>
+                                    <Select
+                                        value={formData.category_id}
+                                        onValueChange={(val) => setFormData({ ...formData, category_id: val })}
+                                    >
+                                        <SelectTrigger className="w-full h-10 bg-[#0a1628]/40 border-white/10 rounded-xl px-4 text-sm text-white focus:ring-0 focus:ring-offset-0">
+                                            <SelectValue placeholder="Select..." />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper" className="bg-[#0a1628] border-white/10 text-white">
+                                            <SelectItem value="none">None</SelectItem>
                                             {categories.map(cat => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                                             ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
-                                    </div>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2 pt-4 border-t border-white/5">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-4">Stock Count Visibility</label>
@@ -472,12 +542,9 @@ export default function CreateProductPage() {
                                 </div>
                                 <div className="space-y-2 pt-4 border-t border-white/5">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Total Stock</label>
-                                    <Input
-                                        type="number"
-                                        placeholder="0"
-                                        className="bg-[#0a1628]/40 border-white/10 h-10"
+                                    <StockInput
                                         value={formData.stock_count}
-                                        onChange={e => setFormData({ ...formData, stock_count: parseInt(e.target.value) })}
+                                        onChange={(val) => setFormData({ ...formData, stock_count: val })}
                                     />
                                 </div>
                             </div>
@@ -555,8 +622,18 @@ export default function CreateProductPage() {
                                     <Activity className="w-5 h-5 text-white/40" />
                                     <h2 className="text-sm font-bold text-white uppercase tracking-widest">Status</h2>
                                 </div>
-                                <button type="button" className="w-10 h-6 bg-brand-primary rounded-full relative flex items-center px-1">
-                                    <div className="w-4 h-4 bg-white rounded-full translate-x-4" />
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                                    className={cn(
+                                        "w-10 h-6 rounded-full transition-colors relative flex items-center px-1",
+                                        formData.is_active ? "bg-brand-primary" : "bg-white/10"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "w-4 h-4 bg-white rounded-full transition-all",
+                                        formData.is_active ? "translate-x-4" : "translate-x-0"
+                                    )} />
                                 </button>
                             </div>
                             <div className="p-6 space-y-6">
@@ -569,9 +646,13 @@ export default function CreateProductPage() {
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, status_color: color })}
                                                 className={cn(
-                                                    "w-6 h-6 rounded-full border-2 transition-all",
-                                                    formData.status_color === color ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40 hover:opacity-100",
-                                                    `bg-${color === 'red' ? 'red-500' : color === 'orange' ? 'orange-500' : color === 'yellow' ? 'yellow-500' : color === 'green' ? 'green-500' : 'brand-primary'}`
+                                                    "w-7 h-7 rounded-full border-2 transition-all",
+                                                    formData.status_color === color ? "border-white scale-110 shadow-lg shadow-white/10" : "border-transparent opacity-40 hover:opacity-100",
+                                                    color === 'red' ? 'bg-[#ff4b4b]' :
+                                                        color === 'orange' ? 'bg-[#ff8c00]' :
+                                                            color === 'yellow' ? 'bg-[#ffcc00]' :
+                                                                color === 'green' ? 'bg-[#00e676]' :
+                                                                    'bg-[#00e5ff]'
                                                 )}
                                             />
                                         ))}

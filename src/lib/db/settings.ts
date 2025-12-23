@@ -39,6 +39,7 @@ export type SiteSettings = {
         ga_id?: string
         crisp_id?: string
         tawk_id?: string
+        webhook_secret?: string
     }
     notifications: {
         webhook_url: string

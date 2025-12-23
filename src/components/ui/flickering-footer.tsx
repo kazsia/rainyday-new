@@ -356,28 +356,29 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "RAINYDAY"
 
     return (
-        <footer id="footer" className="w-full pb-0 bg-[#0a1628] border-t border-white/5">
-            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8">
-                <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0">
+        <footer id="footer" className="w-full pb-0 bg-[#0a1628] border-t border-white/5" suppressHydrationWarning>
+            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8" suppressHydrationWarning>
+                <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0" suppressHydrationWarning>
                     <Logo variant="footer" />
-                    <p className="tracking-tight text-white/40 font-medium leading-relaxed">
+                    <p className="tracking-tight text-white/40 font-medium leading-relaxed" suppressHydrationWarning>
                         {settings?.general.description || siteConfig.hero.description}
                     </p>
                 </div>
-                <div className="md:w-1/2">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
+                <div className="md:w-1/2" suppressHydrationWarning>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-10" suppressHydrationWarning>
                         {siteConfig.footerLinks.map((column, columnIndex) => (
-                            <ul key={columnIndex} className="flex flex-col gap-y-4">
-                                <li className="text-xs font-black text-white/20 uppercase tracking-widest">
+                            <ul key={columnIndex} className="flex flex-col gap-y-4" suppressHydrationWarning>
+                                <li className="text-xs font-black text-white/20 uppercase tracking-widest" suppressHydrationWarning>
                                     {column.title}
                                 </li>
                                 {column.links.map((link) => (
                                     <li
                                         key={link.id}
                                         className="group inline-flex cursor-pointer items-center justify-start gap-1 text-sm font-bold text-white/40 hover:text-brand transition-all duration-300 ease-out"
+                                        suppressHydrationWarning
                                     >
                                         <Link href={link.url}>{link.title}</Link>
-                                        <div className="flex size-4 items-center justify-center translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
+                                        <div className="flex size-4 items-center justify-center translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100" suppressHydrationWarning>
                                             <ChevronRightIcon className="h-4 w-4" />
                                         </div>
                                     </li>
@@ -387,9 +388,9 @@ export const FlickeringFooter = () => {
                     </div>
                 </div>
             </div>
-            <div className="w-full h-48 md:h-64 relative z-0 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#0a1628]/50 to-[#0a1628] z-10" />
-                <div className="absolute inset-0 mx-6">
+            <div className="w-full h-48 md:h-64 relative z-0 overflow-hidden" suppressHydrationWarning>
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#0a1628]/50 to-[#0a1628] z-10" suppressHydrationWarning />
+                <div className="absolute inset-0 mx-6" suppressHydrationWarning>
                     <FlickeringGrid
                         text={siteName.toUpperCase()}
                         fontSize={tablet ? 80 : 120}
@@ -403,9 +404,9 @@ export const FlickeringFooter = () => {
                     />
                 </div>
             </div>
-            <div className="container mx-auto px-10 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
-                <p>© {new Date().getFullYear()} {siteName.toUpperCase()} DIGITAL. ALL RIGHTS RESERVED.</p>
-                <div className="flex gap-8">
+            <div className="container mx-auto px-10 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
+                <p suppressHydrationWarning>© {new Date().getFullYear()} {siteName.toUpperCase()} DIGITAL. ALL RIGHTS RESERVED.</p>
+                <div className="flex gap-8" suppressHydrationWarning>
                     <Link href="/terms" className="hover:text-brand transition-colors">Terms</Link>
                     <Link href="/privacy" className="hover:text-brand transition-colors">Privacy</Link>
                 </div>

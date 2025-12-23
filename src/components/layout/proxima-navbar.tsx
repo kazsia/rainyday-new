@@ -70,31 +70,31 @@ export function ProximaNavbar() {
                 <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl">
                     <div className="flex flex-col lg:flex-row items-stretch">
                         {/* Logo & Slogan */}
-                        <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent">
+                        <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent" suppressHydrationWarning>
                             <Logo />
-                            <div className="w-px h-8 bg-white/5 hidden lg:block" />
-                            <p className="text-xs text-white/30 font-medium hidden lg:block">Quality you can trust, prices that make sense.</p>
+                            <div className="w-px h-8 bg-white/5 hidden lg:block" suppressHydrationWarning />
+                            <p className="text-xs text-white/30 font-medium hidden lg:block" suppressHydrationWarning>Quality you can trust, prices that make sense.</p>
                         </div>
 
                         {/* Stats Section */}
-                        <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md">
-                            <div className="text-center group/stat">
+                        <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md" suppressHydrationWarning>
+                            <div className="text-center group/stat" suppressHydrationWarning>
                                 <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {formatNumber(stats.sales)}
                                 </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Sales</p>
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Sales</p>
                             </div>
-                            <div className="text-center group/stat">
+                            <div className="text-center group/stat" suppressHydrationWarning>
                                 <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {formatNumber(stats.buyers)}
                                 </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Buyers</p>
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Buyers</p>
                             </div>
-                            <div className="text-center group/stat">
+                            <div className="text-center group/stat" suppressHydrationWarning>
                                 <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
                                     {stats.rating}
                                 </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Rating</p>
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Rating</p>
                             </div>
                         </div>
                     </div>
@@ -167,7 +167,7 @@ export function ProximaNavbar() {
                             <DropdownMenuTrigger asChild>
                                 <div className="h-11 px-4 md:px-6 bg-[#0a1628] border border-white/5 rounded-xl flex items-center gap-2 md:gap-3 cursor-pointer hover:border-white/10 transition-all hover:bg-white/[0.02] group/currency" suppressHydrationWarning>
                                     <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors" suppressHydrationWarning>
-                                        {(mounted && currencyHydrated) ? `${symbol} ${currency}` : "$ USD"}
+                                        {(mounted && currencyHydrated) ? symbol : "$"}
                                     </span>
                                     <div className="w-px h-3 bg-white/10" />
                                     <svg className="w-3 h-3 md:w-4 md:h-4 text-white/20 group-hover/currency:text-white transition-transform duration-300 group-hover/currency:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

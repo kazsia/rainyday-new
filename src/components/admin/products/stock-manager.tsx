@@ -9,9 +9,10 @@ import { addStock, getStock, deleteStock, StockItem } from "@/lib/db/stock"
 
 interface StockManagerProps {
     productId: string
+    variantId?: string
 }
 
-export function StockManager({ productId }: StockManagerProps) {
+export function StockManager({ productId, variantId }: StockManagerProps) {
     const [stockItems, setStockItems] = useState<StockItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isAdding, setIsAdding] = useState(false)
@@ -20,12 +21,12 @@ export function StockManager({ productId }: StockManagerProps) {
 
     useEffect(() => {
         loadStock()
-    }, [productId])
+    }, [productId, variantId])
 
     async function loadStock() {
         setIsLoading(true)
         try {
-            const { data, count } = await getStock(productId)
+            const { data, count } = await getStock(productId, 1, 50, variantId)
             setStockItems(data || [])
             setTotalCount(count || 0)
         } catch (error) {
@@ -44,8 +45,9 @@ export function StockManager({ productId }: StockManagerProps) {
             const items = bulkContent.split('\n').map(s => s.trim()).filter(s => s.length > 0)
 
             if (items.length === 0) return
+            setIsAdding(true)
 
-            await addStock(productId, items)
+            await addStock(productId, items, 'text', variantId)
             toast.success(`Added ${items.length} items to stock`)
             setBulkContent("")
             loadStock()
@@ -60,7 +62,7 @@ export function StockManager({ productId }: StockManagerProps) {
         if (!confirm(`Delete ${ids.length} items?`)) return
 
         try {
-            await deleteStock(ids, productId)
+            await deleteStock(ids, productId, variantId)
             toast.success("Stock items deleted")
             loadStock()
         } catch (error) {

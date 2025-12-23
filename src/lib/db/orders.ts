@@ -6,7 +6,7 @@ export async function createOrder(order: {
     email: string
     total: number
     currency?: string
-    items: Array<{ product_id: string; quantity: number; price: number }>
+    items: Array<{ product_id: string; variant_id?: string | null; quantity: number; price: number }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -32,6 +32,7 @@ export async function createOrder(order: {
     const orderItems = order.items.map((item) => ({
         order_id: newOrder.id,
         product_id: item.product_id,
+        variant_id: item.variant_id || null,
         quantity: item.quantity,
         price: item.price,
     }))
@@ -56,7 +57,8 @@ export async function getOrder(id: string) {
       *,
       order_items (
         *,
-        product:products (*)
+        product:products (*),
+        variant:product_variants (*)
       ),
       payments (*),
       deliveries (*),
@@ -87,7 +89,8 @@ export async function getUserOrders() {
       *,
       order_items (
         *,
-        product:products (name, image_url)
+        product:products (name, image_url),
+        variant:product_variants (name)
       )
     `)
         .or(`user_id.eq.${user.id},email.eq.${user.email}`)
@@ -124,7 +127,8 @@ export async function adminGetOrders() {
                 profiles:user_id (email),
                 order_items (
                     *,
-                    product:products (name)
+                    product:products (name),
+                    variant:product_variants (name)
                 ),
                 payments (*)
             `)
@@ -152,7 +156,8 @@ export async function adminGetOrder(id: string) {
                 profiles:user_id (email),
                 order_items (
                     *,
-                    product:products (name, image_url)
+                    product:products (name, image_url),
+                    variant:product_variants (name)
                 ),
                 payments (*),
                 deliveries (*),

@@ -73,8 +73,8 @@ export default function CheckoutPage() {
         if (item.quantity + delta > 0) {
             addToCart({ ...item, quantity: delta })
         } else {
-            removeFromCart(item.id)
-            toast.info(`Removed ${item.title} from cart`)
+            removeFromCart(item.id, item.variantId)
+            toast.info(`Removed ${item.title}${item.variantName ? ` (${item.variantName})` : ''} from cart`)
         }
     }
     const [step, setStep] = React.useState(1)
@@ -219,6 +219,7 @@ export default function CheckoutPage() {
                 const total = finalTotal
                 const items = cart.map(item => ({
                     product_id: item.id,
+                    variant_id: item.variantId || null,
                     quantity: item.quantity || 1,
                     price: item.price
                 }))
@@ -427,7 +428,10 @@ export default function CheckoutPage() {
                                         >
                                             <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors">{item.title}</h3>
+                                                <h3 className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">{item.title}</h3>
+                                                {item.variantName && (
+                                                    <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variantName}</p>
+                                                )}
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 border border-white/10">
                                                         <button
@@ -453,8 +457,8 @@ export default function CheckoutPage() {
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            removeFromCart(item.id);
-                                                            toast.info(`Removed ${item.title} from cart`);
+                                                            removeFromCart(item.id, item.variantId);
+                                                            toast.info(`Removed ${item.title}${item.variantName ? ` (${item.variantName})` : ''} from cart`);
                                                         }}
                                                         className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/10"
                                                     >
