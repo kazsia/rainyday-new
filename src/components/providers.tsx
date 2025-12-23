@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { CartProvider } from "@/context/cart-context"
 import { SiteSettingsProvider } from "@/context/site-settings-context"
 import { CurrencyProvider } from "@/context/currency-context"
+import { SiteIntegrations } from "@/components/layout/site-integrations"
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             disableTransitionOnChange
         >
             <SiteSettingsProvider>
+                <SiteIntegrations />
                 <CurrencyProvider>
                     <CartProvider>
                         {children}

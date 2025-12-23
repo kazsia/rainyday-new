@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils"
 import { Logo } from "@/components/layout/logo"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { motion, AnimatePresence } from "framer-motion"
+import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
 const paymentMethods = [
@@ -66,6 +67,7 @@ export default function CheckoutPage() {
     const router = useRouter()
     const { cart, cartTotal, clearCart, isHydrated, addToCart, removeFromCart } = useCart()
     const { formatPrice } = useCurrency()
+    const { settings } = useSiteSettingsWithDefaults()
 
     const handleUpdateQuantity = (item: any, delta: number) => {
         if (item.quantity + delta > 0) {
@@ -582,48 +584,50 @@ export default function CheckoutPage() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <CircleSlash className="w-2.5 h-2.5 text-brand-primary" />
-                                                <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Promo Code</label>
-                                            </div>
-                                            <div className="relative group">
-                                                <Input
-                                                    value={couponCode}
-                                                    onChange={(e) => setCouponCode(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                                                    placeholder="Enter coupon code..."
-                                                    disabled={!!appliedCoupon || isCheckingCoupon}
-                                                    className={cn(
-                                                        "h-14 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold italic text-sm",
-                                                        appliedCoupon && "border-brand-primary/40 text-brand-primary"
+                                        {settings.checkout.show_coupon && (
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <CircleSlash className="w-2.5 h-2.5 text-brand-primary" />
+                                                    <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Promo Code</label>
+                                                </div>
+                                                <div className="relative group">
+                                                    <Input
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                                        placeholder="Enter coupon code..."
+                                                        disabled={!!appliedCoupon || isCheckingCoupon}
+                                                        className={cn(
+                                                            "h-14 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold italic text-sm",
+                                                            appliedCoupon && "border-brand-primary/40 text-brand-primary"
+                                                        )}
+                                                    />
+                                                    {appliedCoupon ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                setAppliedCoupon(null)
+                                                                setCouponCode("")
+                                                            }}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest"
+                                                        >
+                                                            Remove
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleApplyCoupon}
+                                                            disabled={isCheckingCoupon || !couponCode}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-brand-primary/10 border border-brand-primary/20 rounded-xl text-[9px] font-black text-brand-primary hover:bg-brand-primary hover:text-black transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                                                        >
+                                                            {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
+                                                                Apply
+                                                                <ArrowRight className="w-3 h-3" />
+                                                            </>}
+                                                        </button>
                                                     )}
-                                                />
-                                                {appliedCoupon ? (
-                                                    <button
-                                                        onClick={() => {
-                                                            setAppliedCoupon(null)
-                                                            setCouponCode("")
-                                                        }}
-                                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest"
-                                                    >
-                                                        Remove
-                                                        <Trash2 className="w-3 h-3" />
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={handleApplyCoupon}
-                                                        disabled={isCheckingCoupon || !couponCode}
-                                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-brand-primary/10 border border-brand-primary/20 rounded-xl text-[9px] font-black text-brand-primary hover:bg-brand-primary hover:text-black transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
-                                                    >
-                                                        {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
-                                                            Apply
-                                                            <ArrowRight className="w-3 h-3" />
-                                                        </>}
-                                                    </button>
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-2">
@@ -687,9 +691,9 @@ export default function CheckoutPage() {
 
                                         <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
                                             {[
-                                                { label: "Terms of Service", state: agreeToTerms, setter: setAgreeToTerms },
-                                                { label: "Promotional Updates", state: agreeToPromo, setter: setAgreeToPromo }
-                                            ].map((check, i) => (
+                                                { label: "Terms of Service", state: agreeToTerms, setter: setAgreeToTerms, show: settings.checkout.show_terms },
+                                                { label: "Promotional Updates", state: agreeToPromo, setter: setAgreeToPromo, show: settings.checkout.show_newsletter }
+                                            ].filter(c => c.show).map((check, i) => (
                                                 <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
                                                     <div className="relative">
                                                         <input

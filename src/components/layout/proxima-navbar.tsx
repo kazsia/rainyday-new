@@ -49,8 +49,9 @@ function formatNumber(num: number): string {
 
 export function ProximaNavbar() {
     const pathname = usePathname()
-    const { cartCount } = useCart()
-    const { currency, setCurrency, symbol } = useCurrency()
+    const { cartCount, isHydrated: cartHydrated } = useCart()
+    const { currency, setCurrency, symbol, isHydrated: currencyHydrated } = useCurrency()
+    const [mounted, setMounted] = React.useState(false)
     const [stats, setStats] = React.useState({
         sales: 1460,
         buyers: 162,
@@ -58,38 +59,39 @@ export function ProximaNavbar() {
     })
 
     React.useEffect(() => {
+        setMounted(true)
         getStoreStats().then(setStats)
     }, [])
 
     return (
-        <header className="w-full bg-[#0a1628] z-50" suppressHydrationWarning>
-            <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl" suppressHydrationWarning>
+        <header className="w-full bg-[#0a1628] z-50">
+            <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl">
                 {/* Brand & Stats Section */}
-                <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl" suppressHydrationWarning>
-                    <div className="flex flex-col lg:flex-row items-stretch" suppressHydrationWarning>
+                <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl">
+                    <div className="flex flex-col lg:flex-row items-stretch">
                         {/* Logo & Slogan */}
-                        <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent" suppressHydrationWarning>
+                        <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent">
                             <Logo />
                             <div className="w-px h-8 bg-white/5 hidden lg:block" />
                             <p className="text-xs text-white/30 font-medium hidden lg:block">Quality you can trust, prices that make sense.</p>
                         </div>
 
                         {/* Stats Section */}
-                        <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md" suppressHydrationWarning>
-                            <div className="text-center group/stat" suppressHydrationWarning>
+                        <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md">
+                            <div className="text-center group/stat">
                                 <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
                                     {formatNumber(stats.sales)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Sales</p>
                             </div>
-                            <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
+                            <div className="text-center group/stat">
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
                                     {formatNumber(stats.buyers)}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Buyers</p>
                             </div>
-                            <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
+                            <div className="text-center group/stat">
+                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }}>
                                     {stats.rating}
                                 </p>
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40">Rating</p>
@@ -164,7 +166,9 @@ export function ProximaNavbar() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <div className="h-11 px-4 md:px-6 bg-[#0a1628] border border-white/5 rounded-xl flex items-center gap-2 md:gap-3 cursor-pointer hover:border-white/10 transition-all hover:bg-white/[0.02] group/currency">
-                                    <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors">{symbol} {currency}</span>
+                                    <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors">
+                                        {(mounted && currencyHydrated) ? `${symbol} ${currency}` : "$ USD"}
+                                    </span>
                                     <div className="w-px h-3 bg-white/10" />
                                     <svg className="w-3 h-3 md:w-4 md:h-4 text-white/20 group-hover/currency:text-white transition-transform duration-300 group-hover/currency:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
@@ -183,7 +187,7 @@ export function ProximaNavbar() {
                             className="w-11 h-11 bg-[#0a1628] border border-white/5 rounded-xl flex items-center justify-center text-white/40 hover:text-brand-primary hover:border-brand-primary/20 transition-all shadow-xl shadow-black/60 relative group"
                         >
                             <ShoppingCart className="w-5 h-5 transition-transform group-hover:scale-110" />
-                            {cartCount > 0 && (
+                            {(mounted && cartHydrated && cartCount > 0) && (
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center text-[10px] font-black text-black animate-in zoom-in duration-300">
                                     {cartCount}
                                 </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createClient } from "@/lib/supabase/client"
 import { getSiteSettings, type SiteSettings } from "@/lib/db/settings"
 
 interface SiteSettingsContextType {
@@ -42,6 +43,27 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
 
     React.useEffect(() => {
         fetchSettings()
+
+        // Set up real-time subscription
+        const supabase = createClient()
+        const channel = supabase
+            .channel('site_settings_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'site_settings'
+                },
+                () => {
+                    fetchSettings()
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }, [fetchSettings])
 
     const value = React.useMemo(() => ({
