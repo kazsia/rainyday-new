@@ -353,7 +353,7 @@ export const FlickeringFooter = () => {
     const tablet = useMediaQuery("(max-width: 1024px)");
     const { settings } = useSiteSettingsWithDefaults()
 
-    const siteName = settings?.general.name || "RAINYDAY"
+    const siteName = settings?.general.name || "Rainyday"
 
     return (
         <footer id="footer" className="w-full pb-0 border-t border-white/[0.05]" suppressHydrationWarning>
@@ -405,7 +405,7 @@ export const FlickeringFooter = () => {
                 </div>
             </div>
             <div className="container mx-auto px-10 py-8 border-t border-white/[0.05] flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
-                <p suppressHydrationWarning>© {new Date().getFullYear()} {siteName.toUpperCase()} DIGITAL. ALL RIGHTS RESERVED.</p>
+                <p suppressHydrationWarning>© {new Date().getFullYear()} {siteName} Digital. All rights reserved.</p>
                 <div className="flex gap-8" suppressHydrationWarning>
                     <Link href="/terms" className="hover:text-brand transition-colors">Terms</Link>
                     <Link href="/privacy" className="hover:text-brand transition-colors">Privacy</Link>
