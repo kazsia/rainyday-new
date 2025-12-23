@@ -72,7 +72,7 @@ const navigation = [
     { name: "Account", href: "/admin/account", icon: User },
 ]
 
-export function AdminSidebar({ className, isDrawer }: { className?: string, isDrawer?: boolean }) {
+export function AdminSidebar({ className, isDrawer, onClose }: { className?: string, isDrawer?: boolean, onClose?: () => void }) {
     const isMobile = useMediaQuery("(max-width: 1024px)")
     const pathname = usePathname()
     const router = useRouter()
@@ -128,58 +128,55 @@ export function AdminSidebar({ className, isDrawer }: { className?: string, isDr
                     const isExpanded = expandedItems.includes(item.name)
                     const Icon = item.icon
 
-                    const renderButton = () => (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                if (item.children) {
-                                    toggleExpand(e, item.name)
-                                } else {
-                                    router.push(item.href!)
-                                }
-                            }}
-                            className={cn(
-                                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all group",
-                                isActive && !item.children
-                                    ? "bg-[var(--sa-accent-muted)] text-[var(--sa-accent)] shadow-[0_0_15px_-3px_var(--sa-accent-glow)]"
-                                    : "text-[var(--sa-fg-muted)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)]"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Icon
-                                    strokeWidth={2}
-                                    className={cn(
-                                        "w-4 h-4 transition-colors",
-                                        isActive && !item.children ? "text-[var(--sa-accent)]" : "text-[var(--sa-fg-dim)] group-hover:text-[var(--sa-fg-muted)]"
-                                    )}
-                                />
-                                {item.name}
-                            </div>
-                            {item.children && (
-                                <ChevronDown className={cn(
-                                    "w-4 h-4 transition-transform text-[var(--sa-fg-dim)]",
-                                    isExpanded && "rotate-180"
-                                )} />
-                            )}
-                        </button>
-                    )
-
                     return (
                         <div key={item.name}>
-                            {isDrawer && !item.children ? (
-                                <SheetClose asChild>
-                                    {renderButton()}
-                                </SheetClose>
-                            ) : renderButton()}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    if (item.children) {
+                                        toggleExpand(e, item.name)
+                                    } else {
+                                        router.push(item.href!)
+                                        if (isDrawer && onClose) onClose()
+                                    }
+                                }}
+                                className={cn(
+                                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all group",
+                                    isActive && !item.children
+                                        ? "bg-[var(--sa-accent-muted)] text-[var(--sa-accent)] shadow-[0_0_15px_-3px_var(--sa-accent-glow)]"
+                                        : "text-[var(--sa-fg-muted)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)]"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Icon
+                                        strokeWidth={2}
+                                        className={cn(
+                                            "w-4 h-4 transition-colors",
+                                            isActive && !item.children ? "text-[var(--sa-accent)]" : "text-[var(--sa-fg-dim)] group-hover:text-[var(--sa-fg-muted)]"
+                                        )}
+                                    />
+                                    {item.name}
+                                </div>
+                                {item.children && (
+                                    <ChevronDown className={cn(
+                                        "w-4 h-4 transition-transform text-[var(--sa-fg-dim)]",
+                                        isExpanded && "rotate-180"
+                                    )} />
+                                )}
+                            </button>
 
                             {/* Children */}
                             {item.children && isExpanded && (
                                 <div className="mt-1 space-y-0.5 pl-4 mb-2 relative before:content-[''] before:absolute before:left-[17px] before:top-1 before:bottom-1 before:w-[1px] before:bg-[var(--sa-border-hover)]">
                                     {item.children.map((child) => {
                                         const isChildActive = pathname === child.href
-                                        const childItem = (
+                                        return (
                                             <Link
+                                                key={child.name}
                                                 href={child.href}
+                                                onClick={() => {
+                                                    if (isDrawer && onClose) onClose()
+                                                }}
                                                 className={cn(
                                                     "block pl-8 pr-3 py-2 text-[13px] font-medium transition-all relative rounded-md",
                                                     isChildActive
@@ -192,16 +189,6 @@ export function AdminSidebar({ className, isDrawer }: { className?: string, isDr
                                                     <div className="absolute left-[15px] top-1/2 -translate-y-1/2 w-1 h-1 bg-[var(--sa-accent)] rounded-full shadow-[0_0_8px_var(--sa-accent)]" />
                                                 )}
                                             </Link>
-                                        )
-
-                                        return (
-                                            <div key={child.name}>
-                                                {isDrawer ? (
-                                                    <SheetClose asChild>
-                                                        {childItem}
-                                                    </SheetClose>
-                                                ) : childItem}
-                                            </div>
                                         )
                                     })}
                                 </div>

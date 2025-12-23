@@ -17,6 +17,7 @@ import { Logo } from "@/components/layout/logo"
 
 export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
     const [mounted, setMounted] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     useEffect(() => {
         setMounted(true)
@@ -38,7 +39,7 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                         {/* Mobile Menu Trigger */}
                         <div className="lg:hidden shrink-0">
                             {mounted && (
-                                <Sheet>
+                                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                                     <SheetTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-[var(--sa-fg-dim)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)]">
                                             <Menu className="w-5 h-5" />
@@ -48,7 +49,11 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                                         <SheetHeader className="sr-only">
                                             <SheetTitle>Admin Navigation</SheetTitle>
                                         </SheetHeader>
-                                        <AdminSidebar className="w-full border-r-0" isDrawer />
+                                        <AdminSidebar
+                                            className="w-full border-r-0"
+                                            isDrawer
+                                            onClose={() => setIsMobileMenuOpen(false)}
+                                        />
                                     </SheetContent>
                                 </Sheet>
                             )}
