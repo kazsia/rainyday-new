@@ -22,6 +22,7 @@ const defaultSettings: SiteSettings = {
     legal: { terms_of_service: '', privacy_policy: '' },
     integrations: {},
     notifications: { webhook_url: '', notify_on_sale: true, notify_on_ticket: true },
+    statistics: { base_sales: 0, base_buyers: 0, base_rating: "5.0" },
     dns: { records: [] }
 }
 
