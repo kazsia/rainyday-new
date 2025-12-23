@@ -72,8 +72,8 @@ const navigation = [
     { name: "Account", href: "/admin/account", icon: User },
 ]
 
-const ConditionalNavWrapper = ({ children, isDrawer }: { children: React.ReactNode, isDrawer?: boolean }) => {
-    if (isDrawer) {
+const ConditionalNavWrapper = ({ children, isDrawer, disabled }: { children: React.ReactNode, isDrawer?: boolean, disabled?: boolean }) => {
+    if (isDrawer && !disabled) {
         return <SheetClose asChild>{children}</SheetClose>
     }
     return <>{children}</>
@@ -137,7 +137,7 @@ export function AdminSidebar({ className, isDrawer }: { className?: string, isDr
 
                     return (
                         <div key={item.name}>
-                            <ConditionalNavWrapper isDrawer={isDrawer}>
+                            <ConditionalNavWrapper isDrawer={isDrawer} disabled={!!item.children}>
                                 <button
                                     onClick={() => {
                                         if (item.children) {
