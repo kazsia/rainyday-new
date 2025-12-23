@@ -1,7 +1,73 @@
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+export function FloatingPaths({ position }: { position: number }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const paths = useMemo(() => [
+        {
+            id: 1,
+            d: "M0,128L48,144C96,160,192,192,288,192C384,192,480,160,576,144C672,128,768,128,864,144C960,160,1056,192,1152,192C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
+            color: "rgba(164, 248, 255, 0.05)",
+            duration: 20 + Math.random() * 10,
+        },
+        {
+            id: 2,
+            d: "M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,176C672,160,768,160,864,176C960,192,1056,224,1152,224C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
+            color: "rgba(38, 188, 196, 0.03)",
+            duration: 25 + Math.random() * 10,
+        }
+    ], []);
+
+    if (!mounted) return <div className="absolute inset-0 w-full h-full pointer-events-none" />;
+
+    return (
+        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+            <svg
+                viewBox="0 0 1440 320"
+                className="w-full h-full preserve-3d"
+                style={{
+                    transform: `translateY(${position * 20}%) scaleY(${position})`,
+                    filter: "blur(10px)"
+                }}
+            >
+                {paths.map((path: any) => (
+                    <motion.path
+                        key={path.id}
+                        d={path.d}
+                        fill={path.color}
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{
+                            duration: path.duration,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                        }}
+                    />
+                ))}
+            </svg>
+        </div>
+    );
+}
+
+const fadeUpVariants: any = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 1,
+            ease: [0.25, 0.4, 0.25, 1],
+        },
+    },
+};
 
 function ElegantShape({
     className,
@@ -35,7 +101,7 @@ function ElegantShape({
                 delay,
                 ease: [0.23, 0.86, 0.39, 0.96],
                 opacity: { duration: 1.2 },
-            }}
+            } as any}
             className={cn("absolute", className)}
         >
             <motion.div
@@ -128,9 +194,10 @@ export function BackgroundPaths({
             <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-[90rem] mt-[-5vh]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        custom={0}
+                        variants={fadeUpVariants}
+                        initial="hidden"
+                        animate="visible"
                         className="max-w-5xl flex flex-col items-start text-left"
                     >
                         <div className="space-y-2">

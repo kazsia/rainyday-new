@@ -91,6 +91,7 @@ export function NotificationPanel({ open, onOpenChange, onNotificationsRead }: N
             setLoading(true)
             try {
                 const data = await getRecentNotifications(50)
+                console.log("[NotificationPanel] Data received:", data)
                 setNotifications(data)
             } catch (error) {
                 console.error("[NotificationPanel] Fetch error:", error)

@@ -58,7 +58,7 @@ const numberVariants = {
     }
 };
 
-const ghostVariants = {
+const ghostVariants: any = {
     hidden: {
         scale: 0.8,
         opacity: 0,
@@ -86,7 +86,7 @@ const ghostVariants = {
                 duration: 2,
                 ease: "linear",
                 repeat: Infinity,
-                repeatType: "reverse" as const
+                repeatType: "reverse"
             }
         }
     },

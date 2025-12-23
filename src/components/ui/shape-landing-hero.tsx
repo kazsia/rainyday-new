@@ -36,7 +36,7 @@ function ElegantShape({
                 delay,
                 ease: [0.23, 0.86, 0.39, 0.96],
                 opacity: { duration: 1.2 },
-            }}
+            } as any}
             className={cn("absolute", className)}
         >
             <motion.div
@@ -79,7 +79,7 @@ function HeroGeometric({
     title1?: string;
     title2?: string;
 }) {
-    const fadeUpVariants = {
+    const fadeUpVariants: any = {
         hidden: { opacity: 0, y: 30 },
         visible: (i: number) => ({
             opacity: 1,

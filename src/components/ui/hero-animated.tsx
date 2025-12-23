@@ -166,6 +166,7 @@ export function BgGradient({
                 "pointer-events-none absolute inset-0 size-full select-none",
                 className
             )}
+            suppressHydrationWarning={true}
             style={{
                 background: dominantColor,
                 backgroundImage: gradientStyle,

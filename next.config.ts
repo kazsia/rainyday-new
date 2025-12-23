@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'fcacmryjxeojfviqofus.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
+      },
     ],
     // Increase image optimization cache TTL (in seconds)
     // Default is 60 seconds, we set it to 1 week

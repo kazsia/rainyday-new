@@ -111,13 +111,14 @@ export async function getRecentNotifications(limit: number = 50): Promise<AdminN
             .limit(limit)
 
         if (error) {
-            console.error('[Notification] Fetch error:', error)
+            console.error('[Notification] Fetch error details:', error)
             return []
         }
 
+        console.log('[Notification] Data fetched from DB:', data?.length || 0, 'items')
         return (data || []) as AdminNotification[]
     } catch (error) {
-        console.error('[Notification] Error:', error)
+        console.error('[Notification] Error fetching notifications:', error)
         return []
     }
 }
