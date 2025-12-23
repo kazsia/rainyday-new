@@ -76,7 +76,10 @@ export async function uploadAvatar(file: File, adminId: string) {
         .from("avatars")
         .upload(filePath, file, { upsert: true })
 
-    if (error) throw error
+    if (error) {
+        console.error("[UPLOAD_AVATAR_CRITICAL] Bucket: avatars", error)
+        throw error
+    }
     return data.path
 }
 

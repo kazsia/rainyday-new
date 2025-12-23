@@ -138,8 +138,10 @@ export async function uploadAsset(file: File): Promise<string> {
             .getPublicUrl(filename)
 
         return data.publicUrl
-    } catch (e) {
-        console.error("[UPLOAD_ASSET_CRITICAL]", e)
+    } catch (e: any) {
+        console.error("[UPLOAD_ASSET_CRITICAL] Bucket: assets", e)
+        // If it's a storage error, log the specific message
+        if (e.message) console.error("Message:", e.message)
         return ""
     }
 }
