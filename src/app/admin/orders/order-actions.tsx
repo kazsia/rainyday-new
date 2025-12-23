@@ -16,7 +16,7 @@ export function OrderActions({ order }: { order: any }) {
                     <MoreVertical className="w-4 h-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#0a1628] border-white/10 text-white">
+            <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
                 <DropdownMenuItem className="gap-2 focus:bg-white/5 focus:text-white" asChild>
                     <Link href={`/admin/invoices/${order.id}`}>
                         <Eye className="w-4 h-4 text-muted-foreground" /> View Details

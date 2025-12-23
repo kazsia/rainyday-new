@@ -30,9 +30,9 @@ export function CTASection({
     className,
 }: CTAProps) {
     return (
-        <section className={cn("relative overflow-hidden bg-[#0a1628]", className)}>
+        <section className={cn("relative overflow-hidden", className)}>
             <Vortex
-                backgroundColor="#0a1628"
+                backgroundColor="#000000"
                 rangeY={120}
                 particleCount={150}
                 baseHue={180}
@@ -93,8 +93,7 @@ export function CTASection({
                         >
                             <Button
                                 asChild
-                                variant="outline"
-                                className="h-16 md:h-20 px-10 md:px-14 rounded-2xl text-base md:text-lg font-black uppercase tracking-[0.2em] bg-white/[0.02] text-white border-white/10 hover:bg-white/5 hover:border-[#a4f8ff]/30 hover:text-[#a4f8ff] transition-all hover:scale-105 shadow-2xl hover:shadow-[#a4f8ff]/10"
+                                className="h-16 md:h-20 px-12 rounded-full text-lg md:text-xl font-medium bg-white/10 text-white hover:bg-white/20 hover:scale-105 transition-all border border-white/10 backdrop-blur-sm"
                             >
                                 <Link href={action.href}>{action.text}</Link>
                             </Button>

@@ -30,7 +30,8 @@ import {
 import {
     getProducts,
     deleteProduct,
-    cloneProduct
+    cloneProduct,
+    archiveProduct
 } from "@/lib/db/products"
 import { toast } from "sonner"
 import Image from "next/image"
@@ -70,7 +71,11 @@ export default function AdminProductsPage() {
     async function handleDeleteProduct(id: string) {
         if (!confirm("Are you sure you want to delete this product?")) return
         try {
-            await deleteProduct(id)
+            const result = await deleteProduct(id)
+            if (result && !result.success) {
+                toast.error(result.message || "Failed to delete product")
+                return
+            }
             toast.success("Product deleted")
             loadData()
         } catch (error) {
@@ -156,7 +161,7 @@ export default function AdminProductsPage() {
                 />
 
                 {/* Filters */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#0a1628] border border-white/5 p-4 rounded-xl">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-background border border-white/5 p-4 rounded-xl">
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
                         <Button variant="ghost" className="shrink-0 text-white/40 hover:text-white hover:bg-white/5 gap-2 text-[10px] font-bold uppercase tracking-widest">
                             <Edit2 className="w-3.5 h-3.5" />
@@ -183,7 +188,7 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Table / Mobile Cards */}
-                <div className="bg-[#0a1628] border border-white/5 rounded-xl overflow-hidden">
+                <div className="bg-background border border-white/5 rounded-xl overflow-hidden">
                     {/* Desktop View */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left">
@@ -274,7 +279,7 @@ export default function AdminProductsPage() {
                                                         <MoreHorizontal className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[#0a1628] border-white/10 text-white">
+                                                <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
                                                             <Edit2 className="w-4 h-4" /> Edit
@@ -329,7 +334,7 @@ export default function AdminProductsPage() {
                                                     <MoreHorizontal className="w-4 h-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-[#0a1628] border-white/10 text-white">
+                                            <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
                                                 <DropdownMenuItem asChild>
                                                     <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
                                                         <Edit2 className="w-4 h-4" /> Edit

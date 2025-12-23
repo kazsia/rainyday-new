@@ -85,7 +85,7 @@ export default function AdminImportPage() {
                                 { name: "customer_migration.csv", date: "昨天", status: "completed", count: "1,204 items" },
                                 { name: "legacy_orders.xml", date: "3 days ago", status: "failed", count: "0 items" },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-[#0a1628]/40 rounded-2xl border border-white/5">
+                                <div key={i} className="flex items-center justify-between p-4 bg-background/40 rounded-2xl border border-white/5">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center">
                                             <FileJson className="w-5 h-5 text-white/20" />

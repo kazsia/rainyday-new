@@ -138,7 +138,7 @@ export default function AdminWalletsPage() {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                                 <Input
                                     placeholder="Search hash, address..."
-                                    className="pl-10 bg-[#0a1628]/20 border-white/10"
+                                    className="pl-10 bg-background/20 border-white/10"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />

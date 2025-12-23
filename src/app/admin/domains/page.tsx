@@ -120,7 +120,7 @@ export default function AdminDomainsPage() {
                                 Connect Domain
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-[#0a1628] border-white/5 text-white sm:max-w-[425px]">
+                        <DialogContent className="bg-background border-white/5 text-white sm:max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>Connect Custom Domain</DialogTitle>
                                 <DialogDescription className="text-white/40">
@@ -154,7 +154,7 @@ export default function AdminDomainsPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                         <Input
                             placeholder="Search domains..."
-                            className="pl-10 bg-[#0a1628]/20 border-white/10"
+                            className="pl-10 bg-background/20 border-white/10"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -226,7 +226,7 @@ export default function AdminDomainsPage() {
                         <Lock className="w-5 h-5 text-brand" />
                         <h2 className="text-xl font-bold text-white">DNS Configuration</h2>
                     </div>
-                    <div className="p-4 bg-[#0a1628]/40 rounded-2xl border border-white/5 font-mono text-xs space-y-3">
+                    <div className="p-4 bg-background/40 rounded-2xl border border-white/5 font-mono text-xs space-y-3">
                         <div className="grid grid-cols-3 gap-4 border-b border-white/5 pb-2 text-white/20 font-bold uppercase tracking-widest">
                             <span>Type</span>
                             <span>Name</span>

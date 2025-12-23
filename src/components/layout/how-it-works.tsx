@@ -23,7 +23,7 @@ const steps = [
 
 export function HowItWorks() {
     return (
-        <section className="py-16 md:py-24 relative overflow-hidden bg-[#0a1628]">
+        <section className="py-16 md:py-24 relative overflow-hidden">
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="text-center space-y-4 mb-16">
                     <GooeyText

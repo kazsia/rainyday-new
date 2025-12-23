@@ -460,7 +460,7 @@ function CheckoutContent() {
 
             <div className="relative flex flex-col lg:flex-row min-h-screen">
                 {/* Left Panel - Order Summary */}
-                <div className="w-full lg:w-[35%] p-6 md:p-8 lg:p-12 space-y-8 md:space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
+                <div className="w-full lg:w-[35%] p-6 md:p-8 lg:p-12 space-y-8 md:space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-background/20 backdrop-blur-3xl">
                     <div className="space-y-12">
                         <div className="flex items-center justify-between">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -744,7 +744,7 @@ function CheckoutContent() {
                                                         <div className="flex items-center gap-3 relative z-10">
                                                             <div className={cn(
                                                                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                                                                selectedMethod === method.name ? "bg-brand-primary/20" : "bg-[#0a1628]/40 border border-white/5"
+                                                                selectedMethod === method.name ? "bg-brand-primary/20" : "bg-background/40 border border-white/5"
                                                             )}>
                                                                 <img src={method.icon} alt={method.name} className="w-6 h-6" />
                                                             </div>
@@ -818,7 +818,7 @@ function CheckoutContent() {
                                     <div className="space-y-6">
                                         <div className="flex items-center gap-4 p-6 rounded-3xl bg-white/[0.03] border border-white/10 relative overflow-hidden group hover:bg-white/[0.05] transition-all">
                                             <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="w-14 h-14 rounded-xl bg-[#0a1628] border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
+                                            <div className="w-14 h-14 rounded-xl bg-background border border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
                                                 <img
                                                     src={
                                                         selectedMethod.toLowerCase() === 'bitcoin' ? "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/btc.svg" :

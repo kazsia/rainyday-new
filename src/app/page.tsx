@@ -1,7 +1,7 @@
 "use client"
 
 import { ProximaLayout } from "@/components/layout/proxima-layout"
-import { BackgroundPaths } from "@/components/ui/background-paths"
+import NeuralNetworkHero from "@/components/ui/neural-network-hero"
 
 import { WhyChoose } from "@/components/layout/why-choose"
 import { HowItWorks } from "@/components/layout/how-it-works"
@@ -17,9 +17,18 @@ export default function HomePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="bg-[#0a1628]"
+        className="min-h-screen"
       >
-        <BackgroundPaths title="Digital Products, Redefined." />
+        <div className="-mt-20">
+          <NeuralNetworkHero
+            title="Digital Products, Redefined."
+            description="Experience the future of digital assets with our secure and intuitive platform. Built for the next generation of creators."
+            ctaButtons={[
+              { text: "Get Started", href: "/store", primary: true },
+              { text: "View Products", href: "/store" }
+            ]}
+          />
+        </div>
 
         <WhyChoose />
         <HowItWorks />

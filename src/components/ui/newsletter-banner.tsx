@@ -78,7 +78,7 @@ export function NewsletterBanner({ className }: NewsletterBannerProps) {
                     className="relative max-w-4xl mx-auto"
                 >
                     {/* Main Card */}
-                    <div className="relative rounded-[2.5rem] border border-brand-primary/20 bg-[#0a1628] overflow-hidden">
+                    <div className="relative rounded-[2.5rem] border border-brand-primary/20 bg-background overflow-hidden">
                         {/* Glow Background Effects */}
                         <div className="absolute inset-0">
                             <div className="absolute bottom-0 left-1/4 w-[60%] h-[70%] bg-brand-primary/20 blur-[100px] rounded-full" />

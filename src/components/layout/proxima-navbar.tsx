@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Logo } from "./logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ShoppingCart, Menu } from "lucide-react"
+import { ShoppingCart, Menu, Search, User } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { useCart } from "@/context/cart-context"
@@ -34,165 +34,108 @@ const navLinks = [
     { name: "F.A.Q", href: "/faq" },
     { name: "Feedback", href: "/feedback" },
     { name: "Terms", href: "/terms" },
-    { name: "Privacy", href: "/privacy" },
 ]
-
-function formatNumber(num: number): string {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(2) + "M"
-    }
-    if (num >= 1000) {
-        return (num / 1000).toFixed(2) + "K"
-    }
-    return num.toString()
-}
 
 export function ProximaNavbar() {
     const pathname = usePathname()
     const { cartCount, isHydrated: cartHydrated } = useCart()
     const { currency, setCurrency, symbol, isHydrated: currencyHydrated } = useCurrency()
     const [mounted, setMounted] = React.useState(false)
-    const [stats, setStats] = React.useState({
-        sales: 1460,
-        buyers: 162,
-        rating: "4.98"
-    })
 
     React.useEffect(() => {
         setMounted(true)
-        getStoreStats().then(setStats)
     }, [])
 
     return (
-        <header className="w-full bg-[#0a1628] z-50" suppressHydrationWarning>
-            <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl" suppressHydrationWarning>
-                {/* Brand & Stats Section */}
-                <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl" suppressHydrationWarning>
-                    <div className="flex flex-col lg:flex-row items-stretch" suppressHydrationWarning>
-                        {/* Logo & Slogan */}
-                        <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent" suppressHydrationWarning>
-                            <Logo />
-                            <div className="w-px h-8 bg-white/5 hidden lg:block" suppressHydrationWarning />
-                            <p className="text-xs text-white/30 font-medium hidden lg:block" suppressHydrationWarning>Quality you can trust, prices that make sense.</p>
-                        </div>
-
-                        {/* Stats Section */}
-                        <div className="flex flex-wrap items-center justify-around lg:justify-end gap-x-4 gap-y-2 px-4 md:px-8 lg:px-12 py-4 lg:py-0 bg-[#0a1628]/40 backdrop-blur-md" suppressHydrationWarning>
-                            <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
-                                    {formatNumber(stats.sales)}
-                                </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Sales</p>
-                            </div>
-                            <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
-                                    {formatNumber(stats.buyers)}
-                                </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Buyers</p>
-                            </div>
-                            <div className="text-center group/stat" suppressHydrationWarning>
-                                <p className="text-xl md:text-2xl font-extrabold text-white tracking-tight transition-colors group-hover/stat:text-brand-primary" style={{ fontFamily: 'var(--font-manrope)' }} suppressHydrationWarning>
-                                    {stats.rating}
-                                </p>
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em] mt-1 transition-colors group-hover/stat:text-white/40" suppressHydrationWarning>Rating</p>
-                            </div>
-                        </div>
-                    </div>
+        <header className="w-full bg-background/20 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 transition-all duration-300">
+            <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between max-w-[90rem]">
+                {/* Logo Section */}
+                <div className="flex-shrink-0 mr-8">
+                    <Logo />
                 </div>
 
-                {/* Toolbar Section */}
-                <div className="flex items-center justify-between gap-4" suppressHydrationWarning>
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex flex-wrap items-center gap-2" suppressHydrationWarning>
-                        {navLinks.map((link) => {
-                            const isActive = pathname === link.href
-                            return (
-                                <Link
-                                    key={link.name}
-                                    href={link.href}
-                                    className={cn(
-                                        "h-11 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center border",
-                                        isActive
-                                            ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-glow"
-                                            : "bg-[#0a1628] border-white/5 text-white/40 hover:text-white hover:border-white/20"
-                                    )}
-                                >
-                                    {link.name}
-                                </Link>
-                            )
-                        })}
-                    </div>
+                {/* Desktop Navigation */}
+                <div className="hidden lg:flex items-center gap-1">
+                    {navLinks.map((link) => {
+                        const isActive = pathname === link.href
+                        return (
+                            <Link
+                                key={link.name}
+                                href={link.href}
+                                className={cn(
+                                    "h-10 px-4 rounded-lg text-sm font-medium transition-all flex items-center hover:bg-white/5",
+                                    isActive
+                                        ? "text-brand-primary"
+                                        : "text-muted-foreground hover:text-white"
+                                )}
+                            >
+                                {link.name}
+                            </Link>
+                        )
+                    })}
+                </div>
 
-                    {/* Mobile Menu Trigger */}
-                    <div className="flex md:hidden" suppressHydrationWarning>
+                {/* Right Actions */}
+                <div className="flex items-center gap-3 md:gap-4 ml-auto lg:ml-0">
+                    {/* Currency Selector */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="h-9 px-4 rounded-full text-xs font-bold text-muted-foreground hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider hidden sm:flex items-center gap-2 border border-white/5">
+                                {(mounted && currencyHydrated) ? symbol : "$"} <span className="opacity-50">{currency}</span>
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                            <DropdownMenuItem onClick={() => setCurrency("USD")}>$ USD</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setCurrency("EUR")}>€ EUR</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setCurrency("GBP")}>£ GBP</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Link href="/cart" className="relative group">
+                        <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                            (mounted && cartCount > 0) ? "bg-brand-primary/10 text-brand-primary" : "bg-transparent border border-white/10 text-muted-foreground hover:text-white hover:border-white/20"
+                        )}>
+                            <ShoppingCart className="w-5 h-5" />
+                        </div>
+                        {(mounted && cartHydrated && cartCount > 0) && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center text-[10px] font-bold text-background shadow-lg shadow-brand-primary/20 animate-in zoom-in">
+                                {cartCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    {/* Mobile Menu */}
+                    <div className="lg:hidden">
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-11 w-11 bg-[#0a1628] border border-white/5 rounded-xl text-white/40 hover:text-white" suppressHydrationWarning>
-                                    <Menu className="w-6 h-6" suppressHydrationWarning />
+                                <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-card border border-border text-muted-foreground hover:text-white">
+                                    <Menu className="w-5 h-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="bg-[#0a1628] border-white/5 p-0 w-80 h-full flex flex-col" suppressHydrationWarning>
-                                <SheetHeader className="p-6 border-b border-white/5" suppressHydrationWarning>
-                                    <SheetTitle suppressHydrationWarning>
+                            <SheetContent side="right" className="bg-background border-border p-0 w-80">
+                                <SheetHeader className="p-6 border-b border-border">
+                                    <SheetTitle>
                                         <Logo />
                                     </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2" suppressHydrationWarning>
-                                    {navLinks.map((link) => {
-                                        const isActive = pathname === link.href
-                                        return (
-                                            <SheetClose asChild key={link.name}>
-                                                <Link
-                                                    href={link.href}
-                                                    className={cn(
-                                                        "h-16 px-6 rounded-xl text-sm font-black uppercase tracking-widest transition-all flex items-center border",
-                                                        isActive
-                                                            ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-glow"
-                                                            : "bg-[#0a1628] border-white/5 text-white/40 hover:text-white"
-                                                    )}
-                                                >
-                                                    {link.name}
-                                                </Link>
-                                            </SheetClose>
-                                        )
-                                    })}
+                                <div className="flex flex-col p-4 gap-1">
+                                    {navLinks.map((link) => (
+                                        <SheetClose key={link.name} asChild>
+                                            <Link
+                                                href={link.href}
+                                                className={cn(
+                                                    "h-12 px-4 rounded-lg flex items-center text-sm font-medium transition-colors",
+                                                    pathname === link.href ? "bg-brand-primary/10 text-brand-primary" : "hover:bg-white/5 text-muted-foreground hover:text-white"
+                                                )}
+                                            >
+                                                {link.name}
+                                            </Link>
+                                        </SheetClose>
+                                    ))}
                                 </div>
                             </SheetContent>
                         </Sheet>
-                    </div>
-
-                    <div className="flex items-center gap-3" suppressHydrationWarning>
-                        {/* Currency Selector */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <div className="h-11 px-4 md:px-6 bg-[#0a1628] border border-white/5 rounded-xl flex items-center gap-2 md:gap-3 cursor-pointer hover:border-white/10 transition-all hover:bg-white/[0.02] group/currency" suppressHydrationWarning>
-                                    <span className="text-[10px] md:text-[11px] font-black text-white/40 tracking-widest group-hover/currency:text-white/60 transition-colors" suppressHydrationWarning>
-                                        {(mounted && currencyHydrated) ? symbol : "$"}
-                                    </span>
-                                    <div className="w-px h-3 bg-white/10" />
-                                    <svg className="w-3 h-3 md:w-4 md:h-4 text-white/20 group-hover/currency:text-white transition-transform duration-300 group-hover/currency:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-[#0a1628] border-white/5 text-white/60">
-                                <DropdownMenuItem onClick={() => setCurrency("USD")} className={cn("focus:bg-white/5 focus:text-white cursor-pointer", currency === "USD" && "text-white bg-white/5")}>$ USD</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency("EUR")} className={cn("focus:bg-white/5 focus:text-white cursor-pointer", currency === "EUR" && "text-white bg-white/5")}>€ EUR</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setCurrency("GBP")} className={cn("focus:bg-white/5 focus:text-white cursor-pointer", currency === "GBP" && "text-white bg-white/5")}>£ GBP</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <Link
-                            href="/cart"
-                            className="w-11 h-11 bg-[#0a1628] border border-white/5 rounded-xl flex items-center justify-center text-white/40 hover:text-brand-primary hover:border-brand-primary/20 transition-all shadow-xl shadow-black/60 relative group"
-                        >
-                            <ShoppingCart className="w-5 h-5 transition-transform group-hover:scale-110" />
-                            {(mounted && cartHydrated && cartCount > 0) && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center text-[10px] font-black text-black animate-in zoom-in duration-300">
-                                    {cartCount}
-                                </div>
-                            )}
-                        </Link>
                     </div>
                 </div>
             </div>

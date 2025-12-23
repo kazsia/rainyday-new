@@ -356,7 +356,7 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "RAINYDAY"
 
     return (
-        <footer id="footer" className="w-full pb-0 bg-[#0a1628] border-t border-white/5" suppressHydrationWarning>
+        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05]" suppressHydrationWarning>
             <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8" suppressHydrationWarning>
                 <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0" suppressHydrationWarning>
                     <Logo variant="footer" />
@@ -389,7 +389,7 @@ export const FlickeringFooter = () => {
                 </div>
             </div>
             <div className="w-full h-48 md:h-64 relative z-0 overflow-hidden" suppressHydrationWarning>
-                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#0a1628]/50 to-[#0a1628] z-10" suppressHydrationWarning />
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#000000]/50 to-[#000000] z-10" suppressHydrationWarning />
                 <div className="absolute inset-0 mx-6" suppressHydrationWarning>
                     <FlickeringGrid
                         text={siteName.toUpperCase()}
@@ -404,7 +404,7 @@ export const FlickeringFooter = () => {
                     />
                 </div>
             </div>
-            <div className="container mx-auto px-10 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
+            <div className="container mx-auto px-10 py-8 border-t border-white/[0.05] flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
                 <p suppressHydrationWarning>© {new Date().getFullYear()} {siteName.toUpperCase()} DIGITAL. ALL RIGHTS RESERVED.</p>
                 <div className="flex gap-8" suppressHydrationWarning>
                     <Link href="/terms" className="hover:text-brand transition-colors">Terms</Link>

@@ -114,7 +114,7 @@ export default function CartPage() {
                                     </div>
 
                                     <div className="flex flex-col items-center sm:items-end gap-6">
-                                        <div className="flex items-center gap-4 bg-[#0a1628]/40 border border-white/5 p-1 rounded-xl">
+                                        <div className="flex items-center gap-4 bg-background/40 border border-white/5 p-1 rounded-xl">
                                             <button
                                                 onClick={() => handleUpdateQuantity(item, -1)}
                                                 className="w-11 h-11 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-all"
@@ -145,7 +145,7 @@ export default function CartPage() {
 
                     {/* Order Summary Sidebar */}
                     <div className="lg:w-[400px]">
-                        <div className="p-10 rounded-[3rem] bg-[#0a1628] border border-white/5 sticky top-28 shadow-2xl space-y-8">
+                        <div className="p-10 rounded-[3rem] bg-background border border-white/5 sticky top-28 shadow-2xl space-y-8">
                             <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Summary</h2>
 
                             <div className="space-y-4">

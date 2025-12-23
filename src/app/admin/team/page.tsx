@@ -84,7 +84,7 @@ export default function AdminTeamPage() {
                                 Invite User
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-[#0a1628] border-white/5 text-white sm:max-w-[425px]">
+                        <DialogContent className="bg-background border-white/5 text-white sm:max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>Invite New Member</DialogTitle>
                                 <DialogDescription className="text-white/40">
@@ -122,11 +122,11 @@ export default function AdminTeamPage() {
                     <h2 className="text-xl font-bold text-white">Active Users</h2>
 
                     {isLoading ? (
-                        <div className="flex items-center justify-center h-64 bg-[#0a1628] border border-white/5 rounded-2xl">
+                        <div className="flex items-center justify-center h-64 bg-background border border-white/5 rounded-2xl">
                             <Loader2 className="w-8 h-8 animate-spin text-white/20" />
                         </div>
                     ) : (
-                        <div className="bg-[#0a1628] border border-white/5 rounded-2xl overflow-hidden">
+                        <div className="bg-background border border-white/5 rounded-2xl overflow-hidden">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/5">

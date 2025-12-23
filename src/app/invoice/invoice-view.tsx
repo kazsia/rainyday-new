@@ -375,7 +375,7 @@ function InvoiceContent() {
             </div>
 
             <div className="relative flex flex-col lg:flex-row min-h-screen">
-                <div className="w-full lg:w-[35%] p-8 lg:p-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
+                <div className="w-full lg:w-[35%] p-8 lg:p-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-background/20 backdrop-blur-3xl">
                     <div className="space-y-12">
                         <div className="flex items-center justify-between">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -405,7 +405,7 @@ function InvoiceContent() {
                                         transition={{ delay: idx * 0.1 }}
                                         className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-5 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                     >
-                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-[#0a1628]/40 group-hover:border-brand-primary/30 transition-colors shadow-2xl">
+                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-background/40 group-hover:border-brand-primary/30 transition-colors shadow-2xl">
                                             <Image src={item.product?.image_url || "/logo.png"} alt={item.product?.name} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -618,7 +618,7 @@ function InvoiceContent() {
                                                                             <div className="space-y-2">
                                                                                 {itemAssets.length > 0 ? (
                                                                                     itemAssets.map((d: any, i: number) => (
-                                                                                        <div key={i} className="p-3 rounded-xl bg-[#0a1628] border border-white/5 flex items-center justify-between group/code hover:border-brand-primary/20 transition-all">
+                                                                                        <div key={i} className="p-3 rounded-xl bg-background border border-white/5 flex items-center justify-between group/code hover:border-brand-primary/20 transition-all">
                                                                                             <code className="text-sm font-mono text-white/80 tracking-tight group-hover:text-white transition-colors break-all">{d}</code>
                                                                                             <button
                                                                                                 onClick={() => copyToClipboard(d)}
@@ -629,7 +629,7 @@ function InvoiceContent() {
                                                                                         </div>
                                                                                     ))
                                                                                 ) : (
-                                                                                    <div className="p-3 rounded-xl bg-[#0a1628] border border-white/5 flex items-center gap-3 text-white/60">
+                                                                                    <div className="p-3 rounded-xl bg-background border border-white/5 flex items-center gap-3 text-white/60">
                                                                                         <CheckCircle2 className="w-4 h-4 text-green-400" />
                                                                                         <span className="text-xs">Access confirmed. {item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
                                                                                     </div>
@@ -822,7 +822,7 @@ function InvoiceContent() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <div className="w-16 h-16 rounded-2xl bg-[#0a1628] border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
+                                                        <div className="w-16 h-16 rounded-2xl bg-background border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
                                                             <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
                                                         </div>
                                                         <div className="space-y-2 relative z-10">
@@ -840,7 +840,7 @@ function InvoiceContent() {
                                                 <motion.div
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    className="p-6 rounded-2xl bg-[#0a1628]/40 border border-white/5 space-y-4"
+                                                    className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4"
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3">

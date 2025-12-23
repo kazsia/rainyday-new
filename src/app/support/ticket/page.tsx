@@ -57,7 +57,7 @@ export default function CreateTicketPage() {
                     <p className="text-white/40">Expected response time: less than 24 hours.</p>
                 </div>
 
-                <Card className="bg-[#0a1628] border-white/5 p-8 rounded-[2.5rem] shadow-2xl overflow-hidden relative">
+                <Card className="bg-background border-white/5 p-8 rounded-[2.5rem] shadow-2xl overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-8 text-white/[0.02] -rotate-12">
                         <Mail size={160} />
                     </div>

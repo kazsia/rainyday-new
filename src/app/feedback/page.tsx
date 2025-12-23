@@ -55,7 +55,7 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-12">
-                    <Card className="bg-[#0a1628] border-white/5 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                    <Card className="bg-background border-white/5 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 text-white/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700">
                             <MessageSquareQuote size={120} />
                         </div>

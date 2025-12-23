@@ -141,7 +141,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Link href="/terms" className="flex items-center justify-between p-8 rounded-[2rem] bg-[#0a1628] border border-white/5 hover:border-white/20 transition-all group">
+                    <Link href="/terms" className="flex items-center justify-between p-8 rounded-[2rem] bg-background border border-white/5 hover:border-white/20 transition-all group">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
                                 <FileText className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
@@ -150,7 +150,7 @@ export default function SupportPage() {
                         </div>
                         <ArrowRight className="w-5 h-5 text-white/20 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
                     </Link>
-                    <Link href="/privacy" className="flex items-center justify-between p-8 rounded-[2rem] bg-[#0a1628] border border-white/5 hover:border-white/20 transition-all group">
+                    <Link href="/privacy" className="flex items-center justify-between p-8 rounded-[2rem] bg-background border border-white/5 hover:border-white/20 transition-all group">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
                                 <ShieldCheck className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />

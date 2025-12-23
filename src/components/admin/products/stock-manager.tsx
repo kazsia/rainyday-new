@@ -76,13 +76,13 @@ export function StockManager({ productId, variantId }: StockManagerProps) {
                 {/* Add Stock Section */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest">Add Stock</h3>
-                    <div className="bg-[#0a1628]/40 border border-white/10 rounded-xl overflow-hidden p-4 space-y-4">
+                    <div className="bg-background/40 border border-white/10 rounded-xl overflow-hidden p-4 space-y-4">
                         <p className="text-xs text-white/40">Paste your serials, keys, or download links below (one per line).</p>
                         <Textarea
                             value={bulkContent}
                             onChange={(e) => setBulkContent(e.target.value)}
                             placeholder={`KEY-1234-5678\nKEY-8765-4321\n...`}
-                            className="min-h-[200px] font-mono text-xs bg-[#0a1628]/40 border-white/10"
+                            className="min-h-[200px] font-mono text-xs bg-background/40 border-white/10"
                         />
                         <Button
                             onClick={handleAddStock}
@@ -104,7 +104,7 @@ export function StockManager({ productId, variantId }: StockManagerProps) {
                         </Button>
                     </div>
 
-                    <div className="bg-[#0a1628]/40 border border-white/10 rounded-xl overflow-hidden flex flex-col h-[300px]">
+                    <div className="bg-background/40 border border-white/10 rounded-xl overflow-hidden flex flex-col h-[300px]">
                         <div className="flex-1 overflow-y-auto p-2 space-y-1">
                             {isLoading ? (
                                 <div className="flex items-center justify-center h-full text-white/20">

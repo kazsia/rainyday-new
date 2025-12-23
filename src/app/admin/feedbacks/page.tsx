@@ -190,7 +190,7 @@ export default function AdminFeedbacksPage() {
                             <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 blur-[80px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
                             <div className="flex items-start gap-6 flex-1 relative z-10">
-                                <div className="w-16 h-16 rounded-2xl bg-[#0a1628]/40 border border-white/5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                                <div className="w-16 h-16 rounded-2xl bg-background/40 border border-white/5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
                                     {fb.profiles?.avatar_url ? (
                                         <img src={fb.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
                                     ) : (
@@ -200,7 +200,7 @@ export default function AdminFeedbacksPage() {
                                 <div className="space-y-3">
                                     <div className="flex flex-wrap items-center gap-4">
                                         <h3 className="text-lg font-heading font-black text-white italic uppercase tracking-tight">{fb.profiles?.email || "Ghost Entity"}</h3>
-                                        <div className="flex items-center gap-1 px-3 py-1 bg-[#0a1628]/20 rounded-full border border-white/5">
+                                        <div className="flex items-center gap-1 px-3 py-1 bg-background/20 rounded-full border border-white/5">
                                             {[...Array(5)].map((_, i) => (
                                                 <Star key={i} className={cn(
                                                     "w-3 h-3",

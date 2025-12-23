@@ -31,7 +31,7 @@ const features = [
 
 export function WhyChoose() {
     return (
-        <section className="pt-8 md:pt-12 pb-16 md:pb-24 relative overflow-hidden bg-[#0a1628]">
+        <section className="pt-8 md:pt-12 pb-16 md:pb-24 relative overflow-hidden">
             <div className="container mx-auto px-4 max-w-6xl">
                 <HandWrittenTitle
                     title="Why Choose Rainyday?"
@@ -58,7 +58,7 @@ export function WhyChoose() {
                                         inactiveZone={0.01}
                                         borderWidth={2}
                                     />
-                                    <Card className="proxima-card group h-full border-none bg-[#0a1628]">
+                                    <Card className="proxima-card group h-full border-none bg-white/[0.02]">
                                         <CardContent className="p-8 space-y-5">
                                             <div className="relative">
                                                 <div className="absolute -inset-2 bg-brand-primary/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

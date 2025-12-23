@@ -1,6 +1,7 @@
+"use client";
+
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function ElegantShape({
@@ -69,13 +70,30 @@ function ElegantShape({
     );
 }
 
-export function BackgroundPaths({
-    title = "Digital Products, Redefined.",
+function HeroGeometric({
+    badge = "Design Collective",
+    title1 = "Elevate Your Digital Vision",
+    title2 = "Crafting Exceptional Websites",
 }: {
-    title?: string;
+    badge?: string;
+    title1?: string;
+    title2?: string;
 }) {
+    const fadeUpVariants = {
+        hidden: { opacity: 0, y: 30 },
+        visible: (i: number) => ({
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 1,
+                delay: 0.5 + i * 0.2,
+                ease: [0.25, 0.4, 0.25, 1],
+            },
+        }),
+    };
+
     return (
-        <div className="relative min-h-[85vh] w-full flex flex-col justify-center overflow-hidden bg-[#030303]">
+        <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#030303]">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/[0.05] via-transparent to-rose-500/[0.05] blur-3xl" />
 
             <div className="absolute inset-0 overflow-hidden">
@@ -125,58 +143,53 @@ export function BackgroundPaths({
                 />
             </div>
 
-            <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-[90rem] mt-[-5vh]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="relative z-10 container mx-auto px-4 md:px-6">
+                <div className="max-w-3xl mx-auto text-center">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="max-w-5xl flex flex-col items-start text-left"
+                        custom={0}
+                        variants={fadeUpVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.08] mb-8 md:mb-12"
                     >
-                        <div className="space-y-2">
-                            <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] -ml-1">
-                                Digital Products, <br />
-                                <span className="text-[#333333]">Redefined.</span>
-                            </h1>
-                            <p className="text-lg md:text-xl text-white/40 max-w-xl font-normal leading-relaxed pt-8">
-                                Experience the future of digital assets with our secure, instant, and premium delivery platform. No code, no hassle.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center gap-4 mt-8 md:mt-10">
-                            <Link href="/store">
-                                <Button
-                                    className="h-14 px-8 rounded-full text-base font-medium bg-[#1F1F1F] text-white hover:bg-[#252525] border border-white/5 transition-all"
-                                >
-                                    Get Started
-                                </Button>
-                            </Link>
-                        </div>
+                        <Circle className="h-2 w-2 fill-rose-500/80" />
+                        <span className="text-sm text-white/60 tracking-wide">
+                            {badge}
+                        </span>
                     </motion.div>
 
-                    {/* Floating Hero Logo */}
-                    <div className="hidden md:flex justify-center items-center relative h-[400px]">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-                            className="relative"
-                        >
-                            <motion.div
-                                animate={{ y: [-15, 15, -15], rotate: [-2, 2, -2] }}
-                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                                className="relative w-[300px] h-[300px] flex items-center justify-center p-8"
+                    <motion.div
+                        custom={1}
+                        variants={fadeUpVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold mb-6 md:mb-8 tracking-tight">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
+                                {title1}
+                            </span>
+                            <br />
+                            <span
+                                className={cn(
+                                    "bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-white/90 to-rose-300 "
+                                )}
                             >
-                                <div className="absolute inset-0 bg-[#a4f8ff]/5 rounded-full blur-3xl" />
-                                <div className="absolute inset-0 bg-gradient-to-tr from-[#a4f8ff]/10 to-transparent rounded-full opacity-50" />
-                                <img
-                                    src="/logo.png"
-                                    alt="RainyDay Logo"
-                                    className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_25px_rgba(164,248,255,0.2)]"
-                                />
-                            </motion.div>
-                        </motion.div>
-                    </div>
+                                {title2}
+                            </span>
+                        </h1>
+                    </motion.div>
+
+                    <motion.div
+                        custom={2}
+                        variants={fadeUpVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <p className="text-base sm:text-lg md:text-xl text-white/40 mb-8 leading-relaxed font-light tracking-wide max-w-xl mx-auto px-4">
+                            Crafting exceptional digital experiences through
+                            innovative design and cutting-edge technology.
+                        </p>
+                    </motion.div>
                 </div>
             </div>
 
@@ -184,3 +197,5 @@ export function BackgroundPaths({
         </div>
     );
 }
+
+export { HeroGeometric };

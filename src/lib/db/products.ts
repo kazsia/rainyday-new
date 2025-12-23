@@ -27,6 +27,7 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
                 variants:product_variants (*),
                 badge_links:product_badge_links(badge:product_badges(*))
             `)
+            .neq("is_deleted", true)
 
         if (options?.activeOnly !== false) {
             query = query.eq("is_active", true)
@@ -147,12 +148,50 @@ export async function updateProduct(id: string, updates: any) {
 
 export async function deleteProduct(id: string) {
     const supabaseAdmin = await getAdminClient()
+
+    // 1. Check for existing orders
+    const { count, error: countError } = await supabaseAdmin
+        .from("order_items")
+        .select("*", { count: 'exact', head: true })
+        .eq("product_id", id)
+
+    if (countError) {
+        console.error("Error checking orders for product deletion:", countError)
+        throw new Error("Failed to check product dependencies")
+    }
+
+    // 2. Hybrid Delete Logic
+    if (count && count > 0) {
+        // Soft Delete: Mark as deleted to preserve order history
+        const { error } = await supabaseAdmin
+            .from("products")
+            .update({ is_deleted: true, is_active: false })
+            .eq("id", id)
+
+        if (error) throw error
+        return { success: true, message: "Product deleted (archived due to order history)" }
+    } else {
+        // Hard Delete: Safe to remove row
+        const { error } = await supabaseAdmin
+            .from("products")
+            .delete()
+            .eq("id", id)
+
+        if (error) throw error
+        return { success: true, message: "Product deleted successfully" }
+    }
+}
+
+export async function archiveProduct(id: string) {
+    const supabaseAdmin = await getAdminClient()
+
     const { error } = await supabaseAdmin
         .from("products")
-        .delete()
+        .update({ is_active: false })
         .eq("id", id)
 
     if (error) throw error
+    return { success: true, message: "Product archived successfully" }
 }
 
 export async function cloneProduct(id: string) {

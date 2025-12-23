@@ -437,7 +437,7 @@ export function CustomerDetailDrawer({ userId, isOpen, onClose }: CustomerDetail
                                                                 {log.admin_id ? "Administrative Protocol Executed" : "System Event Logged"}
                                                             </p>
                                                             {log.details && Object.keys(log.details).length > 0 && (
-                                                                <div className="mt-4 p-4 bg-[#0a1628]/40 rounded-xl border border-white/5">
+                                                                <div className="mt-4 p-4 bg-background/40 rounded-xl border border-white/5">
                                                                     <pre className="text-[9px] font-mono text-white/30 whitespace-pre-wrap">
                                                                         {JSON.stringify(log.details, null, 2)}
                                                                     </pre>

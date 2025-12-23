@@ -163,7 +163,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - Product Image & Tabs */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-[#0a1628] rounded-3xl border border-white/5 overflow-hidden">
+                        <div className="bg-background rounded-3xl border border-white/5 overflow-hidden">
                             <div className="p-8 pb-4 flex items-center justify-between">
                                 <h1 className="text-2xl font-black text-white">{product.name}</h1>
                                 <div className={cn(
