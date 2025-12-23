@@ -42,7 +42,7 @@ export function Logo({ className, variant = "default" }: LogoProps) {
                 )}
                 <div className="absolute inset-0 bg-brand-primary/20 blur-2xl rounded-full -z-10 group-hover:bg-brand-primary/40 transition-colors" suppressHydrationWarning />
             </div>
-            <span className="text-2xl font-black tracking-tighter uppercase text-[#a4f8ff] truncate max-w-[200px]" suppressHydrationWarning>
+            <span className="text-2xl font-black tracking-tighter text-[#a4f8ff] truncate max-w-[200px]" suppressHydrationWarning>
                 {siteName}
             </span>
         </Link>
