@@ -11,6 +11,7 @@ import { ShoppingCart, ShieldCheck, Zap, ArrowLeft, CheckCircle2, ArrowRight } f
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
+import { createOrder } from "@/lib/db/orders"
 import * as Icons from "lucide-react"
 
 import { useCart } from "@/context/cart-context"
@@ -30,6 +31,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     const [isLoading, setIsLoading] = React.useState(true)
     const { addToCart } = useCart()
     const router = useRouter()
+    const [isBuyingNow, setIsBuyingNow] = React.useState(false)
 
     React.useEffect(() => {
         async function loadProduct() {
@@ -86,7 +88,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
         toast.success(`Added ${quantity}x ${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''} to cart`)
     }
 
-    const handleBuyNow = () => {
+    const handleBuyNow = async () => {
         if (!product) return
         if (isOutOfStock) {
             toast.error("This product is out of stock")
@@ -96,16 +98,24 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
             toast.error(`Only ${currentStock} items available in stock`)
             return
         }
-        addToCart({
-            id: product.id,
-            title: product.name,
-            price: currentPrice,
-            quantity: quantity,
-            image: product.image_url,
-            variantId: selectedVariant?.id,
-            variantName: selectedVariant?.name
-        })
-        router.push("/checkout")
+
+        setIsBuyingNow(true)
+        try {
+            const order = await createOrder({
+                total: currentPrice * quantity,
+                items: [{
+                    product_id: product.id,
+                    variant_id: selectedVariant?.id || null,
+                    quantity: quantity,
+                    price: currentPrice
+                }]
+            })
+            router.push(`/checkout/${order.readable_id}`)
+        } catch (error) {
+            console.error("Failed to start checkout:", error)
+            toast.error("Failed to start checkout. Please try again.")
+            setIsBuyingNow(false)
+        }
     }
 
     if (isLoading) {
@@ -391,7 +401,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     </Button>
                                     <Button
                                         onClick={handleBuyNow}
-                                        disabled={isOutOfStock}
+                                        disabled={isOutOfStock || isBuyingNow}
                                         variant="outline"
                                         className={cn(
                                             "w-full h-16 font-black text-sm uppercase tracking-[0.2em] gap-3 rounded-2xl transition-all active:scale-[0.98]",
@@ -400,8 +410,17 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                                 : "bg-white/[0.02] border border-white/5 text-white/60 hover:text-white hover:bg-white/[0.05]"
                                         )}
                                     >
-                                        {isOutOfStock ? "Unavailable" : "Buy Now"}
-                                        <ArrowRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+                                        {isBuyingNow ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Preparing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                {isOutOfStock ? "Unavailable" : "Buy Now"}
+                                                <ArrowRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
 

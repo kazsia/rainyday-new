@@ -25,12 +25,12 @@ import {
     LockKeyhole,
     User,
     Mail,
-    AlertCircle,
+    CircleAlert,
     Minus,
     Plus,
     Trash2
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/context/cart-context"
@@ -41,6 +41,8 @@ import { Logo } from "@/components/layout/logo"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
+import { getOrder, updateOrder } from "@/lib/db/orders"
+import { Suspense } from "react"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
 const paymentMethods = [
@@ -63,11 +65,56 @@ const paymentMethods = [
     { id: "dai", name: "DAI", icon: Bitcoin, description: "Stablecoin", color: "#F5AC37" },
 ]
 
-export default function CheckoutPage() {
+function CheckoutContent() {
     const router = useRouter()
-    const { cart, cartTotal, clearCart, isHydrated, addToCart, removeFromCart } = useCart()
+    const params = useParams()
+    const urlOrderId = params.id as string
+
+    const { cart, cartTotal, clearCart, isHydrated, addToCart, removeFromCart, setCart } = useCart()
     const { formatPrice } = useCurrency()
     const { settings } = useSiteSettingsWithDefaults()
+
+    const [existingOrder, setExistingOrder] = React.useState<any>(null)
+    const [isLoadingOrder, setIsLoadingOrder] = React.useState(false)
+
+    // Load existing order if URL has id
+    React.useEffect(() => {
+        if (!urlOrderId || !isHydrated) return
+
+        const loadExistingOrder = async () => {
+            setIsLoadingOrder(true)
+            try {
+                const order = await getOrder(urlOrderId)
+                if (order) {
+                    if (['paid', 'delivered', 'completed'].includes(order.status)) {
+                        router.push(`/invoice?id=${order.id}`)
+                        return
+                    }
+                    setExistingOrder(order)
+                    setEmail(order.email || "")
+
+                    // Sync cart if empty or different
+                    const orderItems = order.order_items.map((item: any) => ({
+                        id: item.product_id,
+                        variantId: item.variant_id,
+                        variantName: item.variant?.name,
+                        title: item.product?.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        image: item.product?.image_url
+                    }))
+                    setCart(orderItems)
+                }
+            } catch (error) {
+                console.error("Failed to load order from URL:", error)
+                toast.error("Invalid checkout link")
+            } finally {
+                setIsLoadingOrder(false)
+            }
+        }
+
+        loadExistingOrder()
+    }, [urlOrderId, isHydrated])
 
     const handleUpdateQuantity = (item: any, delta: number) => {
         if (item.quantity + delta > 0) {
@@ -166,10 +213,10 @@ export default function CheckoutPage() {
     }, [cryptoDetails?.expiresAt, step])
 
     React.useEffect(() => {
-        if (isHydrated && cart.length === 0 && step === 1 && !isProcessing) {
+        if (isHydrated && cart.length === 0 && step === 1 && !isProcessing && !urlOrderId) {
             router.push("/store")
         }
-    }, [cart, router, step, isProcessing, isHydrated])
+    }, [cart, router, step, isProcessing, isHydrated, urlOrderId])
 
     const handleProceedToPayment = async () => {
         if (!agreeToTerms) {
@@ -214,7 +261,7 @@ export default function CheckoutPage() {
                     "Dogs": "DOGS",
                 }
 
-                // 1. Create the Order in Supabase
+                // 1. Create or Update the Order in Supabase
                 // Use finalTotal which includes discount
                 const total = finalTotal
                 const items = cart.map(item => ({
@@ -225,13 +272,20 @@ export default function CheckoutPage() {
                 }))
 
                 // Pass total directly.
-                // Note: If createOrder doesn't support discount meta yet, we just pass the discounted total.
-                // Ideally we should add discount info to the order, but for now getting the correct price is P0.
-                const order = await createOrder({
-                    email,
-                    total,
-                    items
-                })
+                let order;
+                if (existingOrder) {
+                    order = await updateOrder(existingOrder.id, {
+                        email,
+                        total,
+                        items
+                    })
+                } else {
+                    order = await createOrder({
+                        email,
+                        total,
+                        items
+                    })
+                }
 
                 setOrderId(order.id)
 
@@ -248,13 +302,16 @@ export default function CheckoutPage() {
                     returnUrl: `${window.location.origin}/invoice?id=${order.id}`,
                 })
 
-                // 3. Create the Payment record with OxaPay track ID
+                console.log("[Checkout] OxaPay Response:", response)
+
+                // 3. Create the Payment record with OxaPay track ID and pay_url
                 await createPayment({
                     order_id: order.id,
                     provider: payCurrencyMap[selectedMethod] || "Crypto",
                     amount: total,
                     currency: "USD",
-                    track_id: response.trackId
+                    track_id: response.trackId,
+                    pay_url: response.payLink
                 })
 
                 // 4. Check if we need to redirect (white-label not available)
@@ -271,12 +328,18 @@ export default function CheckoutPage() {
                 let exchangeRate = 0
                 const selectedCrypto = payCurrencyMap[selectedMethod] || "BTC"
 
-                // If OxaPay didn't return a proper crypto amount, calculate it ourselves
-                if (!finalCryptoAmount || finalCryptoAmount === String(total)) {
+                // If OxaPay didn't return a proper crypto amount, OR if it just mirrored the USD amount, OR if we just want to be sure
+                // Always try to calculate strict crypto amount to avoid "1 BTC" issues
+                if (true) {
                     const { convertUsdToCrypto } = await import("@/lib/payments/crypto-prices")
                     const conversion = await convertUsdToCrypto(total, selectedCrypto)
                     if (conversion) {
-                        finalCryptoAmount = conversion.cryptoAmount
+                        // Only override if the API returned amount is suspicious (like equal to total USD or "1")
+                        // OR if we want to force our specific calculation
+                        // For now, let's trust our local calc if API returns same string as total (which means it didn't convert)
+                        if (!finalCryptoAmount || finalCryptoAmount === String(total) || finalCryptoAmount === "1" || finalCryptoAmount === "1.00") {
+                            finalCryptoAmount = conversion.cryptoAmount
+                        }
                         exchangeRate = conversion.usdPrice
                     }
                 }
@@ -374,7 +437,18 @@ export default function CheckoutPage() {
         toast.success("Copied to clipboard!")
     }
 
-    if (cart.length === 0 && step === 1) return null
+    if (isLoadingOrder) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#020406]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-white/40 text-xs font-black uppercase tracking-widest">Loading Checkout Session...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (cart.length === 0 && step === 1 && !urlOrderId) return null
 
     return (
         <div className="min-h-screen bg-[#020406] text-white selection:bg-brand-primary/30 antialiased overflow-x-hidden">
@@ -386,7 +460,7 @@ export default function CheckoutPage() {
 
             <div className="relative flex flex-col lg:flex-row min-h-screen">
                 {/* Left Panel - Order Summary */}
-                <div className="w-full lg:w-[35%] p-8 lg:p-12 space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
+                <div className="w-full lg:w-[35%] p-6 md:p-8 lg:p-12 space-y-8 md:space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-[#0a1628]/20 backdrop-blur-3xl">
                     <div className="space-y-12">
                         <div className="flex items-center justify-between">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -394,7 +468,7 @@ export default function CheckoutPage() {
                             </motion.div>
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.03] border border-white/5 rounded-xl cursor-pointer hover:bg-white/[0.06] transition-all group">
                                 <Globe2 className="w-3.5 h-3.5 text-white/40 group-hover:text-brand-primary transition-colors" />
-                                <span className="text-[10px] font-black text-white/60 tracking-widest uppercase">English</span>
+                                <span className="text-[10px] font-black text-white/60 tracking-widest uppercase">EN</span>
                                 <ChevronDown className="w-3.5 h-3.5 text-white/20" />
                             </div>
                         </div>
@@ -416,7 +490,7 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-4 custom-scrollbar">
+                            <div className="space-y-3 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
                                 <AnimatePresence mode="popLayout">
                                     {cart.map((item, idx) => (
                                         <motion.div
@@ -495,14 +569,14 @@ export default function CheckoutPage() {
                                 <span className="tracking-normal">$0.00</span>
                             </div>
                             <div className="flex justify-between items-center pt-2">
-                                <span className="text-xs font-black italic tracking-widest text-white uppercase opacity-40">Total Amount</span>
+                                <span className="text-[10px] sm:text-xs font-black italic tracking-widest text-white uppercase opacity-40">Total Amount</span>
                                 <div className="text-right">
                                     <SparklesText
                                         text={formatPrice(finalTotal)}
-                                        className="block text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_15px_rgba(164,248,255,0.2)]"
+                                        className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_15px_rgba(164,248,255,0.2)]"
                                         sparklesCount={8}
                                     />
-                                    <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.2em]">Secure Transaction</span>
+                                    <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.2em]">Secure</span>
                                 </div>
                             </div>
                         </div>
@@ -514,7 +588,7 @@ export default function CheckoutPage() {
                     <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(38,188,196,0.05),transparent_60%)] pointer-events-none" />
 
                     {/* Steps Navigation */}
-                    <div className="grid grid-cols-3 gap-6 relative z-10 mb-12">
+                    <div className="grid grid-cols-3 gap-3 md:gap-6 relative z-10 mb-8 md:mb-12">
                         {[
                             { s: 1, label: "Order Info", icon: User },
                             { s: 2, label: "Confirm & Pay", icon: CreditCard },
@@ -550,7 +624,7 @@ export default function CheckoutPage() {
                                                 isActive || isCompleted ? "text-brand-primary" : "text-white/20"
                                             )}>Step 0{item.s}</p>
                                             <p className={cn(
-                                                "text-[10px] font-bold tracking-tight transition-colors truncate",
+                                                "text-[9px] md:text-[10px] font-bold tracking-tight transition-colors truncate",
                                                 isActive || isCompleted ? "text-white" : "text-white/20"
                                             )}>{item.label}</p>
                                         </div>
@@ -638,7 +712,7 @@ export default function CheckoutPage() {
                                                 <CreditCard className="w-2.5 h-2.5 text-brand-primary" />
                                                 <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Payment System</label>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                                                 {[
                                                     { id: "btc", name: "Bitcoin", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/btc.svg" },
                                                     { id: "eth", name: "Ethereum", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/eth.svg" },
@@ -845,7 +919,7 @@ export default function CheckoutPage() {
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex-1 h-14 px-5 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex items-center gap-3">
-                                                                    <AlertCircle className="w-4 h-4 text-yellow-500" />
+                                                                    <CircleAlert className="w-4 h-4 text-yellow-500" />
                                                                     <span className="text-xs text-yellow-500/80">Scan QR code to open payment page</span>
                                                                 </div>
                                                             )}
@@ -969,5 +1043,17 @@ export default function CheckoutPage() {
                 }
             `}</style>
         </div >
+    )
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#020406]">
+                <div className="w-12 h-12 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     )
 }

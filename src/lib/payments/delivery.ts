@@ -72,20 +72,46 @@ export async function deliverProduct(orderId: string) {
         }
     }
 
-    // 3. Create the delivery record
-    if (deliveredAssets.length > 0) {
-        const { error: deliveryError } = await supabase
-            .from("deliveries")
-            .insert({
-                order_id: orderId,
-                delivery_assets: deliveredAssets,
-                content: "Your digital assets are ready.",
-                status: 'delivered',
-                type: 'instant'
-            })
+    // 3. Create the delivery record - ALWAYS create one even if no assets
+    // This ensures the invoice page shows proper delivery status
+    const hasAssets = deliveredAssets.length > 0
 
-        if (deliveryError) throw deliveryError
-    }
+    // Check if there are any service-type products (no serials needed)
+    const hasServiceProducts = await (async () => {
+        for (const item of order.order_items) {
+            const { data: product } = await supabase
+                .from("products")
+                .select("delivery_type")
+                .eq("id", item.product_id)
+                .single()
+            if (product?.delivery_type === 'service') return true
+        }
+        return false
+    })()
+
+    const deliveryContent = hasAssets
+        ? "Your digital assets are ready."
+        : hasServiceProducts
+            ? "Your service order has been confirmed. You will receive further instructions via email."
+            : "Your order has been processed."
+
+    const { error: deliveryError } = await supabase
+        .from("deliveries")
+        .insert({
+            order_id: orderId,
+            delivery_assets: hasAssets ? deliveredAssets : [],
+            content: deliveryContent,
+            // 'status' column doesn't exist in schema, so we remove it. 
+            // Order status is updated to 'delivered' separately below.
+
+            // Schema has 'delivery_type', not 'type'.
+            // Schema constraint allows: 'instant' or 'manual'.
+            // atomic assets -> 'instant'
+            // service/no-assets -> 'manual' (since fulfilled via email/offline, or just confirmed)
+            delivery_type: hasAssets ? 'instant' : 'manual'
+        })
+
+    if (deliveryError) throw deliveryError
 
     // 4. Update order status
     await supabase

@@ -12,11 +12,13 @@ import {
     Ban,
     RotateCcw,
     ExternalLink,
-    Copy
+    Copy,
+    CheckCircle
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { adminGetOrders, updateOrderStatus } from "@/lib/db/orders"
+import { adminGetOrders, updateOrderStatus, markOrderAsPaid, retriggerDelivery } from "@/lib/db/orders"
+import { Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -78,6 +80,28 @@ export default function AdminInvoicesPage() {
             loadData(false)
         } catch (error) {
             toast.error("Failed to update status")
+        }
+    }
+
+    const handleMarkAsPaid = async (id: string) => {
+        const t = toast.loading("Marking as paid...")
+        try {
+            await markOrderAsPaid(id)
+            toast.success("Order marked as paid and delivered", { id: t })
+            loadData(false)
+        } catch (error: any) {
+            toast.error(error.message || "Failed to mark as paid", { id: t })
+        }
+    }
+
+    const handleRetriggerDelivery = async (id: string) => {
+        const t = toast.loading("Triggering delivery...")
+        try {
+            const result = await retriggerDelivery(id)
+            toast.success(result.message || "Delivery triggered!", { id: t })
+            loadData(false)
+        } catch (error: any) {
+            toast.error(error.message || "Failed to trigger delivery", { id: t })
         }
     }
 
@@ -326,6 +350,18 @@ export default function AdminInvoicesPage() {
                                                         <ExternalLink className="w-4 h-4 mr-2" />
                                                         View Invoice
                                                     </DropdownMenuItem>
+                                                    {ord.status !== 'paid' && ord.status !== 'completed' && ord.status !== 'delivered' && (
+                                                        <DropdownMenuItem onClick={() => handleMarkAsPaid(ord.id)} className="text-emerald-400 focus:text-emerald-400 font-medium">
+                                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                                            Mark as Paid
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {(ord.status === 'paid' || ord.status === 'delivered' || ord.status === 'completed') && (
+                                                        <DropdownMenuItem onClick={() => handleRetriggerDelivery(ord.id)} className="text-blue-400 focus:text-blue-400">
+                                                            <Gift className="w-4 h-4 mr-2" />
+                                                            Retrigger Delivery
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuItem onClick={() => handleUpdateStatus(ord.id, 'refunded')} className="text-purple-400 focus:text-purple-400">
                                                         <RotateCcw className="w-4 h-4 mr-2" />
                                                         Mark as Refunded

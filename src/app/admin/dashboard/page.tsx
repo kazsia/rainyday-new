@@ -92,7 +92,8 @@ export default async function AdminDashboardPage(props: {
                             <Link href="/admin/orders">View All</Link>
                         </Button>
                     </div>
-                    <div className="overflow-x-auto custom-scrollbar relative">
+                    {/* Desktop/Tablet Table View */}
+                    <div className="hidden md:block overflow-x-auto custom-scrollbar relative">
                         <table className="w-full text-left text-sm min-w-[700px]">
                             <thead>
                                 <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-muted)] text-[10px] uppercase font-bold tracking-widest bg-white/[0.01]">
@@ -131,6 +132,42 @@ export default async function AdminDashboardPage(props: {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden divide-y divide-[var(--sa-border)]">
+                        {recentOrders.map((order) => (
+                            <div key={order.id} className="p-4 space-y-3">
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-bold text-[var(--sa-fg-bright)]">{order.product}</p>
+                                        <p className="text-[10px] text-[var(--sa-fg-dim)] font-mono">{order.time}</p>
+                                    </div>
+                                    <span className={cn(
+                                        "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border",
+                                        order.paid === 'Paid'
+                                            ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/10"
+                                            : "bg-amber-500/5 text-amber-500 border-amber-500/10"
+                                    )}>
+                                        {order.paid}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] text-[var(--sa-fg-dim)] uppercase font-bold tracking-wider">Customer</span>
+                                        <span className="text-[var(--sa-fg-muted)] truncate max-w-[150px]">{order.email}</span>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-[10px] text-[var(--sa-fg-dim)] uppercase font-bold tracking-wider">Amount</span>
+                                        <span className="font-bold text-[var(--sa-fg-bright)]">{order.price}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                    <CreditCard className="w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
+                                    <span className="text-[10px] font-medium text-[var(--sa-fg-muted)] uppercase tracking-widest">{order.method}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 

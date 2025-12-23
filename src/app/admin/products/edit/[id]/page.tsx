@@ -489,7 +489,7 @@ export default function EditProductPage() {
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
-                                            className="bg-[#0a1628]/40 border-white/10 h-10"
+                                            className="bg-[#0a1628]/40 border-white/10 h-12"
                                             value={formData.price}
                                             onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                                         />

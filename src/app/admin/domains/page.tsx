@@ -6,7 +6,7 @@ import {
     Globe,
     Plus,
     CheckCircle2,
-    AlertCircle,
+    CircleAlert,
     ExternalLink,
     Search,
     RefreshCw,

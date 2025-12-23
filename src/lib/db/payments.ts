@@ -8,6 +8,7 @@ export async function createPayment(payment: {
     amount: number
     currency?: string
     track_id?: string
+    pay_url?: string
 }) {
     const supabase = await createClient()
 
@@ -20,6 +21,7 @@ export async function createPayment(payment: {
             currency: payment.currency || "USD",
             status: "pending",
             track_id: payment.track_id || null,
+            pay_url: payment.pay_url || null,
         })
         .select()
         .single()

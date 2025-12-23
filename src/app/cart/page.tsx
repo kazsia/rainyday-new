@@ -10,17 +10,42 @@ import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
 import { SparklesText } from "@/components/ui/sparkles-text"
+import { createOrder } from "@/lib/db/orders"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 export default function CartPage() {
+    const router = useRouter()
     const { cart, removeFromCart, addToCart, cartTotal, cartCount, isHydrated } = useCart()
     const { formatPrice } = useCurrency()
+    const [isRedirecting, setIsRedirecting] = React.useState(false)
 
     const handleUpdateQuantity = (item: any, delta: number) => {
         if (item.quantity + delta > 0) {
             addToCart({ ...item, quantity: delta })
         } else {
-            removeFromCart(item.id)
+            removeFromCart(item.id, item.variantId)
             toast.info(`Removed ${item.title} from cart`)
+        }
+    }
+
+    const handleCheckout = async () => {
+        setIsRedirecting(true)
+        try {
+            const order = await createOrder({
+                total: cartTotal,
+                items: cart.map(item => ({
+                    product_id: item.id,
+                    variant_id: item.variantId || null,
+                    quantity: item.quantity,
+                    price: item.price
+                }))
+            })
+            router.push(`/checkout/${order.readable_id}`)
+        } catch (error) {
+            console.error("Failed to create checkout session:", error)
+            toast.error("Failed to start checkout. Please try again.")
+            setIsRedirecting(false)
         }
     }
 
@@ -45,8 +70,8 @@ export default function CartPage() {
                     </div>
                     <h1 className="text-4xl font-black text-white italic tracking-tighter mb-4 uppercase">Your Cart is Empty</h1>
                     <p className="text-white/40 mb-10 text-lg">Looks like you haven't added anything to your cart yet. Explore our store for the best digital goods.</p>
-                    <Link href="/store">
-                        <Button className="h-16 px-12 bg-brand-primary text-black font-black uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-xl shadow-brand-primary/20">
+                    <Link href="/store" className="w-full sm:w-auto">
+                        <Button className="w-full h-16 px-12 bg-brand-primary text-black font-black uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-xl shadow-brand-primary/20">
                             Back to Store
                         </Button>
                     </Link>
@@ -57,19 +82,19 @@ export default function CartPage() {
 
     return (
         <MainLayout>
-            <div className="container mx-auto px-4 py-16 max-w-6xl">
+            <div className="container mx-auto px-4 py-8 md:py-16 max-w-6xl">
                 <div className="flex flex-col lg:flex-row gap-16">
                     {/* Cart Items List */}
                     <div className="flex-1 space-y-8">
-                        <div className="flex items-end gap-4 mb-4">
-                            <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase">Shopping Cart</h1>
+                        <div className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-4 mb-8">
+                            <h1 className="text-3xl sm:text-5xl font-black text-white italic tracking-tighter uppercase">Shopping Cart</h1>
                             <span className="text-brand-primary font-black mb-1">({cartCount} items)</span>
                         </div>
 
                         <div className="space-y-4">
                             {cart.map((item) => (
-                                <div key={item.id} className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row items-center gap-8 group hover:bg-white/[0.04] transition-all duration-300">
-                                    <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex-shrink-0">
+                                <div key={item.id} className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row items-center gap-4 sm:gap-8 group hover:bg-white/[0.04] transition-all duration-300">
+                                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex-shrink-0">
                                         <Image
                                             src={item.image}
                                             alt={item.title}
@@ -79,8 +104,8 @@ export default function CartPage() {
                                         />
                                     </div>
 
-                                    <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
-                                        <h3 className="text-2xl font-black text-white truncate italic">{item.title}</h3>
+                                    <div className="flex-1 min-w-0 space-y-1 sm:space-y-2 text-center sm:text-left">
+                                        <h3 className="text-xl sm:text-2xl font-black text-white truncate italic">{item.title}</h3>
                                         <SparklesText
                                             text={formatPrice(item.price)}
                                             className="text-brand-primary font-black text-xl italic"
@@ -106,7 +131,7 @@ export default function CartPage() {
                                         </div>
 
                                         <button
-                                            onClick={() => removeFromCart(item.id)}
+                                            onClick={() => removeFromCart(item.id, item.variantId)}
                                             className="flex items-center gap-2 text-white/20 hover:text-red-500/80 text-[10px] font-black uppercase tracking-widest transition-colors"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -134,21 +159,32 @@ export default function CartPage() {
                                 </div>
                                 <div className="h-px bg-white/5 my-6" />
                                 <div className="flex justify-between items-end">
-                                    <span className="text-sm font-black text-white/20 uppercase tracking-[0.2em]">Total Amount</span>
+                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1">Total Amount</span>
                                     <SparklesText
                                         text={formatPrice(cartTotal)}
-                                        className="text-4xl font-black text-brand-primary tracking-tighter italic"
+                                        className="text-3xl sm:text-4xl font-black text-brand-primary tracking-tighter italic"
                                         sparklesCount={10}
                                     />
                                 </div>
                             </div>
 
-                            <Link href="/checkout" target="_blank" className="block">
-                                <Button className="w-full h-16 bg-brand-primary text-black font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-brand-primary/20 gap-3 group">
-                                    Secure Checkout
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </Button>
-                            </Link>
+                            <Button
+                                onClick={handleCheckout}
+                                disabled={isRedirecting}
+                                className="w-full h-16 bg-brand-primary text-black font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-brand-primary/20 gap-3 group"
+                            >
+                                {isRedirecting ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Preparing Checkout...
+                                    </>
+                                ) : (
+                                    <>
+                                        Secure Checkout
+                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </Button>
 
                             <div className="flex items-center justify-center gap-3 text-[9px] font-black text-white/10 uppercase tracking-widest italic text-center">
                                 <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />

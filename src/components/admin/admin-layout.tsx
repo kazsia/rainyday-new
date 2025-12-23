@@ -24,20 +24,20 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
     }, [])
 
     return (
-        <div className="flex min-h-screen bg-[var(--sa-bg)] text-[var(--sa-fg-muted)]">
+        <div className="flex min-h-screen bg-[var(--sa-bg)] text-[var(--sa-fg-muted)]" suppressHydrationWarning>
             <SalesNotifier />
 
             {/* Desktop Sidebar */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block" suppressHydrationWarning>
                 <AdminSidebar />
             </div>
 
-            <div className="flex-1 flex flex-col bg-[var(--sa-bg)] min-w-0">
+            <div className="flex-1 flex flex-col bg-[var(--sa-bg)] min-w-0" suppressHydrationWarning>
                 {/* Topbar */}
                 <header className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-[var(--sa-bg)]/80 backdrop-blur-xl sticky top-0 z-40 border-b border-[var(--sa-border)] transition-all">
-                    <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="flex items-center gap-3 overflow-hidden" suppressHydrationWarning>
                         {/* Mobile Menu Trigger */}
-                        <div className="lg:hidden shrink-0">
+                        <div className="lg:hidden shrink-0" suppressHydrationWarning>
                             {mounted && (
                                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                                     <SheetTrigger asChild>
@@ -59,19 +59,19 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                             )}
                         </div>
 
-                        <div className="relative group flex items-center gap-2 shrink-0">
+                        <div className="relative group flex items-center gap-2 shrink-0" suppressHydrationWarning>
                             <Logo className="scale-[0.55] sm:scale-75 origin-left" />
                         </div>
                     </div>
 
-                    <div className="flex items-center shrink-0">
+                    <div className="flex items-center shrink-0" suppressHydrationWarning>
                         <NotificationBell />
                     </div>
                 </header>
 
                 {/* Content */}
                 <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-                    <div className="max-w-full">
+                    <div className="max-w-full" suppressHydrationWarning>
                         {children}
                     </div>
                 </main>

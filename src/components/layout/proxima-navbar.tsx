@@ -67,8 +67,8 @@ export function ProximaNavbar() {
         <header className="w-full bg-[#0a1628] z-50" suppressHydrationWarning>
             <div className="container mx-auto px-4 pt-4 pb-6 max-w-7xl" suppressHydrationWarning>
                 {/* Brand & Stats Section */}
-                <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl">
-                    <div className="flex flex-col lg:flex-row items-stretch">
+                <div className="bg-[#0a1628] rounded-2xl border border-white/5 overflow-hidden mb-4 shadow-2xl" suppressHydrationWarning>
+                    <div className="flex flex-col lg:flex-row items-stretch" suppressHydrationWarning>
                         {/* Logo & Slogan */}
                         <div className="flex-1 p-5 lg:p-6 flex items-center gap-6 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent" suppressHydrationWarning>
                             <Logo />
@@ -101,9 +101,9 @@ export function ProximaNavbar() {
                 </div>
 
                 {/* Toolbar Section */}
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-4" suppressHydrationWarning>
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex flex-wrap items-center gap-2">
+                    <div className="hidden md:flex flex-wrap items-center gap-2" suppressHydrationWarning>
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href
                             return (
@@ -131,13 +131,13 @@ export function ProximaNavbar() {
                                     <Menu className="w-6 h-6" suppressHydrationWarning />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="bg-[#0a1628] border-white/5 p-0 w-80" suppressHydrationWarning>
+                            <SheetContent side="left" className="bg-[#0a1628] border-white/5 p-0 w-80 h-full flex flex-col" suppressHydrationWarning>
                                 <SheetHeader className="p-6 border-b border-white/5" suppressHydrationWarning>
                                     <SheetTitle suppressHydrationWarning>
                                         <Logo />
                                     </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col p-4 gap-2" suppressHydrationWarning>
+                                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2" suppressHydrationWarning>
                                     {navLinks.map((link) => {
                                         const isActive = pathname === link.href
                                         return (
@@ -145,10 +145,10 @@ export function ProximaNavbar() {
                                                 <Link
                                                     href={link.href}
                                                     className={cn(
-                                                        "h-14 px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center border",
+                                                        "h-16 px-6 rounded-xl text-sm font-black uppercase tracking-widest transition-all flex items-center border",
                                                         isActive
-                                                            ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20"
-                                                            : "bg-[#0a1628]/50 border-white/5 text-white/40 hover:bg-white/5"
+                                                            ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-glow"
+                                                            : "bg-[#0a1628] border-white/5 text-white/40 hover:text-white"
                                                     )}
                                                 >
                                                     {link.name}

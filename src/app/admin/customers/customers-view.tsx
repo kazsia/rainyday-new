@@ -227,7 +227,7 @@ export default function AdminCustomersPage() {
                                     <th className="px-6 py-4 text-[11px] font-bold text-[var(--sa-fg-muted)] uppercase tracking-wider text-right">Control</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[var(--sa-border)]">
+                            <tbody className="divide-y divide-[var(--sa-border)] hidden lg:table-row-group">
                                 {users.length > 0 ? (
                                     users.map((user) => (
                                         <tr
@@ -318,6 +318,103 @@ export default function AdminCustomersPage() {
                                 )}
                             </tbody>
                         </table>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden divide-y divide-[var(--sa-border)]">
+                            {users.length > 0 ? (
+                                users.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="p-4 space-y-4 hover:bg-[var(--sa-card-hover)] transition-colors cursor-pointer"
+                                        onClick={() => openDetails(user.id)}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-lg bg-white/[0.03] border border-[var(--sa-border)] flex items-center justify-center text-sm font-bold text-[var(--sa-fg-bright)] overflow-hidden">
+                                                        {user.avatar_url ? (
+                                                            <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            (user.full_name || user.email || "?").charAt(0)
+                                                        )}
+                                                    </div>
+                                                    {user.status !== 'active' && (
+                                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded bg-[var(--sa-error)] border-2 border-[var(--sa-card)] flex items-center justify-center">
+                                                            <Ban className="w-2 h-2 text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-[var(--sa-fg-bright)] flex items-center gap-2">
+                                                        {user.full_name || user.email?.split('@')[0] || "Anonymous"}
+                                                        {user.role === 'admin' && <Shield className="w-3.5 h-3.5 text-[var(--sa-warning)]" />}
+                                                    </p>
+                                                    <p className="text-[10px] text-[var(--sa-fg-dim)]">{user.email}</p>
+                                                </div>
+                                            </div>
+                                            <Badge variant="outline" className={cn(
+                                                "text-[9px] font-bold uppercase tracking-wide py-0 px-2 rounded border",
+                                                user.is_registered
+                                                    ? "text-emerald-500 bg-emerald-500/5 border-emerald-500/10"
+                                                    : "text-[var(--sa-fg-muted)] bg-white/5 border-[var(--sa-border)]"
+                                            )}>
+                                                {user.is_registered ? "Member" : "Guest"}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-widest">Financials</p>
+                                                <p className="text-sm font-black text-brand-primary">
+                                                    ${Number(user.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-widest">Engagement</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn(
+                                                        "w-1.5 h-1.5 rounded-full",
+                                                        user.newsletter_subscribed ? "bg-emerald-500" : "bg-[var(--sa-fg-dim)]"
+                                                    )} />
+                                                    <span className="text-[10px] text-[var(--sa-fg-muted)]">
+                                                        {user.newsletter_subscribed ? "Subscribed" : "Unsubscribed"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end pt-2 border-t border-[var(--sa-border)]" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-8 px-3 text-[var(--sa-fg-dim)] hover:text-white bg-white/[0.02] border border-white/5">
+                                                        <MoreVertical className="w-3.5 h-3.5 mr-2" />
+                                                        Manage
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-[var(--sa-card)] border-[var(--sa-border)] text-[var(--sa-fg)]">
+                                                    <DropdownMenuItem onClick={() => openDetails(user.id)}>
+                                                        <ExternalLink className="w-4 h-4 mr-2" />
+                                                        View Profile
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator className="bg-[var(--sa-border)]" />
+                                                    <DropdownMenuItem onClick={async () => {
+                                                        const res = await forceUserLogout(user.id);
+                                                        if (res.success) toast.success("Client Logged Out");
+                                                    }}>
+                                                        <LogOut className="w-4 h-4 mr-2" />
+                                                        Revoke Sessions
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-12 text-center text-[var(--sa-fg-muted)]">
+                                    No customers found.
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Pagination */}

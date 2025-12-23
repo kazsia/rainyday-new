@@ -10,7 +10,7 @@ import {
     Clock,
     ExternalLink,
     CheckCircle2,
-    AlertCircle,
+    CircleAlert,
     Loader2,
     ArrowRight,
     Copy,
@@ -193,7 +193,7 @@ function PaymentWaitingContent() {
             borderColor: "border-green-500/20"
         },
         failed: {
-            icon: AlertCircle,
+            icon: CircleAlert,
             title: "Payment Expired",
             subtitle: "The payment window has expired",
             color: "text-red-500",

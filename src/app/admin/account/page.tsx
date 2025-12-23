@@ -17,7 +17,7 @@ import {
     Copy,
     RefreshCw,
     ShieldCheck,
-    AlertCircle,
+    CircleAlert,
     CheckCircle2,
     Laptop,
     Smartphone,
@@ -343,7 +343,7 @@ export default function AdminAccountPage() {
                                 </div>
 
                                 <div className="p-6 rounded-2xl bg-orange-400/5 border border-orange-400/10 flex items-start gap-4">
-                                    <AlertCircle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+                                    <CircleAlert className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
                                     <div className="space-y-1">
                                         <p className="text-sm font-bold text-white">Security Recommendation</p>
                                         <p className="text-xs text-white/40 leading-relaxed">Changing your password will invalidate all other active sessions for this account. You will need to log back in on your other devices.</p>

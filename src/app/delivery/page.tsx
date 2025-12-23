@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ShieldCheck, AlertCircle, Clock } from "lucide-react"
+import { ShieldCheck, CircleAlert, Clock } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import {
     verifyDeliveryToken,
@@ -222,7 +222,7 @@ async function DeliveryPageContent({ searchParams }: DeliveryPageProps) {
                     {/* Warning Card */}
                     <Card className="bg-yellow-500/5 border-yellow-500/20">
                         <CardContent className="p-6 flex gap-4">
-                            <AlertCircle className="w-6 h-6 text-yellow-500 shrink-0" />
+                            <CircleAlert className="w-6 h-6 text-yellow-500 shrink-0" />
                             <div className="space-y-1">
                                 <h4 className="font-bold text-yellow-500">One-Time Reveal</h4>
                                 <p className="text-sm text-yellow-500/80">
@@ -276,7 +276,7 @@ function ErrorCard({ title, message }: { title: string; message: string }) {
         <Card className="bg-red-500/5 border-red-500/20">
             <CardContent className="p-8 text-center">
                 <div className="inline-flex p-3 rounded-2xl bg-red-500/10 text-red-500 mb-4">
-                    <AlertCircle className="w-8 h-8" />
+                    <CircleAlert className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl font-bold text-red-500 mb-2">{title}</h2>
                 <p className="text-red-500/80">{message}</p>

@@ -60,53 +60,62 @@ const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
  * Fetch current crypto price from CoinGecko (free, no API key required)
  */
 export async function getCryptoPrice(symbol: string): Promise<number | null> {
-    const coingeckoId = COINGECKO_IDS[symbol] || COINGECKO_IDS[symbol.toUpperCase()]
+    const cleanSymbol = symbol.toUpperCase().replace("BITCOIN", "BTC").replace("ETHEREUM", "ETH").replace("LITECOIN", "LTC");
 
-    if (!coingeckoId) {
-        console.error(`Unknown crypto symbol: ${symbol}`)
-        return null
-    }
-
-    // Check cache first
-    const cached = priceCache[coingeckoId]
-    if (cached && Date.now() - cached.lastUpdated.getTime() < CACHE_TTL) {
-        return cached.usdPrice
-    }
-
+    // 1. Try CoinGecko first (most comprehensive)
     try {
-        const response = await fetch(
-            `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd`,
-            {
-                headers: {
-                    'Accept': 'application/json',
-                },
-                next: { revalidate: 60 }, // Cache for 1 minute on server
+        const coingeckoId = COINGECKO_IDS[symbol] || COINGECKO_IDS[symbol.toUpperCase()]
+        if (coingeckoId) {
+            const cached = priceCache[coingeckoId]
+            if (cached && Date.now() - cached.lastUpdated.getTime() < CACHE_TTL) {
+                return cached.usdPrice
             }
-        )
 
-        if (!response.ok) {
-            console.error(`CoinGecko API error: ${response.status}`)
-            return null
-        }
-
-        const data = await response.json()
-        const price = data[coingeckoId]?.usd
-
-        if (price) {
-            // Update cache
-            priceCache[coingeckoId] = {
-                symbol: symbol.toUpperCase(),
-                usdPrice: price,
-                lastUpdated: new Date(),
+            const response = await fetch(
+                `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd`,
+                { headers: { 'Accept': 'application/json' }, next: { revalidate: 60 } }
+            )
+            if (response.ok) {
+                const data = await response.json()
+                const price = data[coingeckoId]?.usd
+                if (price) {
+                    priceCache[coingeckoId] = { symbol: symbol.toUpperCase(), usdPrice: price, lastUpdated: new Date() }
+                    return price
+                }
             }
-            return price
         }
-
-        return null
-    } catch (error) {
-        console.error(`Error fetching crypto price for ${symbol}:`, error)
-        return null
+    } catch (e) {
+        console.warn("CoinGecko fetch failed, trying backups...", e)
     }
+
+    // 2. Try Coinbase (Good for major coins)
+    try {
+        const mapSymbol = cleanSymbol === "USDT" ? "USDT" : cleanSymbol; // Coinbase supports standard symbols
+        const cbResponse = await fetch(`https://api.coinbase.com/v2/prices/${mapSymbol}-USD/spot`)
+        if (cbResponse.ok) {
+            const data = await cbResponse.json()
+            const price = parseFloat(data.data.amount)
+            if (!isNaN(price)) return price
+        }
+    } catch (e) {
+        console.warn("Coinbase fetch failed", e)
+    }
+
+    // 3. Try Binance (Backup)
+    try {
+        const binanceSymbol = `${cleanSymbol}USDT`;
+        const bResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`)
+        if (bResponse.ok) {
+            const data = await bResponse.json()
+            const price = parseFloat(data.price)
+            if (!isNaN(price)) return price
+        }
+    } catch (e) {
+        console.warn("Binance fetch failed", e)
+    }
+
+    console.error(`All price fetch sources failed for ${symbol}`)
+    return null
 }
 
 /**

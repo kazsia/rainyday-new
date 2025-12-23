@@ -8,7 +8,7 @@ import {
     Database,
     ArrowRight,
     CheckCircle2,
-    AlertCircle,
+    CircleAlert,
     Info,
     History,
     RefreshCw,

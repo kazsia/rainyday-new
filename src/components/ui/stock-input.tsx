@@ -27,10 +27,10 @@ export function StockInput({ value, onChange, className, ...props }: StockInputP
         <div className={cn("relative flex items-center group", className)}>
             <input
                 type="number"
-                value={value}
+                value={value === 0 ? '' : value}
                 onChange={handleChange}
                 className={cn(
-                    "w-full h-12 bg-[#0a1628]/40 border border-white/10 rounded-xl px-4 pr-12 text-sm text-white focus:outline-none focus:border-brand-primary/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                    "w-full h-12 bg-[#0a1628]/40 border border-white/10 rounded-xl px-4 pr-12 text-sm text-white focus:outline-none focus:border-brand-primary/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-white/20",
                     props.disabled && "opacity-50 cursor-not-allowed"
                 )}
                 placeholder="0"

@@ -49,6 +49,11 @@ export type SiteSettings = {
     dns: {
         records: { type: string; name: string; value: string }[]
     }
+    statistics: {
+        base_sales: number
+        base_buyers: number
+        base_rating: string
+    }
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -76,7 +81,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             legal: settingsMap.legal || defaultSiteSettings.legal,
             integrations: settingsMap.integrations || defaultSiteSettings.integrations,
             notifications: settingsMap.notifications || defaultSiteSettings.notifications,
-            dns: settingsMap.dns || defaultSiteSettings.dns
+            dns: settingsMap.dns || defaultSiteSettings.dns,
+            statistics: settingsMap.statistics || defaultSiteSettings.statistics
         }
     } catch (error) {
         console.error("Critical error in getSiteSettings:", error)
@@ -94,7 +100,12 @@ const defaultSiteSettings: SiteSettings = {
     legal: { terms_of_service: '', privacy_policy: '' },
     integrations: {},
     notifications: { webhook_url: '', notify_on_sale: true, notify_on_ticket: true },
-    dns: { records: [{ type: 'A', name: '@', value: '76.76.21.21' }] }
+    dns: { records: [{ type: 'A', name: '@', value: '76.76.21.21' }] },
+    statistics: {
+        base_sales: 1460,
+        base_buyers: 162,
+        base_rating: "4.98"
+    }
 }
 
 export async function updateSiteSettings(section: keyof SiteSettings, value: any) {

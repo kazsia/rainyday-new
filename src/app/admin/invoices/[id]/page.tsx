@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
-import { adminGetOrder } from "@/lib/db/orders"
+import { adminGetOrder, retriggerDelivery } from "@/lib/db/orders"
 import { Button } from "@/components/ui/button"
 import {
     ChevronLeft,
@@ -16,6 +16,7 @@ import {
     StickyNote,
     Download,
     RefreshCw,
+    RotateCcw,
     ShieldAlert,
     Ban,
     Lock as LockIcon
@@ -30,6 +31,7 @@ export default function AdminInvoiceDetailsPage() {
     const router = useRouter()
     const [order, setOrder] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [isRetriggering, setIsRetriggering] = useState(false)
 
     useEffect(() => {
         if (params.id) {
@@ -58,6 +60,22 @@ export default function AdminInvoiceDetailsPage() {
             style: 'currency',
             currency: 'USD'
         }).format(amount)
+    }
+
+    async function handleRetriggerDelivery() {
+        if (!order?.id) return
+        setIsRetriggering(true)
+        try {
+            const result = await retriggerDelivery(order.id)
+            if (result.success) {
+                toast.success(result.message || "Delivery triggered successfully")
+                await loadOrder(order.id) // Refresh to show new deliverables
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to trigger delivery")
+        } finally {
+            setIsRetriggering(false)
+        }
     }
 
     // Helper for status badges (reused style)
@@ -119,6 +137,18 @@ export default function AdminInvoiceDetailsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* Retrigger Delivery Button - Only for paid orders */}
+                        {['paid', 'delivered', 'completed'].includes(order.status) && (
+                            <Button
+                                variant="outline"
+                                className="border-white/5 bg-[#0a1628] text-white/60 hover:text-white hover:bg-white/5"
+                                onClick={handleRetriggerDelivery}
+                                disabled={isRetriggering}
+                            >
+                                <RotateCcw className={cn("w-4 h-4 mr-2", isRetriggering && "animate-spin")} />
+                                {isRetriggering ? "Retriggering..." : "Retrigger Delivery"}
+                            </Button>
+                        )}
                         <Button variant="outline" className="border-white/5 bg-[#0a1628] text-white/60 hover:text-white hover:bg-white/5">
                             <Ban className="w-4 h-4 mr-2" />
                             Block User

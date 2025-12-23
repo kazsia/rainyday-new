@@ -17,7 +17,12 @@ import {
     Eye,
     RefreshCw,
     Download,
-    ExternalLink
+    ExternalLink,
+    Plus,
+    CreditCard,
+    Calendar,
+    Mail,
+    Hash
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -29,6 +34,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { adminGetOrders } from "@/lib/db/orders"
+import { OrderActions } from "./order-actions"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -97,72 +103,109 @@ export default function AdminOrdersPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent border-white/5">
-                                    <TableHead>Order ID</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Product</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading orders...</TableCell>
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent border-white/5">
+                                        <TableHead>Order ID</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Product</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ) : filteredOrders.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No orders found.</TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredOrders.map((order) => (
-                                        <TableRow key={order.id} className="border-white/5 hover:bg-white/[0.02]">
-                                            <TableCell className="font-mono text-xs font-bold">{order.readable_id || order.id.slice(0, 8)}</TableCell>
-                                            <TableCell className="text-sm">{order.email}</TableCell>
-                                            <TableCell className="text-sm max-w-[200px] truncate">{order.items_summary}</TableCell>
-                                            <TableCell className="font-bold">${order.total.toFixed(2)}</TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                                            <TableCell>
-                                                <Badge className={cn(
-                                                    order.status === "paid" || order.status === "completed" || order.status === "delivered" ? "bg-green-500/10 text-green-500" :
-                                                        order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
-                                                            "bg-red-500/10 text-red-500",
-                                                    "border-none capitalize"
-                                                )}>
-                                                    {order.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border-white/10">
-                                                        <DropdownMenuItem className="gap-2" asChild>
-                                                            <Link href={`/admin/invoices/${order.id}`}>
-                                                                <Eye className="w-4 h-4" /> View Details
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="gap-2">
-                                                            <Download className="w-4 h-4" /> Invoice
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="gap-2">
-                                                            <ExternalLink className="w-4 h-4" /> Track Payment
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading orders...</TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : filteredOrders.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No orders found.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredOrders.map((order) => (
+                                            <TableRow key={order.id} className="border-white/5 hover:bg-white/[0.02]">
+                                                <TableCell className="font-mono text-xs font-bold">{order.readable_id || order.id.slice(0, 8)}</TableCell>
+                                                <TableCell className="text-sm">{order.email}</TableCell>
+                                                <TableCell className="text-sm max-w-[200px] truncate">{order.items_summary}</TableCell>
+                                                <TableCell className="font-bold">${order.total.toFixed(2)}</TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    <Badge className={cn(
+                                                        order.status === "paid" || order.status === "completed" || order.status === "delivered" ? "bg-green-500/10 text-green-500" :
+                                                            order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
+                                                                "bg-red-500/10 text-red-500",
+                                                        "border-none capitalize"
+                                                    )}>
+                                                        {order.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <OrderActions order={order} />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden divide-y divide-white/5">
+                            {isLoading ? (
+                                <div className="p-8 text-center text-muted-foreground">Loading orders...</div>
+                            ) : filteredOrders.length === 0 ? (
+                                <div className="p-8 text-center text-muted-foreground">No orders found.</div>
+                            ) : (
+                                filteredOrders.map((order) => (
+                                    <div key={order.id} className="p-4 space-y-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Hash className="w-3 h-3 text-muted-foreground" />
+                                                    <span className="font-mono text-xs font-bold text-white">{order.readable_id || order.id.slice(0, 8)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                                                    <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            <Badge className={cn(
+                                                order.status === "paid" || order.status === "completed" || order.status === "delivered" ? "bg-green-500/10 text-green-500" :
+                                                    order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
+                                                        "bg-red-500/10 text-red-500",
+                                                "border-none capitalize text-[10px] py-0 px-2"
+                                            )}>
+                                                {order.status}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                                <span className="text-xs text-white truncate">{order.email}</span>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-3">
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Products</p>
+                                                <p className="text-xs text-white line-clamp-2">{order.items_summary}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Total</span>
+                                                <span className="text-lg font-black text-brand-primary">${order.total.toFixed(2)}</span>
+                                            </div>
+                                            <OrderActions order={order} />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
