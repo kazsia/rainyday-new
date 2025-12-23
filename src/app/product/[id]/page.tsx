@@ -158,16 +158,28 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                 <h1 className="text-2xl font-black text-white">{product.name}</h1>
                                 <div className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors",
-                                    currentStock > 0 ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"
+                                    product.status_color === 'red' ? "bg-red-500/10 border border-red-500/20" :
+                                        product.status_color === 'orange' ? "bg-orange-500/10 border border-orange-500/20" :
+                                            product.status_color === 'yellow' ? "bg-yellow-500/10 border border-yellow-500/20" :
+                                                product.status_color === 'green' ? "bg-green-500/10 border border-green-500/20" :
+                                                    "bg-brand-primary/10 border border-brand-primary/20"
                                 )}>
                                     <div className={cn(
                                         "w-2 h-2 rounded-full animate-pulse",
-                                        currentStock > 0 ? "bg-green-500" : "bg-red-500"
+                                        product.status_color === 'red' ? "bg-[#ff4b4b]" :
+                                            product.status_color === 'orange' ? "bg-[#ff8c00]" :
+                                                product.status_color === 'yellow' ? "bg-[#ffcc00]" :
+                                                    product.status_color === 'green' ? "bg-[#00e676]" :
+                                                        "bg-[#00e5ff]"
                                     )} />
                                     <span className={cn(
                                         "text-[11px] font-bold",
-                                        currentStock > 0 ? "text-green-400" : "text-red-400"
-                                    )}>{currentStock > 0 ? 'In Stock!' : 'Out of Stock'}</span>
+                                        product.status_color === 'red' ? "text-red-400" :
+                                            product.status_color === 'orange' ? "text-orange-400" :
+                                                product.status_color === 'yellow' ? "text-yellow-400" :
+                                                    product.status_color === 'green' ? "text-green-400" :
+                                                        "text-brand-primary"
+                                    )}>{product.status_label || (currentStock > 0 ? "In Stock!" : "Out of Stock")}</span>
                                 </div>
                             </div>
 
@@ -257,8 +269,12 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                     <span className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.2em] block mb-1">Status</span>
                                     <span className={cn(
                                         "text-xs font-black",
-                                        currentStock > 0 ? "text-green-400" : "text-red-400"
-                                    )}>{currentStock} In Stock</span>
+                                        product.status_color === 'red' ? "text-red-400" :
+                                            product.status_color === 'orange' ? "text-orange-400" :
+                                                product.status_color === 'yellow' ? "text-yellow-400" :
+                                                    product.status_color === 'green' ? "text-green-400" :
+                                                        "text-brand-primary"
+                                    )}>{product.status_label || (currentStock > 0 ? "In Stock" : "Out of Stock")}</span>
                                 </div>
                             </div>
 

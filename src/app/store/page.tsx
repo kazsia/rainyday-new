@@ -72,6 +72,8 @@ export default function StorePage() {
                                 image={product.image_url || "/logo.png"}
                                 productCount={product.stock_count}
                                 badge_links={product.badge_links}
+                                status_label={product.status_label}
+                                status_color={product.status_color}
                             />
                         ))}
                     </div>

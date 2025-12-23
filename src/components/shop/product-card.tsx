@@ -20,9 +20,11 @@ interface ProductCardProps {
     productCount?: number
     priceRange?: string
     badge_links?: any[]
+    status_label?: string
+    status_color?: string
 }
 
-export function ProductCard({ id, title, price, category, image, productCount = 1, priceRange, badge_links }: ProductCardProps) {
+export function ProductCard({ id, title, price, category, image, productCount = 1, priceRange, badge_links, status_label, status_color }: ProductCardProps) {
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
 
@@ -115,8 +117,16 @@ export function ProductCard({ id, title, price, category, image, productCount = 
                         <h3 className="text-xl font-black text-white tracking-tight group-hover:text-brand-primary transition-colors duration-300">
                             {title}
                         </h3>
-                        <p className={`text-[13px] font-bold uppercase tracking-widest ${isOutOfStock ? 'text-red-400' : 'text-white/20'}`}>
-                            {isOutOfStock ? 'Out of Stock' : `${productCount} In Stock`}
+                        <p className={cn(
+                            "text-[13px] font-bold uppercase tracking-widest",
+                            status_color === 'red' ? "text-red-400" :
+                                status_color === 'orange' ? "text-orange-400" :
+                                    status_color === 'yellow' ? "text-yellow-400" :
+                                        status_color === 'green' ? "text-green-400" :
+                                            status_color === 'blue' ? "text-brand-primary" :
+                                                isOutOfStock ? "text-red-400" : "text-white/20"
+                        )}>
+                            {status_label || (isOutOfStock ? 'Out of Stock' : `${productCount} In Stock`)}
                         </p>
                         <SparklesText
                             text={priceRange || formatPrice(price)}
