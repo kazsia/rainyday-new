@@ -1416,132 +1416,131 @@ export default function AdminStorefrontPage() {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* STATISTICS TAB */}
+                        {activeTab === "statistics" && (
+                            <div className="space-y-10 max-w-3xl animate-in fade-in duration-500">
+                                <div>
+                                    <h2 className="text-lg font-bold text-white mb-1">Virtual Statistics</h2>
+                                    <p className="text-sm text-white/40">These base numbers are added to your live store data to make it look established.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Base Sales</label>
+                                        <div className="relative">
+                                            <Input
+                                                type="number"
+                                                value={settings.statistics?.base_sales || 0}
+                                                onChange={(e) => setSettings({
+                                                    ...settings,
+                                                    statistics: { ...settings.statistics, base_sales: parseInt(e.target.value) || 0 }
+                                                })}
+                                                className="bg-background border-white/10 h-11 pl-10"
+                                            />
+                                            <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                        </div>
+                                        <p className="text-[10px] text-white/40">Number of orders to add to actual count.</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Base Buyers</label>
+                                        <div className="relative">
+                                            <Input
+                                                type="number"
+                                                value={settings.statistics?.base_buyers || 0}
+                                                onChange={(e) => setSettings({
+                                                    ...settings,
+                                                    statistics: { ...settings.statistics, base_buyers: parseInt(e.target.value) || 0 }
+                                                })}
+                                                className="bg-background border-white/10 h-11 pl-10"
+                                            />
+                                            <Heart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                        </div>
+                                        <p className="text-[10px] text-white/40">Number of unique customers to add.</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Base Rating</label>
+                                        <div className="relative">
+                                            <Input
+                                                type="text"
+                                                placeholder="4.98"
+                                                value={settings.statistics?.base_rating || ""}
+                                                onChange={(e) => setSettings({
+                                                    ...settings,
+                                                    statistics: { ...settings.statistics, base_rating: e.target.value }
+                                                })}
+                                                className="bg-background border-white/10 h-11 pl-10"
+                                            />
+                                            <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                        </div>
+                                        <p className="text-[10px] text-white/40">Fallback rating if no feedback exists.</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 rounded-xl bg-brand/5 border border-brand/10 flex gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span className="text-[10px] font-bold text-brand italic">i</span>
+                                    </div>
+                                    <p className="text-xs text-brand/80 leading-relaxed italic">
+                                        Example: If your actual store has 10 sales and you set Base Sales to 1000,
+                                        the public navbar will show 1010 Sales.
+                                    </p>
+                                </div>
                             </div>
                         )}
 
-                {/* STATISTICS TAB */}
-                {activeTab === "statistics" && (
-                    <div className="space-y-10 max-w-3xl animate-in fade-in duration-500">
-                        <div>
-                            <h2 className="text-lg font-bold text-white mb-1">Virtual Statistics</h2>
-                            <p className="text-sm text-white/40">These base numbers are added to your live store data to make it look established.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-white">Base Sales</label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        value={settings.statistics?.base_sales || 0}
-                                        onChange={(e) => setSettings({
-                                            ...settings,
-                                            statistics: { ...settings.statistics, base_sales: parseInt(e.target.value) || 0 }
-                                        })}
-                                        className="bg-background border-white/10 h-11 pl-10"
-                                    />
-                                    <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                        {/* OTHER TABS (Placeholder) */}
+                        {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
+                            <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
+                                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                                    {(() => {
+                                        const Icon = TABS.find(t => t.id === activeTab)?.icon
+                                        return Icon ? <Icon className="w-8 h-8 text-white/20" /> : null
+                                    })()}
                                 </div>
-                                <p className="text-[10px] text-white/40">Number of orders to add to actual count.</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-white">Base Buyers</label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        value={settings.statistics?.base_buyers || 0}
-                                        onChange={(e) => setSettings({
-                                            ...settings,
-                                            statistics: { ...settings.statistics, base_buyers: parseInt(e.target.value) || 0 }
-                                        })}
-                                        className="bg-background border-white/10 h-11 pl-10"
-                                    />
-                                    <Heart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Coming Soon</h3>
+                                    <p className="text-sm text-white/40">The {TABS.find(t => t.id === activeTab)?.label} settings are under development.</p>
                                 </div>
-                                <p className="text-[10px] text-white/40">Number of unique customers to add.</p>
                             </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-white">Base Rating</label>
-                                <div className="relative">
-                                    <Input
-                                        type="text"
-                                        placeholder="4.98"
-                                        value={settings.statistics?.base_rating || ""}
-                                        onChange={(e) => setSettings({
-                                            ...settings,
-                                            statistics: { ...settings.statistics, base_rating: e.target.value }
-                                        })}
-                                        className="bg-background border-white/10 h-11 pl-10"
-                                    />
-                                    <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                </div>
-                                <p className="text-[10px] text-white/40">Fallback rating if no feedback exists.</p>
-                            </div>
-                        </div>
-
-                        <div className="p-4 rounded-xl bg-brand/5 border border-brand/10 flex gap-3">
-                            <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-[10px] font-bold text-brand italic">i</span>
-                            </div>
-                            <p className="text-xs text-brand/80 leading-relaxed italic">
-                                Example: If your actual store has 10 sales and you set Base Sales to 1000,
-                                the public navbar will show 1010 Sales.
-                            </p>
-                        </div>
+                        )}
                     </div>
-                )}
+                </div>
 
-                {/* OTHER TABS (Placeholder) */}
-                {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
-                    <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
-                        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                            {(() => {
-                                const Icon = TABS.find(t => t.id === activeTab)?.icon
-                                return Icon ? <Icon className="w-8 h-8 text-white/20" /> : null
-                            })()}
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white">Coming Soon</h3>
-                            <p className="text-sm text-white/40">The {TABS.find(t => t.id === activeTab)?.label} settings are under development.</p>
-                        </div>
+                {/* Save Toolbar */}
+                <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 sm:p-6 bg-background/80 backdrop-blur-md border-t border-white/5 z-50">
+                    <div className="max-w-[100rem] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
+                        <Button
+                            variant="ghost"
+                            className="bg-background text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5 sm:flex-1 md:max-w-[200px]"
+                            onClick={() => window.location.href = '/admin/dashboard'}
+                        >
+                            <X className="w-4 h-4 mr-2" />
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent sm:flex-1 md:max-w-[200px]"
+                            onClick={async () => {
+                                await handleSave()
+                                window.location.href = '/admin/dashboard'
+                            }}
+                        >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save & Exit
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20 sm:flex-1 md:max-w-[200px]"
+                        >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save
+                        </Button>
                     </div>
-                )}
-            </div>
-        </div>
-
-                {/* Save Toolbar */ }
-    <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 sm:p-6 bg-background/80 backdrop-blur-md border-t border-white/5 z-50">
-        <div className="max-w-[100rem] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-            <Button
-                variant="ghost"
-                className="bg-background text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5 sm:flex-1 md:max-w-[200px]"
-                onClick={() => window.location.href = '/admin/dashboard'}
-            >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-            </Button>
-            <Button
-                variant="outline"
-                className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent sm:flex-1 md:max-w-[200px]"
-                onClick={async () => {
-                    await handleSave()
-                    window.location.href = '/admin/dashboard'
-                }}
-            >
-                <Save className="w-4 h-4 mr-2" />
-                Save & Exit
-            </Button>
-            <Button
-                onClick={handleSave}
-                className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20 sm:flex-1 md:max-w-[200px]"
-            >
-                <Save className="w-4 h-4 mr-2" />
-                Save
-            </Button>
-        </div>
-    </div>
+                </div>
             </div >
         </AdminLayout >
     )
