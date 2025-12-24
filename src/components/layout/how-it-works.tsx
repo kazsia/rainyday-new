@@ -33,6 +33,24 @@ export function HowItWorks({
 }: HowItWorksProps) {
     return (
         <section className="py-16 md:py-24 relative overflow-hidden">
+            {/* Background with gradient glow effects */}
+            <div className="absolute inset-0">
+                {/* Center cyan gradient orb */}
+                <motion.div
+                    initial={{ opacity: 0.25 }}
+                    animate={{ opacity: [0.25, 0.4, 0.25] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-teal-500/15 blur-[130px] rounded-full"
+                />
+
+                {/* Left accent */}
+                <motion.div
+                    initial={{ opacity: 0.2 }}
+                    animate={{ opacity: [0.2, 0.3, 0.2] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className="absolute bottom-1/4 left-[15%] w-[400px] h-[350px] bg-[#a4f8ff]/10 blur-[100px] rounded-full"
+                />
+            </div>
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="text-center space-y-4 mb-16">

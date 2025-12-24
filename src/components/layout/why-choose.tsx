@@ -65,7 +65,26 @@ export function WhyChoose({
 }: WhyChooseProps) {
     return (
         <section className="pt-8 md:pt-12 pb-16 md:pb-24 relative overflow-hidden">
-            <div className="container mx-auto px-4 max-w-6xl">
+            {/* Background with gradient glow effects */}
+            <div className="absolute inset-0">
+                {/* Left cyan gradient orb */}
+                <motion.div
+                    initial={{ opacity: 0.2 }}
+                    animate={{ opacity: [0.2, 0.35, 0.2] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/4 left-[10%] w-[500px] h-[400px] bg-[#a4f8ff]/15 blur-[120px] rounded-full"
+                />
+
+                {/* Right cyan orb */}
+                <motion.div
+                    initial={{ opacity: 0.15 }}
+                    animate={{ opacity: [0.15, 0.3, 0.15] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                    className="absolute top-1/2 right-[10%] w-[450px] h-[450px] bg-cyan-500/15 blur-[110px] rounded-full"
+                />
+            </div>
+
+            <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <HandWrittenTitle
                     title={subtitle}
                     subtitle={title}
