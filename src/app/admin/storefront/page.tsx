@@ -163,19 +163,21 @@ export default function AdminStorefrontPage() {
     const [uploading, setUploading] = useState<string | null>(null)
 
     useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const data = await getSiteSettings()
+                if (data) {
+                    setSettings(data)
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error)
+                toast.error('Failed to load settings')
+            } finally {
+                setIsLoading(false)
+            }
+        }
         loadSettings()
     }, [])
-
-    async function loadSettings() {
-        try {
-            const data = await getSiteSettings()
-            setSettings(data)
-        } catch (error) {
-            toast.error("Failed to load settings")
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
     async function handleSave() {
         try {
