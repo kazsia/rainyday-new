@@ -34,7 +34,8 @@ import {
     Sparkles,
     MessageCircle,
     MousePointerClick,
-    Footprints
+    Footprints,
+    User
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +53,7 @@ const CONFIGURE_TABS = [
     { id: "feedbacks", label: "Feedbacks", icon: Star },
     { id: "integrations", label: "Integrations", icon: Plug },
     { id: "statistics", label: "Statistics", icon: Activity },
+    { id: "account", label: "Account", icon: User },
 ]
 
 const EDITOR_TABS = [
