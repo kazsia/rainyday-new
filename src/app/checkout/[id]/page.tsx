@@ -500,7 +500,9 @@ function CheckoutContent() {
                                             transition={{ delay: idx * 0.1 }}
                                             className="p-4 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-4 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                                         >
-                                            <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl border border-white/10">
+                                                <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">{item.title}</h3>
                                                 {item.variantName && (
