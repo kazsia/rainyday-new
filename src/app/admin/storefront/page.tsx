@@ -1217,6 +1217,104 @@ export default function AdminStorefrontPage() {
 
                         {/* LANDING CONTENT TAB */}
                         {activeTab === "hero" && (
+                        {/* NAVBAR TAB */}
+                        {activeTab === "navbar" && (
+                            <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
+                                <div>
+                                    <h2 className="text-lg font-bold text-white mb-1">Navbar Settings</h2>
+                                    <p className="text-sm text-white/40">Customize your navigation bar appearance and links.</p>
+                                </div>
+
+                                <div className="space-y-8">
+                                    {/* Logo Section */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Logo</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-3">
+                                                <label className="text-sm font-bold text-white">Logo Image</label>
+                                                <p className="text-xs text-white/40">Displayed in the navbar header.</p>
+                                                <div className="relative group aspect-video rounded-xl bg-background border border-white/10 overflow-hidden hover:border-brand/40 transition-colors">
+                                                    {settings.branding?.logo_url ? (
+                                                        <>
+                                                            <img
+                                                                src={settings.branding.logo_url}
+                                                                alt="Logo"
+                                                                className="w-full h-full object-contain p-4"
+                                                            />
+                                                            <button
+                                                                onClick={() => setSettings({ ...settings, branding: { ...settings.branding, logo_url: "" } })}
+                                                                className="absolute top-2 right-2 p-1.5 bg-background/60 rounded-lg text-white/60 hover:text-white hover:bg-red-500/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20 gap-2">
+                                                            <ImageIcon className="w-8 h-8" />
+                                                            <span className="text-xs font-bold uppercase tracking-wider">Upload</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                                                        <div className="relative">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                disabled={uploading === "logo_url"}
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0]
+                                                                    if (file) handleUpload(file, 'branding', 'logo_url')
+                                                                }}
+                                                                className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
+                                                            />
+                                                            <Button size="sm" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 pointer-events-none">
+                                                                {uploading === "logo_url" ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Upload className="w-3 h-3 mr-2" />}
+                                                                Choose File
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Navigation Links */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Navigation Links</h3>
+                                        <p className="text-xs text-white/40 mb-4">These are the default navigation links. You can customize them in your navbar component.</p>
+                                        <div className="bg-background p-6 rounded-xl border border-white/10 space-y-4">
+                                            {[
+                                                { label: "Store", path: "/store" },
+                                                { label: "About", path: "/about" },
+                                                { label: "FAQ", path: "/faq" },
+                                                { label: "Feedback", path: "/feedback" },
+                                                { label: "Support", path: "/support" }
+                                            ].map((link, index) => (
+                                                <div key={index} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-bold text-white">{link.label}</p>
+                                                        <p className="text-xs text-white/40 font-mono">{link.path}</p>
+                                                    </div>
+                                                    <div className="text-xs text-white/20 font-mono">Default</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Social Links */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Social Links</h3>
+                                        <p className="text-xs text-white/40 mb-4">Configure social media links in the Socials tab under Configure section.</p>
+                                        <div className="bg-brand/5 border border-brand/10 p-4 rounded-xl flex items-start gap-3">
+                                            <Info className="w-5 h-5 text-brand shrink-0 mt-0.5" />
+                                            <div className="text-xs text-white/60">
+                                                Social media icons in the navbar are automatically populated from your social media settings. Go to <strong className="text-white">Configure → Socials</strong> to manage them.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                             <div className="space-y-12 max-w-4xl animate-in fade-in duration-500 pb-20">
                                 {/* HERO SECTION */}
                                 <div className="space-y-8">
