@@ -358,15 +358,15 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "Rainyday"
 
     return (
-        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
+        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-visible" suppressHydrationWarning>
             {/* Background with gradient glow effects */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -inset-32 pointer-events-none">
                 {/* Main cyan gradient orb - left */}
                 <motion.div
                     initial={{ opacity: 0.3 }}
                     animate={{ opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-1/2 left-[15%] -translate-y-1/2 w-[600px] h-[500px] bg-[#a4f8ff]/20 blur-[150px] rounded-full"
+                    className="absolute top-1/2 left-[15%] -translate-y-1/2 w-[1200px] h-[1000px] bg-[#a4f8ff]/20 blur-[200px] rounded-full"
                 />
 
                 {/* Secondary cyan orb - right */}
@@ -374,7 +374,7 @@ export const FlickeringFooter = () => {
                     initial={{ opacity: 0.25 }}
                     animate={{ opacity: [0.25, 0.4, 0.25] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[500px] h-[450px] bg-cyan-500/20 blur-[130px] rounded-full"
+                    className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[1000px] h-[900px] bg-cyan-500/20 blur-[180px] rounded-full"
                 />
 
                 {/* Center accent glow */}
@@ -382,7 +382,7 @@ export const FlickeringFooter = () => {
                     initial={{ opacity: 0.2 }}
                     animate={{ opacity: [0.2, 0.35, 0.2] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-teal-500/15 blur-[100px] rounded-full"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[800px] bg-teal-500/15 blur-[150px] rounded-full"
                 />
             </div>
 
