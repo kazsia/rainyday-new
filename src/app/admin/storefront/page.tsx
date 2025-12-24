@@ -1415,401 +1415,134 @@ export default function AdminStorefrontPage() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* WHY CHOOSE SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                                <Info className="w-5 h-5 text-brand" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-lg font-bold text-white mb-1">Why Choose Section</h2>
-                                                <p className="text-sm text-white/40">Customize the features list on your landing page.</p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={() => setSettings({
-                                                ...settings,
-                                                why_choose: {
-                                                    ...settings.why_choose,
-                                                    features: [...settings.why_choose.features, { title: "", description: "", icon: "Zap" }]
-                                                }
-                                            })}
-                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Feature
-                                        </Button>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4 col-span-full">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Subtitle (Top)</label>
-                                                <Input
-                                                    value={settings.why_choose.subtitle}
-                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, subtitle: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11"
-                                                    placeholder="Why Choose Rainyday?"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Main Title</label>
-                                                <Input
-                                                    value={settings.why_choose.title}
-                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11 text-lg font-bold"
-                                                    placeholder="The Ultimate Ecosystem"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="col-span-full space-y-4">
-                                            {settings.why_choose.features.map((feature, index) => (
-                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
-                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => {
-                                                                const newFeatures = [...settings.why_choose.features]
-                                                                newFeatures.splice(index, 1)
-                                                                setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
-                                                            }}
-                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                                                        >
-                                                            <Trash className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="space-y-2">
-                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Icon Name (Lucide)</label>
-                                                            <Input
-                                                                value={feature.icon}
-                                                                onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], icon: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
-                                                                }}
-                                                                className="bg-background border-white/10 h-10 font-mono text-xs"
-                                                                placeholder="Zap, Shield"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2 md:col-span-2">
-                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Feature Title</label>
-                                                            <Input
-                                                                value={feature.title}
-                                                                onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], title: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
-                                                                }}
-                                                                className="bg-background border-white/10 h-10 font-bold"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2 col-span-full">
-                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
-                                                            <Textarea
-                                                                value={feature.description}
-                                                                onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], description: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
-                                                                }}
-                                                                className="bg-background border-white/10 min-h-[60px] text-white/60"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* HOW IT WORKS SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                                <Activity className="w-5 h-5 text-brand" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-lg font-bold text-white mb-1">How It Works Section</h2>
-                                                <p className="text-sm text-white/40">Customize the step‑by‑step process on your landing page.</p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={() => setSettings({
-                                                ...settings,
-                                                how_it_works: {
-                                                    ...settings.how_it_works,
-                                                    steps: [...settings.how_it_works.steps, { title: "", description: "" }]
-                                                }
-                                            })}
-                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Step
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 gap-6">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Description</label>
-                                                <Input
-                                                    value={settings.how_it_works.title}
-                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11"
-                                                    placeholder="Shopping made simple in three easy steps!"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Morphing Texts (comma separated)</label>
-                                                <Input
-                                                    value={settings.how_it_works.texts.join(", ")}
-                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, texts: e.target.value.split(",").map(s => s.trim()) } })}
-                                                    className="bg-background border-white/10 h-11 font-mono text-xs"
-                                                    placeholder="How It Works, Simple Process, Easy Steps"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            {settings.how_it_works.steps.map((step, index) => (
-                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
-                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => {
-                                                                const newSteps = [...settings.how_it_works.steps]
-                                                                newSteps.splice(index, 1)
-                                                                setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                            }}
-                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                                                        >
-                                                            <Trash className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                        <div className="flex items-center justify-center">
-                                                            <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-black font-black text-xl">
-                                                                {index + 1}
-                                                            </div>
-                                                        </div>
-                                                        <div className="md:col-span-3 space-y-4">
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Step Title</label>
-                                                                <Input
-                                                                    value={step.title}
-                                                                    onChange={e => {
-                                                                        const newSteps = [...settings.how_it_works.steps]
-                                                                        newSteps[index] = { ...newSteps[index], title: e.target.value }
-                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                                    }}
-                                                                    className="bg-background border-white/10 h-10 font-bold"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
-                                                                <Textarea
-                                                                    value={step.description}
-                                                                    onChange={e => {
-                                                                        const newSteps = [...settings.how_it_works.steps]
-                                                                        newSteps[index] = { ...newSteps[index], description: e.target.value }
-                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                                    }}
-                                                                    className="bg-background border-white/10 min-h-[60px] text-white/60"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* LANDING CTA SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                            <ShoppingCart className="w-5 h-5 text-brand" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-lg font-bold text-white mb-1">Landing CTA Section</h2>
-                                            <p className="text-sm text-white/40">Customize the call‑to‑action section at the bottom of the landing page.</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4 col-span-full">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">CTA Title</label>
-                                                <Input
-                                                    value={settings.landing_cta.title}
-                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11 font-bold"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">CTA Description</label>
-                                                <Textarea
-                                                    value={settings.landing_cta.description}
-                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, description: e.target.value } })}
-                                                    className="bg-background border-white/10 min-h-[80px]"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Button Text</label>
-                                            <Input
-                                                value={settings.landing_cta.button_text}
-                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_text: e.target.value } })}
-                                                className="bg-background border-white/10 h-11"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Button Link</label>
-                                            <Input
-                                                value={settings.landing_cta.button_href}
-                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_href: e.target.value } })}
-                                                className="bg-background border-white/10 h-11 font-mono text-xs"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                            </div>
                             </div>
                         )}
 
-                        {/* STATISTICS TAB */}
-                        {activeTab === "statistics" && (
-                            <div className="space-y-10 max-w-3xl animate-in fade-in duration-500">
-                                <div>
-                                    <h2 className="text-lg font-bold text-white mb-1">Virtual Statistics</h2>
-                                    <p className="text-sm text-white/40">These base numbers are added to your live store data to make it look established.</p>
+                {/* STATISTICS TAB */}
+                {activeTab === "statistics" && (
+                    <div className="space-y-10 max-w-3xl animate-in fade-in duration-500">
+                        <div>
+                            <h2 className="text-lg font-bold text-white mb-1">Virtual Statistics</h2>
+                            <p className="text-sm text-white/40">These base numbers are added to your live store data to make it look established.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-white">Base Sales</label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        value={settings.statistics?.base_sales || 0}
+                                        onChange={(e) => setSettings({
+                                            ...settings,
+                                            statistics: { ...settings.statistics, base_sales: parseInt(e.target.value) || 0 }
+                                        })}
+                                        className="bg-background border-white/10 h-11 pl-10"
+                                    />
+                                    <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-white">Base Sales</label>
-                                        <div className="relative">
-                                            <Input
-                                                type="number"
-                                                value={settings.statistics?.base_sales || 0}
-                                                onChange={(e) => setSettings({
-                                                    ...settings,
-                                                    statistics: { ...settings.statistics, base_sales: parseInt(e.target.value) || 0 }
-                                                })}
-                                                className="bg-background border-white/10 h-11 pl-10"
-                                            />
-                                            <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                        </div>
-                                        <p className="text-[10px] text-white/40">Number of orders to add to actual count.</p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-white">Base Buyers</label>
-                                        <div className="relative">
-                                            <Input
-                                                type="number"
-                                                value={settings.statistics?.base_buyers || 0}
-                                                onChange={(e) => setSettings({
-                                                    ...settings,
-                                                    statistics: { ...settings.statistics, base_buyers: parseInt(e.target.value) || 0 }
-                                                })}
-                                                className="bg-background border-white/10 h-11 pl-10"
-                                            />
-                                            <Heart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                        </div>
-                                        <p className="text-[10px] text-white/40">Number of unique customers to add.</p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-white">Base Rating</label>
-                                        <div className="relative">
-                                            <Input
-                                                type="text"
-                                                placeholder="4.98"
-                                                value={settings.statistics?.base_rating || ""}
-                                                onChange={(e) => setSettings({
-                                                    ...settings,
-                                                    statistics: { ...settings.statistics, base_rating: e.target.value }
-                                                })}
-                                                className="bg-background border-white/10 h-11 pl-10"
-                                            />
-                                            <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                        </div>
-                                        <p className="text-[10px] text-white/40">Fallback rating if no feedback exists.</p>
-                                    </div>
-                                </div>
-
-                                <div className="p-4 rounded-xl bg-brand/5 border border-brand/10 flex gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <span className="text-[10px] font-bold text-brand italic">i</span>
-                                    </div>
-                                    <p className="text-xs text-brand/80 leading-relaxed italic">
-                                        Example: If your actual store has 10 sales and you set Base Sales to 1000,
-                                        the public navbar will show 1010 Sales.
-                                    </p>
-                                </div>
+                                <p className="text-[10px] text-white/40">Number of orders to add to actual count.</p>
                             </div>
-                        )}
 
-                        {/* OTHER TABS (Placeholder) */}
-                        {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
-                            <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
-                                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                                    {(() => {
-                                        const Icon = TABS.find(t => t.id === activeTab)?.icon
-                                        return Icon ? <Icon className="w-8 h-8 text-white/20" /> : null
-                                    })()}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-white">Base Buyers</label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        value={settings.statistics?.base_buyers || 0}
+                                        onChange={(e) => setSettings({
+                                            ...settings,
+                                            statistics: { ...settings.statistics, base_buyers: parseInt(e.target.value) || 0 }
+                                        })}
+                                        className="bg-background border-white/10 h-11 pl-10"
+                                    />
+                                    <Heart className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-white">Coming Soon</h3>
-                                    <p className="text-sm text-white/40">The {TABS.find(t => t.id === activeTab)?.label} settings are under development.</p>
-                                </div>
+                                <p className="text-[10px] text-white/40">Number of unique customers to add.</p>
                             </div>
-                        )}
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-white">Base Rating</label>
+                                <div className="relative">
+                                    <Input
+                                        type="text"
+                                        placeholder="4.98"
+                                        value={settings.statistics?.base_rating || ""}
+                                        onChange={(e) => setSettings({
+                                            ...settings,
+                                            statistics: { ...settings.statistics, base_rating: e.target.value }
+                                        })}
+                                        className="bg-background border-white/10 h-11 pl-10"
+                                    />
+                                    <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                </div>
+                                <p className="text-[10px] text-white/40">Fallback rating if no feedback exists.</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-brand/5 border border-brand/10 flex gap-3">
+                            <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <span className="text-[10px] font-bold text-brand italic">i</span>
+                            </div>
+                            <p className="text-xs text-brand/80 leading-relaxed italic">
+                                Example: If your actual store has 10 sales and you set Base Sales to 1000,
+                                the public navbar will show 1010 Sales.
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Save Toolbar */}
-                <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 sm:p-6 bg-background/80 backdrop-blur-md border-t border-white/5 z-50">
-                    <div className="max-w-[100rem] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-                        <Button
-                            variant="ghost"
-                            className="bg-background text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5 sm:flex-1 md:max-w-[200px]"
-                            onClick={() => window.location.href = '/admin/dashboard'}
-                        >
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent sm:flex-1 md:max-w-[200px]"
-                            onClick={async () => {
-                                await handleSave()
-                                window.location.href = '/admin/dashboard'
-                            }}
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            Save & Exit
-                        </Button>
-                        <Button
-                            onClick={handleSave}
-                            className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20 sm:flex-1 md:max-w-[200px]"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                        </Button>
+                {/* OTHER TABS (Placeholder) */}
+                {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
+                    <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
+                        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                            {(() => {
+                                const Icon = TABS.find(t => t.id === activeTab)?.icon
+                                return Icon ? <Icon className="w-8 h-8 text-white/20" /> : null
+                            })()}
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-white">Coming Soon</h3>
+                            <p className="text-sm text-white/40">The {TABS.find(t => t.id === activeTab)?.label} settings are under development.</p>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
-        </AdminLayout>
+        </div>
+
+                {/* Save Toolbar */ }
+    <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 sm:p-6 bg-background/80 backdrop-blur-md border-t border-white/5 z-50">
+        <div className="max-w-[100rem] mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
+            <Button
+                variant="ghost"
+                className="bg-background text-white/60 hover:text-white hover:bg-[#142442] h-12 px-6 rounded-xl border border-white/5 sm:flex-1 md:max-w-[200px]"
+                onClick={() => window.location.href = '/admin/dashboard'}
+            >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+            </Button>
+            <Button
+                variant="outline"
+                className="h-12 px-6 rounded-xl border-brand text-brand hover:bg-brand/10 bg-transparent sm:flex-1 md:max-w-[200px]"
+                onClick={async () => {
+                    await handleSave()
+                    window.location.href = '/admin/dashboard'
+                }}
+            >
+                <Save className="w-4 h-4 mr-2" />
+                Save & Exit
+            </Button>
+            <Button
+                onClick={handleSave}
+                className="h-12 px-8 rounded-xl bg-brand text-black font-bold hover:bg-brand/90 shadow-lg shadow-brand/20 sm:flex-1 md:max-w-[200px]"
+            >
+                <Save className="w-4 h-4 mr-2" />
+                Save
+            </Button>
+        </div>
+    </div>
+            </div >
+        </AdminLayout >
     )
 }
