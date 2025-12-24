@@ -47,12 +47,6 @@ export function CTASection({
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-teal-500/15 blur-[100px] rounded-full"
                 />
-
-                {/* Top edge glow line */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#a4f8ff]/30 to-transparent" />
-
-                {/* Bottom edge glow line */}
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
             </div>
 
             {/* Content */}
