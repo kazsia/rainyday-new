@@ -51,6 +51,7 @@ const CONFIGURE_TABS = [
 
 const EDITOR_TABS = [
     { id: "landing", label: "Landing Content", icon: Store },
+    { id: "why_choose", label: "Why Choose", icon: Zap },
     { id: "about", label: "About Page", icon: Info },
     { id: "faq", label: "FAQ", icon: HelpCircle },
     { id: "legal", label: "Legal Pages", icon: FileText },
@@ -783,6 +784,174 @@ export default function AdminStorefrontPage() {
                         )}
 
                         {/* ABOUT TAB */}
+                        {/* WHY CHOOSE TAB */}
+                        {activeTab === "why_choose" && (
+                            <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
+                                <div>
+                                    <h2 className="text-lg font-bold text-white mb-1">Why Choose Section</h2>
+                                    <p className="text-sm text-white/40">Customize the "Why Choose" section on your landing page.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Title</label>
+                                            <Input
+                                                value={settings.why_choose.title}
+                                                onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="The Ultimate Ecosystem"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Subtitle</label>
+                                            <Input
+                                                value={settings.why_choose.subtitle}
+                                                onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, subtitle: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Why Choose Rainyday?"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-bold text-white">Features</label>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSettings({
+                                                        ...settings,
+                                                        why_choose: {
+                                                            ...settings.why_choose,
+                                                            features: [
+                                                                ...settings.why_choose.features,
+                                                                { title: "", description: "", icon: "Zap" }
+                                                            ]
+                                                        }
+                                                    })
+                                                }}
+                                                className="bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20"
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Add Feature
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {settings.why_choose.features.map((feature, index) => (
+                                                <div key={index} className="bg-background p-6 rounded-xl border border-white/10 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-white/40 uppercase tracking-widest">Feature {index + 1}</span>
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                const newFeatures = settings.why_choose.features.filter((_, i) => i !== index)
+                                                                setSettings({
+                                                                    ...settings,
+                                                                    why_choose: {
+                                                                        ...settings.why_choose,
+                                                                        features: newFeatures
+                                                                    }
+                                                                })
+                                                            }}
+                                                            className="h-8 w-8 text-white/40 hover:text-red-500 hover:bg-red-500/10"
+                                                        >
+                                                            <Trash className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-white/60">Icon</label>
+                                                            <select
+                                                                value={feature.icon}
+                                                                onChange={e => {
+                                                                    const newFeatures = [...settings.why_choose.features]
+                                                                    newFeatures[index] = { ...newFeatures[index], icon: e.target.value }
+                                                                    setSettings({
+                                                                        ...settings,
+                                                                        why_choose: {
+                                                                            ...settings.why_choose,
+                                                                            features: newFeatures
+                                                                        }
+                                                                    })
+                                                                }}
+                                                                className="w-full h-11 bg-background border border-white/10 rounded-lg px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50"
+                                                            >
+                                                                <option value="Zap">⚡ Zap</option>
+                                                                <option value="Shield">🛡️ Shield</option>
+                                                                <option value="Globe">🌐 Globe</option>
+                                                                <option value="Rocket">🚀 Rocket</option>
+                                                                <option value="Lock">🔒 Lock</option>
+                                                                <option value="Cloud">☁️ Cloud</option>
+                                                                <option value="Download">⬇️ Download</option>
+                                                                <option value="Eye">👁️ Eye</option>
+                                                                <option value="Star">⭐ Star</option>
+                                                                <option value="Heart">❤️ Heart</option>
+                                                                <option value="Trophy">🏆 Trophy</option>
+                                                                <option value="Users">👥 Users</option>
+                                                                <option value="Activity">📊 Activity</option>
+                                                                <option value="Cpu">💻 Cpu</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-white/60">Title</label>
+                                                            <Input
+                                                                value={feature.title}
+                                                                onChange={e => {
+                                                                    const newFeatures = [...settings.why_choose.features]
+                                                                    newFeatures[index] = { ...newFeatures[index], title: e.target.value }
+                                                                    setSettings({
+                                                                        ...settings,
+                                                                        why_choose: {
+                                                                            ...settings.why_choose,
+                                                                            features: newFeatures
+                                                                        }
+                                                                    })
+                                                                }}
+                                                                className="bg-background border-white/10 h-11"
+                                                                placeholder="Feature Title"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/60">Description</label>
+                                                        <Textarea
+                                                            value={feature.description}
+                                                            onChange={e => {
+                                                                const newFeatures = [...settings.why_choose.features]
+                                                                newFeatures[index] = { ...newFeatures[index], description: e.target.value }
+                                                                setSettings({
+                                                                    ...settings,
+                                                                    why_choose: {
+                                                                        ...settings.why_choose,
+                                                                        features: newFeatures
+                                                                    }
+                                                                })
+                                                            }}
+                                                            className="bg-background border-white/10 min-h-[80px] resize-none"
+                                                            placeholder="Feature description..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {settings.why_choose.features.length === 0 && (
+                                                <div className="text-center py-12 bg-background rounded-xl border border-white/5">
+                                                    <p className="text-sm text-white/40">No features added yet. Click "Add Feature" to get started.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === "about" && (
                             <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
                                 <div>
