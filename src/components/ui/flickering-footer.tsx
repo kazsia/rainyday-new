@@ -360,21 +360,29 @@ export const FlickeringFooter = () => {
     return (
         <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
             {/* Background with gradient glow effects */}
-            <div className="absolute inset-0 pointer-events-none">
-                {/* Left cyan gradient orb */}
+            <div className="absolute inset-0 bg-black pointer-events-none">
+                {/* Main cyan gradient orb - left */}
                 <motion.div
-                    initial={{ opacity: 0.15 }}
-                    animate={{ opacity: [0.15, 0.25, 0.15] }}
-                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-1/4 left-[10%] w-[600px] h-[500px] bg-[#a4f8ff]/10 blur-[140px] rounded-full"
+                    initial={{ opacity: 0.3 }}
+                    animate={{ opacity: [0.3, 0.5, 0.3] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/2 left-[15%] -translate-y-1/2 w-[600px] h-[500px] bg-[#a4f8ff]/20 blur-[150px] rounded-full"
                 />
 
-                {/* Right teal accent */}
+                {/* Secondary cyan orb - right */}
                 <motion.div
-                    initial={{ opacity: 0.1 }}
-                    animate={{ opacity: [0.1, 0.2, 0.1] }}
+                    initial={{ opacity: 0.25 }}
+                    animate={{ opacity: [0.25, 0.4, 0.25] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[500px] h-[450px] bg-cyan-500/20 blur-[130px] rounded-full"
+                />
+
+                {/* Center accent glow */}
+                <motion.div
+                    initial={{ opacity: 0.2 }}
+                    animate={{ opacity: [0.2, 0.35, 0.2] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute bottom-1/3 right-[15%] w-[500px] h-[450px] bg-teal-500/8 blur-[120px] rounded-full"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-teal-500/15 blur-[100px] rounded-full"
                 />
             </div>
 
