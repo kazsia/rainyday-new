@@ -110,6 +110,19 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Rewrite clean URLs to storefront with query parameters
+  async rewrites() {
+    return [
+      {
+        source: '/admin/configure',
+        destination: '/admin/storefront?tab=identity',
+      },
+      {
+        source: '/admin/editor',
+        destination: '/admin/storefront?tab=hero',
+      },
+    ];
+  },
   // Enable experimental features for better performance
   experimental: {
     serverActions: {
