@@ -77,16 +77,12 @@ export default function AdminStorefrontPage() {
     const searchParams = useSearchParams()
     const tabParam = searchParams.get("tab")
 
-    console.log('Storefront page - tabParam:', tabParam)
-
     // Determine initial tab based on URL parameter
     const getInitialTab = () => {
         if (tabParam && TABS.some(t => t.id === tabParam)) {
-            console.log('Using tabParam:', tabParam)
             return tabParam
         }
-        // Default to identity (first configure tab) instead of hero
-        console.log('Using default: identity')
+        // Default to identity (first configure tab)
         return "identity"
     }
 
@@ -94,9 +90,7 @@ export default function AdminStorefrontPage() {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        console.log('useEffect - tabParam:', tabParam, 'activeTab:', activeTab)
         if (tabParam && TABS.some(t => t.id === tabParam)) {
-            console.log('Setting activeTab to:', tabParam)
             setActiveTab(tabParam)
         }
     }, [tabParam])
