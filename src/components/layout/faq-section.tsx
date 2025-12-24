@@ -27,8 +27,26 @@ export function FAQSection() {
     const faqs = (settings?.faq?.items || []).slice(0, 4) // Show only first 4 on landing page
     return (
         <section id="faq" className="py-16 md:py-24 relative overflow-hidden">
+            {/* Background with gradient glow effects */}
+            <div className="absolute inset-0">
+                {/* Right cyan gradient orb */}
+                <motion.div
+                    initial={{ opacity: 0.2 }}
+                    animate={{ opacity: [0.2, 0.35, 0.2] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/3 right-[15%] w-[500px] h-[400px] bg-[#a4f8ff]/15 blur-[120px] rounded-full"
+                />
 
-            <div className="container mx-auto px-6 max-w-5xl">
+                {/* Left accent */}
+                <motion.div
+                    initial={{ opacity: 0.15 }}
+                    animate={{ opacity: [0.15, 0.25, 0.15] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                    className="absolute bottom-1/4 left-[10%] w-[450px] h-[400px] bg-cyan-500/10 blur-[110px] rounded-full"
+                />
+            </div>
+
+            <div className="container mx-auto px-6 max-w-5xl relative z-10">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}

@@ -6,6 +6,7 @@ import * as Color from "color-bits";
 import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import { motion } from "framer-motion";
 
 import { Logo } from "@/components/layout/logo";
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context";
@@ -358,8 +359,26 @@ export const FlickeringFooter = () => {
 
     return (
         <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
+            {/* Background with gradient glow effects */}
+            <div className="absolute inset-0 pointer-events-none">
+                {/* Left cyan gradient orb */}
+                <motion.div
+                    initial={{ opacity: 0.15 }}
+                    animate={{ opacity: [0.15, 0.25, 0.15] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/4 left-[10%] w-[600px] h-[500px] bg-[#a4f8ff]/10 blur-[140px] rounded-full"
+                />
 
-            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8" suppressHydrationWarning>
+                {/* Right teal accent */}
+                <motion.div
+                    initial={{ opacity: 0.1 }}
+                    animate={{ opacity: [0.1, 0.2, 0.1] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className="absolute bottom-1/3 right-[15%] w-[500px] h-[450px] bg-teal-500/8 blur-[120px] rounded-full"
+                />
+            </div>
+
+            <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8 relative z-10" suppressHydrationWarning>
                 <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0" suppressHydrationWarning>
                     <Logo variant="footer" />
                     <p className="tracking-tight text-white/40 font-medium leading-relaxed" suppressHydrationWarning>
