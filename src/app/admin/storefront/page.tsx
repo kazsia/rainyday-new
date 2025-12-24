@@ -29,7 +29,12 @@ import {
     Mail,
     Info,
     Plus,
-    Zap
+    Zap,
+    Menu,
+    Sparkles,
+    MessageCircle,
+    MousePointerClick,
+    Footprints
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,10 +55,14 @@ const CONFIGURE_TABS = [
 ]
 
 const EDITOR_TABS = [
-    { id: "landing", label: "Landing Content", icon: Store },
+    { id: "navbar", label: "Navbar", icon: Menu },
+    { id: "hero", label: "Hero Section", icon: Sparkles },
     { id: "why_choose", label: "Why Choose", icon: Zap },
-    { id: "about", label: "About Page", icon: Info },
+    { id: "how_it_works", label: "How It Works", icon: Activity },
     { id: "faq", label: "FAQ", icon: HelpCircle },
+    { id: "cta", label: "CTA Section", icon: MousePointerClick },
+    { id: "footer", label: "Footer", icon: Footprints },
+    { id: "about", label: "About Page", icon: Info },
     { id: "legal", label: "Legal Pages", icon: FileText },
     { id: "notifications", label: "Webhooks", icon: Bell },
     { id: "email", label: "Email", icon: Mail },
@@ -1181,7 +1190,7 @@ export default function AdminStorefrontPage() {
                         )}
 
                         {/* LANDING CONTENT TAB */}
-                        {activeTab === "landing" && (
+                        {activeTab === "hero" && (
                             <div className="space-y-12 max-w-4xl animate-in fade-in duration-500 pb-20">
                                 {/* HERO SECTION */}
                                 <div className="space-y-8">
