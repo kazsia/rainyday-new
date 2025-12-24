@@ -75,7 +75,7 @@ import { useSearchParams } from "next/navigation"
 export default function AdminStorefrontPage() {
     const searchParams = useSearchParams()
     const tabParam = searchParams.get("tab")
-    const [activeTab, setActiveTab] = useState(tabParam && TABS.some(t => t.id === tabParam) ? tabParam : "identity")
+    const [activeTab, setActiveTab] = useState(tabParam && TABS.some(t => t.id === tabParam) ? tabParam : "hero")
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
