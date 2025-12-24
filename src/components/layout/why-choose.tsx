@@ -106,6 +106,22 @@ export function WhyChoose({
                     transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
                     className="absolute bottom-[5%] right-[20%] w-[400px] h-[400px] bg-blue-500/12 blur-[100px] rounded-full"
                 />
+
+                {/* Top right pink gradient */}
+                <motion.div
+                    initial={{ opacity: 0.18 }}
+                    animate={{ opacity: [0.18, 0.32, 0.18] }}
+                    transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
+                    className="absolute top-[15%] right-[12%] w-[480px] h-[480px] bg-pink-500/12 blur-[115px] rounded-full"
+                />
+
+                {/* Middle left emerald gradient */}
+                <motion.div
+                    initial={{ opacity: 0.16 }}
+                    animate={{ opacity: [0.16, 0.28, 0.16] }}
+                    transition={{ duration: 6.8, repeat: Infinity, ease: "easeInOut", delay: 3.5 }}
+                    className="absolute top-1/2 left-[8%] w-[420px] h-[420px] bg-emerald-500/10 blur-[105px] rounded-full"
+                />
             </div>
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">

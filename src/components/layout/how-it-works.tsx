@@ -37,18 +37,42 @@ export function HowItWorks({
             <div className="absolute inset-0">
                 {/* Center cyan gradient orb */}
                 <motion.div
-                    initial={{ opacity: 0.25 }}
-                    animate={{ opacity: [0.25, 0.4, 0.25] }}
+                    initial={{ opacity: 0.3 }}
+                    animate={{ opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-teal-500/15 blur-[130px] rounded-full"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-teal-500/18 blur-[140px] rounded-full"
                 />
 
-                {/* Left accent */}
+                {/* Left cyan accent */}
+                <motion.div
+                    initial={{ opacity: 0.25 }}
+                    animate={{ opacity: [0.25, 0.4, 0.25] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute bottom-1/4 left-[10%] w-[500px] h-[450px] bg-cyan-400/15 blur-[120px] rounded-full"
+                />
+
+                {/* Top right purple gradient */}
+                <motion.div
+                    initial={{ opacity: 0.22 }}
+                    animate={{ opacity: [0.22, 0.38, 0.22] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className="absolute top-[15%] right-[12%] w-[550px] h-[480px] bg-purple-500/14 blur-[125px] rounded-full"
+                />
+
+                {/* Bottom right blue gradient */}
                 <motion.div
                     initial={{ opacity: 0.2 }}
-                    animate={{ opacity: [0.2, 0.3, 0.2] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute bottom-1/4 left-[15%] w-[400px] h-[350px] bg-[#a4f8ff]/10 blur-[100px] rounded-full"
+                    animate={{ opacity: [0.2, 0.35, 0.2] }}
+                    transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                    className="absolute bottom-[10%] right-[15%] w-[480px] h-[420px] bg-blue-500/13 blur-[110px] rounded-full"
+                />
+
+                {/* Top left emerald gradient */}
+                <motion.div
+                    initial={{ opacity: 0.18 }}
+                    animate={{ opacity: [0.18, 0.32, 0.18] }}
+                    transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                    className="absolute top-[8%] left-[8%] w-[450px] h-[450px] bg-emerald-500/11 blur-[105px] rounded-full"
                 />
             </div>
 
