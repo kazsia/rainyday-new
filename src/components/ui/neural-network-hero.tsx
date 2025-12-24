@@ -44,11 +44,12 @@ const fragmentShader = `
   uniform vec2 iResolution;
   varying vec2 vUv;
   
-  vec4 buf[8];
+  varying vec2 vUv;
   
   vec4 sigmoid(vec4 x) { return 1. / (1. + exp(-x)); }
   
   vec4 cppn_fn(vec2 coordinate, float in0, float in1, float in2) {
+    vec4 buf[8];
     // layer 1 *********************************************************************
     buf[6] = vec4(coordinate.x, coordinate.y, 0.3948333106474662 + in0, 0.36 + in1);
     buf[7] = vec4(0.14 + in2, sqrt(coordinate.x * coordinate.x + coordinate.y * coordinate.y), 0., 0.);
@@ -213,26 +214,8 @@ function ShaderBackground() {
 
     const camera = useMemo(() => ({ position: [0, 0, 1] as [number, number, number], fov: 75, near: 0.1, far: 1000 }), []);
 
-    useGSAP(
-        () => {
-            if (!canvasRef.current) return;
-
-            gsap.set(canvasRef.current, {
-                filter: 'blur(10px)',
-                scale: 1.1,
-                autoAlpha: 1
-            });
-
-            gsap.to(canvasRef.current, {
-                filter: 'blur(0px)',
-                scale: 1,
-                autoAlpha: 1,
-                duration: 1.5,
-                ease: 'power3.out',
-            });
-        },
-        { scope: canvasRef }
-    );
+    // Removed GSAP animation for background to ensure it never vanishes
+    // useGSAP removed to rely on simple CSS/React rendering
 
     return (
         <div ref={canvasRef} className="bg-black absolute inset-0 -z-10 w-full h-full" aria-hidden>
