@@ -31,18 +31,26 @@ export function FAQSection() {
             <div className="absolute inset-0">
                 {/* Right cyan gradient orb */}
                 <motion.div
-                    initial={{ opacity: 0.2 }}
-                    animate={{ opacity: [0.2, 0.35, 0.2] }}
+                    initial={{ opacity: 0.3 }}
+                    animate={{ opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-1/3 right-[15%] w-[500px] h-[400px] bg-[#a4f8ff]/15 blur-[120px] rounded-full"
+                    className="absolute top-1/3 right-[15%] w-[600px] h-[500px] bg-[#a4f8ff]/20 blur-[130px] rounded-full"
                 />
 
                 {/* Left accent */}
                 <motion.div
-                    initial={{ opacity: 0.15 }}
-                    animate={{ opacity: [0.15, 0.25, 0.15] }}
+                    initial={{ opacity: 0.25 }}
+                    animate={{ opacity: [0.25, 0.4, 0.25] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                    className="absolute bottom-1/4 left-[10%] w-[450px] h-[400px] bg-cyan-500/10 blur-[110px] rounded-full"
+                    className="absolute bottom-1/4 left-[10%] w-[550px] h-[500px] bg-cyan-500/15 blur-[120px] rounded-full"
+                />
+
+                {/* Center glow */}
+                <motion.div
+                    initial={{ opacity: 0.2 }}
+                    animate={{ opacity: [0.2, 0.35, 0.2] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-teal-500/15 blur-[140px] rounded-full"
                 />
             </div>
 
