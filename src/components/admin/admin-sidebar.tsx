@@ -282,20 +282,21 @@ function SidebarContent({ className, isDrawer, onClose }: { className?: string, 
                 </div>
             </div>
 
-            {/* Profile Section */}
+            {/* Account Button */}
             <div className="mt-auto p-3 border-t border-[var(--sa-border)] bg-black/20">
-                <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors cursor-pointer group">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--sa-accent-glow)] to-transparent border border-[var(--sa-border)] flex items-center justify-center text-[10px] font-bold text-[var(--sa-accent)] uppercase">
-                        AD
+                <button
+                    onClick={() => router.push('/admin/account')}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.05] transition-all group border border-transparent hover:border-[var(--sa-border-hover)]"
+                >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--sa-accent-glow)] to-transparent border border-[var(--sa-border)] flex items-center justify-center">
+                        <User className="w-4 h-4 text-[var(--sa-accent)]" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-white truncate">Administrator</p>
-                        <p className="text-[9px] text-[var(--sa-fg-dim)] truncate group-hover:text-[var(--sa-fg-muted)] transition-colors">admin@rainyday.cc</p>
+                    <div className="flex-1 text-left">
+                        <p className="text-xs font-bold text-white">Account</p>
+                        <p className="text-[10px] text-[var(--sa-fg-dim)] group-hover:text-[var(--sa-fg-muted)] transition-colors">Manage settings</p>
                     </div>
-                    <Link href="/auth/signout" className="p-1.5 rounded-md hover:bg-white/5 text-[var(--sa-fg-dim)] hover:text-white transition-all">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
-                </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-[var(--sa-fg-dim)] group-hover:text-white transition-colors" />
+                </button>
             </div>
         </aside>
     )
