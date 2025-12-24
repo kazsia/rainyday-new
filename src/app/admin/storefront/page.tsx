@@ -246,7 +246,7 @@ export default function AdminStorefrontPage() {
                     {/* Sidebar / Tabs */}
                     <div className="col-span-12 md:col-span-3 lg:col-span-2">
                         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                            {(EDITOR_TABS.some(t => t.id === activeTab) ? EDITOR_TABS : CONFIGURE_TABS).map((tab) => (
+                            {TABS.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
