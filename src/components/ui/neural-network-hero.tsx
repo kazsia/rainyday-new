@@ -38,7 +38,7 @@ const vertexShader = `
 
 const fragmentShader = `
   #ifdef GL_ES
-    precision lowp float;
+    precision highp float;
   #endif
   uniform float iTime;
   uniform vec2 iResolution;
@@ -285,24 +285,8 @@ export default function NeuralNetworkHero({
             if (!headerRef.current) return;
 
             document.fonts.ready.then(() => {
-                // Fallback animation if SplitText is unavailable (free GSAP)
-                const hasSplitText = typeof SplitText !== 'undefined';
-                let lines: any = [];
-
-                if (hasSplitText) {
-                    try {
-                        const split = new SplitText(headerRef.current!, {
-                            type: 'lines',
-                            wordsClass: 'lines',
-                        });
-                        lines = split.lines;
-                    } catch (e) {
-                        // fallback
-                        lines = [headerRef.current];
-                    }
-                } else {
-                    lines = [headerRef.current];
-                }
+                // Simplified animation without SplitText plugin dependency to prevent crashes
+                const lines = [headerRef.current];
 
                 gsap.set(lines, {
                     filter: 'blur(16px)',
