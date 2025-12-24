@@ -64,7 +64,7 @@ export function WhyChoose({
     features = []
 }: WhyChooseProps) {
     return (
-        <section className="pt-8 md:pt-12 pb-16 md:pb-24 relative overflow-hidden">
+        <section className="pb-16 md:pb-24 relative overflow-hidden">
             {/* Background with gradient glow effects */}
             <div className="absolute inset-0">
                 {/* Top left cyan gradient orb */}

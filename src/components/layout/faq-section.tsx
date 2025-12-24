@@ -26,7 +26,7 @@ export function FAQSection() {
 
     const faqs = (settings?.faq?.items || []).slice(0, 4) // Show only first 4 on landing page
     return (
-        <section id="faq" className="py-16 md:py-24 relative overflow-hidden">
+        <section id="faq" className="pb-16 md:pb-24 relative overflow-hidden">
             {/* Background with gradient glow effects */}
             <div className="absolute inset-0">
                 {/* Right cyan gradient orb */}
