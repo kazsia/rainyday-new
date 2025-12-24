@@ -44,7 +44,7 @@ const fragmentShader = `
   uniform vec2 iResolution;
   varying vec2 vUv;
   
-  varying vec2 vUv;
+
   
   vec4 sigmoid(vec4 x) { return 1. / (1. + exp(-x)); }
   
