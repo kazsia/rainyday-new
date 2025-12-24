@@ -1,15 +1,17 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect, memo } from 'react';
 import { Canvas, useFrame, extend } from '@react-three/fiber';
 import { shaderMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { SplitText } from 'gsap/SplitText';
 
-// Note: SplitText is a premium GSAP plugin and cannot be used in open implementations.
-// Logic has been adapted to standard GSAP animations.
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(SplitText, useGSAP);
+}
 
 // ===================== SHADER =====================
 const vertexShader = `
@@ -28,10 +30,11 @@ const fragmentShader = `
   uniform vec2 iResolution;
   varying vec2 vUv;
   
+  vec4 buf[8];
+  
   vec4 sigmoid(vec4 x) { return 1. / (1. + exp(-x)); }
   
   vec4 cppn_fn(vec2 coordinate, float in0, float in1, float in2) {
-    vec4 buf[8];
     // layer 1 *********************************************************************
     buf[6] = vec4(coordinate.x, coordinate.y, 0.3948333106474662 + in0, 0.36 + in1);
     buf[7] = vec4(0.14 + in2, sqrt(coordinate.x * coordinate.x + coordinate.y * coordinate.y), 0., 0.);
@@ -144,22 +147,35 @@ const fragmentShader = `
     + vec4(-1.5468478, -3.6171484, 0.24762098, 0.0);
 
     buf[0] = sigmoid(buf[0]);
-    return vec4(buf[0].x , buf[0].y , buf[0].z, 1.0);
+    return vec4(buf[0].x, buf[0].y, buf[0].z, 1.0);
   }
   
   void main() {
-    vec2 uv = vUv * 2.0 - 1.0; uv.y *= -1.0;
-    gl_FragColor = cppn_fn(uv, 0.1 * sin(0.3 * iTime), 0.1 * sin(0.69 * iTime), 0.1 * sin(0.44 * iTime));
+    // Spatial centering: shift visual density 'more lower' near the centered heading
+    vec2 uv = vUv * 2.0 - 1.0; 
+    uv.y = (uv.y * -1.0) + 0.45; // Shifted sampling for lower positioning
+    
+    // Smooth modulation for looping effect
+    float t = iTime * 0.8;
+    vec4 color = cppn_fn(uv, 0.2 * sin(0.4 * t), 0.2 * sin(0.85 * t), 0.2 * sin(0.55 * t));
+    
+    // Exact Branding Color #a4f8ff (164, 248, 255)
+    vec3 brandColor = vec3(164.0/255.0, 248.0/255.0, 255.0/255.0);
+    vec3 finalColor = color.rgb * brandColor * 5.0;
+    
+    gl_FragColor = vec4(finalColor, 1.0);
   }
 `;
 
-const NeuralMaterial = shaderMaterial(
+// Use a more standard name to avoid case sensitivity issues in registration
+const NeuralShaderMaterial = shaderMaterial(
     { iTime: 0, iResolution: new THREE.Vector2(1, 1) },
     vertexShader,
     fragmentShader
 );
 
-extend({ NeuralMaterial });
+// Register with Fiber - this must use the class/function as value
+extend({ NeuralShaderMaterial });
 
 function ShaderPlane() {
     const meshRef = useRef<THREE.Mesh>(null!);
@@ -173,51 +189,42 @@ function ShaderPlane() {
     });
 
     return (
-        <mesh ref={meshRef} position={[0, -0.75, -0.5]}>
-            <planeGeometry args={[4, 4]} />
-            <neuralMaterial ref={materialRef} side={THREE.DoubleSide} />
+        <mesh ref={meshRef} position={[0, 0, 0]}>
+            <planeGeometry args={[5, 5]} />
+            {/* 
+          R3F maps 'NeuralShaderMaterial' to 'neuralShaderMaterial'. 
+          Using lowercase 'n' in the tag name.
+      */}
+            <neuralShaderMaterial ref={materialRef} transparent side={THREE.DoubleSide} />
         </mesh>
     );
 }
 
-function ShaderBackground() {
-    const canvasRef = useRef<HTMLDivElement | null>(null);
+const ShaderOverlay = memo(function ShaderOverlay() {
+    const [isMounted, setIsMounted] = useState(false);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const camera = useMemo(() => ({ position: [0, 0, 1] as [number, number, number], fov: 75, near: 0.1, far: 1000 }), []);
 
-    // Clean initialization without complex GSAP transitions that might hide the canvas
-    useGSAP(
-        () => {
-            if (!canvasRef.current) return;
-            gsap.set(canvasRef.current, {
-                filter: 'blur(10px)',
-                scale: 1,
-                autoAlpha: 1
-            });
-
-            gsap.to(canvasRef.current, {
-                filter: 'blur(0px)',
-                duration: 1.5,
-                ease: 'power3.out'
-            });
-        },
-        { scope: canvasRef }
-    );
+    if (!isMounted) return null;
 
     return (
-        <div ref={canvasRef} className="bg-black absolute inset-0 -z-10 w-full h-full" aria-hidden>
+        <div ref={containerRef} className="absolute inset-0 z-30 pointer-events-none mix-blend-screen overflow-hidden" aria-hidden>
             <Canvas
                 camera={camera}
-                gl={{ antialias: true, alpha: false }}
+                gl={{ antialias: true, alpha: true }}
                 dpr={[1, 2]}
                 style={{ width: '100%', height: '100%' }}
             >
                 <ShaderPlane />
             </Canvas>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
         </div>
     );
-}
+});
 
 // ===================== HERO =====================
 interface HeroProps {
@@ -235,8 +242,8 @@ export default function NeuralNetworkHero({
     badgeText = "Generative Surfaces",
     badgeLabel = "New",
     ctaButtons = [
-        { text: "Get started", href: "#get-started", primary: true },
-        { text: "View showcase", href: "#showcase" }
+        { text: "Get started", href: "/store", primary: true },
+        { text: "View showcase", href: "/store" }
     ],
     microDetails = ["Low‑weight font", "Tight tracking", "Subtle motion"]
 }: HeroProps) {
@@ -245,20 +252,19 @@ export default function NeuralNetworkHero({
     const paraRef = useRef<HTMLParagraphElement | null>(null);
     const ctaRef = useRef<HTMLDivElement | null>(null);
     const badgeRef = useRef<HTMLDivElement | null>(null);
-    const microRef = useRef<HTMLUListElement | null>(null);
-    const microItem1Ref = useRef<HTMLLIElement | null>(null);
-    const microItem2Ref = useRef<HTMLLIElement | null>(null);
-    const microItem3Ref = useRef<HTMLLIElement | null>(null);
+    const microItemRefs = useRef<(HTMLLIElement | null)[]>([]);
 
     useGSAP(
         () => {
             if (!headerRef.current) return;
 
             document.fonts.ready.then(() => {
-                // Standard GSAP text animation fallback since SplitText is not available
-                const lines = [headerRef.current];
+                const split = new SplitText(headerRef.current!, {
+                    type: 'lines',
+                    wordsClass: 'lines',
+                });
 
-                gsap.set(lines, {
+                gsap.set(split.lines, {
                     filter: 'blur(16px)',
                     yPercent: 30,
                     autoAlpha: 0,
@@ -266,82 +272,61 @@ export default function NeuralNetworkHero({
                     transformOrigin: '50% 100%',
                 });
 
-                if (badgeRef.current) {
-                    gsap.set(badgeRef.current, { autoAlpha: 0, y: -8 });
-                }
-                if (paraRef.current) {
-                    gsap.set(paraRef.current, { autoAlpha: 0, y: 8 });
-                }
-                if (ctaRef.current) {
-                    gsap.set(ctaRef.current, { autoAlpha: 0, y: 8 });
-                }
-                const microItems = [microItem1Ref.current, microItem2Ref.current, microItem3Ref.current].filter(Boolean);
-                if (microItems.length > 0) {
-                    gsap.set(microItems, { autoAlpha: 0, y: 6 });
-                }
+                if (badgeRef.current) gsap.set(badgeRef.current, { autoAlpha: 0, y: -8 });
+                if (paraRef.current) gsap.set(paraRef.current, { autoAlpha: 0, y: 8 });
+                if (ctaRef.current) gsap.set(ctaRef.current, { autoAlpha: 0, y: 8 });
+                const microItems = microItemRefs.current.filter(Boolean);
+                if (microItems.length > 0) gsap.set(microItems, { autoAlpha: 0, y: 6 });
 
-                const tl = gsap.timeline({
-                    defaults: { ease: 'power3.out' },
-                });
+                const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-                if (badgeRef.current) {
-                    tl.to(badgeRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.0);
-                }
+                if (badgeRef.current) tl.to(badgeRef.current, { autoAlpha: 1, y: 0, duration: 0.8 }, 0.4);
 
-                tl.to(
-                    lines,
-                    {
-                        filter: 'blur(0px)',
-                        yPercent: 0,
-                        autoAlpha: 1,
-                        scale: 1,
-                        duration: 0.9,
-                        stagger: 0.15,
-                    },
-                    0.1,
-                );
+                tl.to(split.lines, {
+                    filter: 'blur(0px)',
+                    yPercent: 0,
+                    autoAlpha: 1,
+                    scale: 1,
+                    duration: 1.4,
+                    stagger: 0.15,
+                }, 0.5);
 
-                if (paraRef.current) {
-                    tl.to(paraRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, '-=0.55');
-                }
-                if (ctaRef.current) {
-                    tl.to(ctaRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, '-=0.35');
-                }
-                if (microItems.length > 0) {
-                    tl.to(microItems, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1 }, '-=0.25');
-                }
+                if (paraRef.current) tl.to(paraRef.current, { autoAlpha: 1, y: 0, duration: 0.8 }, '-=1.0');
+                if (ctaRef.current) tl.to(ctaRef.current, { autoAlpha: 1, y: 0, duration: 0.8 }, '-=0.8');
+                if (microItems.length > 0) tl.to(microItems, { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.1 }, '-=0.6');
             });
         },
         { scope: sectionRef },
     );
 
     return (
-        <section ref={sectionRef} className="relative h-screen w-screen overflow-hidden">
-            <ShaderBackground />
+        <section ref={sectionRef} className="relative h-screen w-screen overflow-hidden bg-black flex flex-col items-center justify-center text-center px-6" suppressHydrationWarning>
+            {/* FRONT LAYER OVERLAY EFFECT - z-30 mix-blend-screen */}
+            <ShaderOverlay />
 
-            <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-6 px-6 pb-24 pt-36 sm:gap-8 sm:pt-44 md:px-10 lg:px-16">
-                <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">
+            <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-6">
+                <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm shadow-2xl shadow-cyan-500/10">
                     <span className="text-[10px] font-light uppercase tracking-[0.08em] text-white/70">{badgeLabel}</span>
-                    <span className="h-1 w-1 rounded-full bg-white/40" />
+                    <span className="h-1 w-1 rounded-full bg-cyan-400/60 animate-pulse" />
                     <span className="text-xs font-light tracking-tight text-white/80">{badgeText}</span>
                 </div>
 
-                <h1 ref={headerRef} className="max-w-2xl text-left text-5xl font-extralight leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl">
+                <h1 ref={headerRef} className="max-w-4xl text-5xl font-extralight leading-[1.05] tracking-tight text-white sm:text-7xl md:text-8xl">
                     {title}
                 </h1>
 
-                <p ref={paraRef} className="max-w-xl text-left text-base font-light leading-relaxed tracking-tight text-white/75 sm:text-lg">
+                <p ref={paraRef} className="max-w-2xl text-base font-light leading-relaxed tracking-tight text-white/40 sm:text-lg">
                     {description}
                 </p>
 
-                <div ref={ctaRef} className="flex flex-wrap items-center gap-3 pt-2">
+                <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-3 pt-6">
                     {ctaButtons.map((button, index) => (
                         <a
                             key={index}
                             href={button.href}
-                            className={`rounded-2xl border border-white/10 px-5 py-3 text-sm font-light tracking-tight transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 duration-300 ${button.primary
-                                    ? "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                                    : "text-white/80 hover:bg-white/5"
+                            className={`rounded-2xl border border-white/10 px-10 py-5 text-sm font-light tracking-tight transition-all duration-700 ease-out ${button.primary
+                                    ? "bg-white/10 text-white backdrop-blur-xl hover:bg-white/20 border-white/20 shadow-2xl shadow-cyan-500/10 hover:scale-[1.02]"
+                                    : "text-white/40 hover:text-white hover:bg-white/5"
                                 }`}
                         >
                             {button.text}
@@ -349,25 +334,23 @@ export default function NeuralNetworkHero({
                     ))}
                 </div>
 
-                <ul ref={microRef} className="mt-8 flex flex-wrap gap-6 text-xs font-extralight tracking-tight text-white/60">
-                    {microDetails.map((detail, index) => {
-                        const refMap = [microItem1Ref, microItem2Ref, microItem3Ref];
-                        return (
-                            <li key={index} ref={refMap[index]} className="flex items-center gap-2">
-                                <span className="h-1 w-1 rounded-full bg-white/40" /> {detail}
-                            </li>
-                        );
-                    })}
+                <ul className="mt-20 flex flex-wrap justify-center gap-16 text-[10px] uppercase font-extralight tracking-[0.3em] text-white/10">
+                    {microDetails.map((detail, index) => (
+                        <li key={index} ref={el => { microItemRefs.current[index] = el }} className="flex items-center gap-5">
+                            <span className="h-px w-8 bg-white/5" /> {detail}
+                        </li>
+                    ))}
                 </ul>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-transparent to-transparent z-40" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-black via-transparent to-transparent z-40" />
         </section>
     );
 }
 
 declare module '@react-three/fiber' {
     interface ThreeElements {
-        neuralMaterial: any;
+        neuralShaderMaterial: any;
     }
 }
