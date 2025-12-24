@@ -246,47 +246,41 @@ export default function AdminStorefrontPage() {
                     {/* Sidebar / Tabs */}
                     <div className="col-span-12 md:col-span-3 lg:col-span-2">
                         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                            {CONFIGURE_TABS.some(t => t.id === activeTab) ? (
-                                <>
-                                    {/* Configure Section */}
-                                    <div className="hidden md:block text-[10px] font-black text-white/20 uppercase tracking-widest px-4 py-2">Configure</div>
-                                    {CONFIGURE_TABS.map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={cn(
-                                                "whitespace-nowrap flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium border shrink-0",
-                                                activeTab === tab.id
-                                                    ? "bg-brand/10 text-brand border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
-                                                    : "text-white/40 hover:text-white hover:bg-white/5 border-transparent"
-                                            )}
-                                        >
-                                            <tab.icon className="w-4 h-4" />
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </>
-                            ) : (
-                                <>
-                                    {/* Editor Section */}
-                                    <div className="hidden md:block text-[10px] font-black text-white/20 uppercase tracking-widest px-4 py-2">Editor</div>
-                                    {EDITOR_TABS.map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={cn(
-                                                "whitespace-nowrap flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium border shrink-0",
-                                                activeTab === tab.id
-                                                    ? "bg-brand/10 text-brand border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
-                                                    : "text-white/40 hover:text-white hover:bg-white/5 border-transparent"
-                                            )}
-                                        >
-                                            <tab.icon className="w-4 h-4" />
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </>
-                            )}
+                            {/* Configure Section */}
+                            <div className="hidden md:block text-[10px] font-black text-white/20 uppercase tracking-widest px-4 py-2">Configure</div>
+                            {CONFIGURE_TABS.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "whitespace-nowrap flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium border shrink-0",
+                                        activeTab === tab.id
+                                            ? "bg-brand/10 text-brand border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
+                                            : "text-white/40 hover:text-white hover:bg-white/5 border-transparent"
+                                    )}
+                                >
+                                    <tab.icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            ))}
+
+                            {/* Editor Section */}
+                            <div className="hidden md:block text-[10px] font-black text-white/20 uppercase tracking-widest px-4 py-2 mt-4">Editor</div>
+                            {EDITOR_TABS.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "whitespace-nowrap flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium border shrink-0",
+                                        activeTab === tab.id
+                                            ? "bg-brand/10 text-brand border-brand/20 shadow-[0_0_15px_rgba(38,188,196,0.1)]"
+                                            : "text-white/40 hover:text-white hover:bg-white/5 border-transparent"
+                                    )}
+                                >
+                                    <tab.icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
