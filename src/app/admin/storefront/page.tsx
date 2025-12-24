@@ -1215,8 +1215,6 @@ export default function AdminStorefrontPage() {
                             </div>
                         )}
 
-                        {/* LANDING CONTENT TAB */}
-                        {activeTab === "hero" && (
                         {/* NAVBAR TAB */}
                         {activeTab === "navbar" && (
                             <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
@@ -1315,375 +1313,375 @@ export default function AdminStorefrontPage() {
                             </div>
                         )}
 
-                            <div className="space-y-12 max-w-4xl animate-in fade-in duration-500 pb-20">
-                                {/* HERO SECTION */}
-                                <div className="space-y-8">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                            <Store className="w-5 h-5 text-brand" />
+                        <div className="space-y-12 max-w-4xl animate-in fade-in duration-500 pb-20">
+                            {/* HERO SECTION */}
+                            <div className="space-y-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                        <Store className="w-5 h-5 text-brand" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-white mb-1">Hero Section</h2>
+                                        <p className="text-sm text-white/40">Customize the main hero section on your landing page.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4 col-span-full">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Main Title</label>
+                                            <Input
+                                                value={settings.hero.title}
+                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11 text-lg font-bold"
+                                                placeholder="Digital Products, Redefined."
+                                            />
                                         </div>
-                                        <div>
-                                            <h2 className="text-lg font-bold text-white mb-1">Hero Section</h2>
-                                            <p className="text-sm text-white/40">Customize the main hero section on your landing page.</p>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Description</label>
+                                            <Textarea
+                                                value={settings.hero.description}
+                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, description: e.target.value } })}
+                                                className="bg-background border-white/10 min-h-[100px]"
+                                                placeholder="Describe your platform..."
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4 col-span-full">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Main Title</label>
-                                                <Input
-                                                    value={settings.hero.title}
-                                                    onChange={e => setSettings({ ...settings, hero: { ...settings.hero, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11 text-lg font-bold"
-                                                    placeholder="Digital Products, Redefined."
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Description</label>
-                                                <Textarea
-                                                    value={settings.hero.description}
-                                                    onChange={e => setSettings({ ...settings, hero: { ...settings.hero, description: e.target.value } })}
-                                                    className="bg-background border-white/10 min-h-[100px]"
-                                                    placeholder="Describe your platform..."
-                                                />
-                                            </div>
-                                        </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Badge Label</label>
+                                        <Input
+                                            value={settings.hero.badge_label}
+                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_label: e.target.value } })}
+                                            className="bg-background border-white/10 h-11"
+                                            placeholder="New"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Badge Text</label>
+                                        <Input
+                                            value={settings.hero.badge_text}
+                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_text: e.target.value } })}
+                                            className="bg-background border-white/10 h-11"
+                                            placeholder="Generative Surfaces"
+                                        />
+                                    </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Badge Label</label>
-                                            <Input
-                                                value={settings.hero.badge_label}
-                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_label: e.target.value } })}
-                                                className="bg-background border-white/10 h-11"
-                                                placeholder="New"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Badge Text</label>
-                                            <Input
-                                                value={settings.hero.badge_text}
-                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_text: e.target.value } })}
-                                                className="bg-background border-white/10 h-11"
-                                                placeholder="Generative Surfaces"
-                                            />
-                                        </div>
-
-                                        <div className="p-6 bg-[#0c1218] rounded-2xl border border-white/5 space-y-6 col-span-full">
-                                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                                <Store className="w-4 h-4 text-brand" />
-                                                Call to Action Buttons
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                <div className="space-y-4">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Text</label>
-                                                        <Input
-                                                            value={settings.hero.cta1_text}
-                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_text: e.target.value } })}
-                                                            className="bg-background border-white/5 h-10"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Link</label>
-                                                        <Input
-                                                            value={settings.hero.cta1_href}
-                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_href: e.target.value } })}
-                                                            className="bg-background border-white/5 h-10 font-mono text-xs"
-                                                        />
-                                                    </div>
+                                    <div className="p-6 bg-[#0c1218] rounded-2xl border border-white/5 space-y-6 col-span-full">
+                                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <Store className="w-4 h-4 text-brand" />
+                                            Call to Action Buttons
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Text</label>
+                                                    <Input
+                                                        value={settings.hero.cta1_text}
+                                                        onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_text: e.target.value } })}
+                                                        className="bg-background border-white/5 h-10"
+                                                    />
                                                 </div>
-                                                <div className="space-y-4">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Text</label>
-                                                        <Input
-                                                            value={settings.hero.cta2_text}
-                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_text: e.target.value } })}
-                                                            className="bg-background border-white/5 h-10"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Link</label>
-                                                        <Input
-                                                            value={settings.hero.cta2_href}
-                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_href: e.target.value } })}
-                                                            className="bg-background border-white/5 h-10 font-mono text-xs"
-                                                        />
-                                                    </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Link</label>
+                                                    <Input
+                                                        value={settings.hero.cta1_href}
+                                                        onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_href: e.target.value } })}
+                                                        className="bg-background border-white/5 h-10 font-mono text-xs"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Text</label>
+                                                    <Input
+                                                        value={settings.hero.cta2_text}
+                                                        onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_text: e.target.value } })}
+                                                        className="bg-background border-white/5 h-10"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Link</label>
+                                                    <Input
+                                                        value={settings.hero.cta2_href}
+                                                        onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_href: e.target.value } })}
+                                                        className="bg-background border-white/5 h-10 font-mono text-xs"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* WHY CHOOSE SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                                <Info className="w-5 h-5 text-brand" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-lg font-bold text-white mb-1">Why Choose Section</h2>
-                                                <p className="text-sm text-white/40">Customize the features list on your landing page.</p>
-                                            </div>
+                            {/* WHY CHOOSE SECTION */}
+                            <div className="pt-10 border-t border-white/5 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                            <Info className="w-5 h-5 text-brand" />
                                         </div>
-                                        <Button
-                                            onClick={() => setSettings({
-                                                ...settings,
-                                                why_choose: {
-                                                    ...settings.why_choose,
-                                                    features: [...settings.why_choose.features, { title: "", description: "", icon: "Zap" }]
-                                                }
-                                            })}
-                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Feature
-                                        </Button>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white mb-1">Why Choose Section</h2>
+                                            <p className="text-sm text-white/40">Customize the features list on your landing page.</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={() => setSettings({
+                                            ...settings,
+                                            why_choose: {
+                                                ...settings.why_choose,
+                                                features: [...settings.why_choose.features, { title: "", description: "", icon: "Zap" }]
+                                            }
+                                        })}
+                                        className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Add Feature
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4 col-span-full">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Section Subtitle (Top)</label>
+                                            <Input
+                                                value={settings.why_choose.subtitle}
+                                                onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, subtitle: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Why Choose Rainyday?"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Section Main Title</label>
+                                            <Input
+                                                value={settings.why_choose.title}
+                                                onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11 text-lg font-bold"
+                                                placeholder="The Ultimate Ecosystem"
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4 col-span-full">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Subtitle (Top)</label>
-                                                <Input
-                                                    value={settings.why_choose.subtitle}
-                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, subtitle: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11"
-                                                    placeholder="Why Choose Rainyday?"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Main Title</label>
-                                                <Input
-                                                    value={settings.why_choose.title}
-                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11 text-lg font-bold"
-                                                    placeholder="The Ultimate Ecosystem"
-                                                />
-                                            </div>
-                                        </div>
+                                    <div className="col-span-full space-y-4">
+                                        {settings.why_choose.features.map((feature, index) => (
+                                            <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
+                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            const newFeatures = [...settings.why_choose.features]
+                                                            newFeatures.splice(index, 1)
+                                                            setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                        }}
+                                                        className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                    >
+                                                        <Trash className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
 
-                                        <div className="col-span-full space-y-4">
-                                            {settings.why_choose.features.map((feature, index) => (
-                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
-                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => {
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Icon Name (Lucide)</label>
+                                                        <Input
+                                                            value={feature.icon}
+                                                            onChange={e => {
                                                                 const newFeatures = [...settings.why_choose.features]
-                                                                newFeatures.splice(index, 1)
+                                                                newFeatures[index] = { ...newFeatures[index], icon: e.target.value }
                                                                 setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
                                                             }}
-                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                                                        >
-                                                            <Trash className="w-4 h-4" />
-                                                        </Button>
+                                                            className="bg-background border-white/10 h-10 font-mono text-xs"
+                                                            placeholder="Zap, Shield"
+                                                        />
                                                     </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Feature Title</label>
+                                                        <Input
+                                                            value={feature.title}
+                                                            onChange={e => {
+                                                                const newFeatures = [...settings.why_choose.features]
+                                                                newFeatures[index] = { ...newFeatures[index], title: e.target.value }
+                                                                setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                            }}
+                                                            className="bg-background border-white/10 h-10 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2 col-span-full">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
+                                                        <Textarea
+                                                            value={feature.description}
+                                                            onChange={e => {
+                                                                const newFeatures = [...settings.why_choose.features]
+                                                                newFeatures[index] = { ...newFeatures[index], description: e.target.value }
+                                                                setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                            }}
+                                                            className="bg-background border-white/10 min-h-[60px] text-white/60"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="space-y-2">
-                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Icon Name (Lucide)</label>
-                                                            <Input
-                                                                value={feature.icon}
-                                                                onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], icon: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
-                                                                }}
-                                                                className="bg-background border-white/10 h-10 font-mono text-xs"
-                                                                placeholder="Zap, Shield"
-                                                            />
+                            {/* HOW IT WORKS SECTION */}
+                            <div className="pt-10 border-t border-white/5 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                            <Activity className="w-5 h-5 text-brand" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white mb-1">How It Works Section</h2>
+                                            <p className="text-sm text-white/40">Customize the step‑by‑step process on your landing page.</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={() => setSettings({
+                                            ...settings,
+                                            how_it_works: {
+                                                ...settings.how_it_works,
+                                                steps: [...settings.how_it_works.steps, { title: "", description: "" }]
+                                            }
+                                        })}
+                                        className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Add Step
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Section Description</label>
+                                            <Input
+                                                value={settings.how_it_works.title}
+                                                onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Shopping made simple in three easy steps!"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Morphing Texts (comma separated)</label>
+                                            <Input
+                                                value={settings.how_it_works.texts.join(", ")}
+                                                onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, texts: e.target.value.split(",").map(s => s.trim()) } })}
+                                                className="bg-background border-white/10 h-11 font-mono text-xs"
+                                                placeholder="How It Works, Simple Process, Easy Steps"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {settings.how_it_works.steps.map((step, index) => (
+                                            <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
+                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            const newSteps = [...settings.how_it_works.steps]
+                                                            newSteps.splice(index, 1)
+                                                            setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
+                                                        }}
+                                                        className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                    >
+                                                        <Trash className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                    <div className="flex items-center justify-center">
+                                                        <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-black font-black text-xl">
+                                                            {index + 1}
                                                         </div>
-                                                        <div className="space-y-2 md:col-span-2">
-                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Feature Title</label>
+                                                    </div>
+                                                    <div className="md:col-span-3 space-y-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Step Title</label>
                                                             <Input
-                                                                value={feature.title}
+                                                                value={step.title}
                                                                 onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], title: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                                    const newSteps = [...settings.how_it_works.steps]
+                                                                    newSteps[index] = { ...newSteps[index], title: e.target.value }
+                                                                    setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
                                                                 }}
                                                                 className="bg-background border-white/10 h-10 font-bold"
                                                             />
                                                         </div>
-                                                        <div className="space-y-2 col-span-full">
+                                                        <div className="space-y-2">
                                                             <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
                                                             <Textarea
-                                                                value={feature.description}
+                                                                value={step.description}
                                                                 onChange={e => {
-                                                                    const newFeatures = [...settings.why_choose.features]
-                                                                    newFeatures[index] = { ...newFeatures[index], description: e.target.value }
-                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                                    const newSteps = [...settings.how_it_works.steps]
+                                                                    newSteps[index] = { ...newSteps[index], description: e.target.value }
+                                                                    setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
                                                                 }}
                                                                 className="bg-background border-white/10 min-h-[60px] text-white/60"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* HOW IT WORKS SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                                <Activity className="w-5 h-5 text-brand" />
                                             </div>
-                                            <div>
-                                                <h2 className="text-lg font-bold text-white mb-1">How It Works Section</h2>
-                                                <p className="text-sm text-white/40">Customize the step‑by‑step process on your landing page.</p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={() => setSettings({
-                                                ...settings,
-                                                how_it_works: {
-                                                    ...settings.how_it_works,
-                                                    steps: [...settings.how_it_works.steps, { title: "", description: "" }]
-                                                }
-                                            })}
-                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Step
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 gap-6">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Section Description</label>
-                                                <Input
-                                                    value={settings.how_it_works.title}
-                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11"
-                                                    placeholder="Shopping made simple in three easy steps!"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">Morphing Texts (comma separated)</label>
-                                                <Input
-                                                    value={settings.how_it_works.texts.join(", ")}
-                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, texts: e.target.value.split(",").map(s => s.trim()) } })}
-                                                    className="bg-background border-white/10 h-11 font-mono text-xs"
-                                                    placeholder="How It Works, Simple Process, Easy Steps"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            {settings.how_it_works.steps.map((step, index) => (
-                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
-                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() => {
-                                                                const newSteps = [...settings.how_it_works.steps]
-                                                                newSteps.splice(index, 1)
-                                                                setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                            }}
-                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                                                        >
-                                                            <Trash className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                        <div className="flex items-center justify-center">
-                                                            <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-black font-black text-xl">
-                                                                {index + 1}
-                                                            </div>
-                                                        </div>
-                                                        <div className="md:col-span-3 space-y-4">
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Step Title</label>
-                                                                <Input
-                                                                    value={step.title}
-                                                                    onChange={e => {
-                                                                        const newSteps = [...settings.how_it_works.steps]
-                                                                        newSteps[index] = { ...newSteps[index], title: e.target.value }
-                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                                    }}
-                                                                    className="bg-background border-white/10 h-10 font-bold"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
-                                                                <Textarea
-                                                                    value={step.description}
-                                                                    onChange={e => {
-                                                                        const newSteps = [...settings.how_it_works.steps]
-                                                                        newSteps[index] = { ...newSteps[index], description: e.target.value }
-                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
-                                                                    }}
-                                                                    className="bg-background border-white/10 min-h-[60px] text-white/60"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* LANDING CTA SECTION */}
-                                <div className="pt-10 border-t border-white/5 space-y-8">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                                            <ShoppingCart className="w-5 h-5 text-brand" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-lg font-bold text-white mb-1">Landing CTA Section</h2>
-                                            <p className="text-sm text-white/40">Customize the call‑to‑action section at the bottom of the landing page.</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4 col-span-full">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">CTA Title</label>
-                                                <Input
-                                                    value={settings.landing_cta.title}
-                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, title: e.target.value } })}
-                                                    className="bg-background border-white/10 h-11 font-bold"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-white">CTA Description</label>
-                                                <Textarea
-                                                    value={settings.landing_cta.description}
-                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, description: e.target.value } })}
-                                                    className="bg-background border-white/10 min-h-[80px]"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Button Text</label>
-                                            <Input
-                                                value={settings.landing_cta.button_text}
-                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_text: e.target.value } })}
-                                                className="bg-background border-white/10 h-11"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-white">Button Link</label>
-                                            <Input
-                                                value={settings.landing_cta.button_href}
-                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_href: e.target.value } })}
-                                                className="bg-background border-white/10 h-11 font-mono text-xs"
-                                            />
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
+
+                            {/* LANDING CTA SECTION */}
+                            <div className="pt-10 border-t border-white/5 space-y-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                        <ShoppingCart className="w-5 h-5 text-brand" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-white mb-1">Landing CTA Section</h2>
+                                        <p className="text-sm text-white/40">Customize the call‑to‑action section at the bottom of the landing page.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4 col-span-full">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">CTA Title</label>
+                                            <Input
+                                                value={settings.landing_cta.title}
+                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11 font-bold"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">CTA Description</label>
+                                            <Textarea
+                                                value={settings.landing_cta.description}
+                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, description: e.target.value } })}
+                                                className="bg-background border-white/10 min-h-[80px]"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Button Text</label>
+                                        <Input
+                                            value={settings.landing_cta.button_text}
+                                            onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_text: e.target.value } })}
+                                            className="bg-background border-white/10 h-11"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-white">Button Link</label>
+                                        <Input
+                                            value={settings.landing_cta.button_href}
+                                            onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_href: e.target.value } })}
+                                            className="bg-background border-white/10 h-11 font-mono text-xs"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         )}
 
                         {/* STATISTICS TAB */}
