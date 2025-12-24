@@ -51,8 +51,8 @@ const navigation = [
             { name: "Feedbacks", href: "/admin/feedbacks" },
         ]
     },
-    { name: "Configure", href: "/admin/storefront?tab=identity", icon: Settings },
-    { name: "Editor", href: "/admin/storefront?tab=hero", icon: Layout },
+    { name: "Configure", href: "/admin/configure", icon: Settings },
+    { name: "Editor", href: "/admin/editor", icon: Layout },
     {
         name: "Settings",
         icon: Settings,
