@@ -1492,21 +1492,7 @@ export default function AdminStorefrontPage() {
                             </div>
                         )}
 
-                        {/* OTHER TABS (Placeholder) */}
-                        {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
-                            <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
-                                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                                    {(() => {
-                                        const Icon = TABS.find(t => t.id === activeTab)?.icon
-                                        return Icon ? <Icon className="w-8 h-8 text-white/20" /> : null
-                                    })()}
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-white">Coming Soon</h3>
-                                    <p className="text-sm text-white/40">The {TABS.find(t => t.id === activeTab)?.label} settings are under development.</p>
-                                </div>
-                            </div>
-                        )}
+
                     </div>
                 </div>
 
