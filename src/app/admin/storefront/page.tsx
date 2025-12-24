@@ -76,7 +76,17 @@ import { useSearchParams } from "next/navigation"
 export default function AdminStorefrontPage() {
     const searchParams = useSearchParams()
     const tabParam = searchParams.get("tab")
-    const [activeTab, setActiveTab] = useState(tabParam && TABS.some(t => t.id === tabParam) ? tabParam : "hero")
+
+    // Determine initial tab based on URL parameter
+    const getInitialTab = () => {
+        if (tabParam && TABS.some(t => t.id === tabParam)) {
+            return tabParam
+        }
+        // Default to identity (first configure tab) instead of hero
+        return "identity"
+    }
+
+    const [activeTab, setActiveTab] = useState(getInitialTab())
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
