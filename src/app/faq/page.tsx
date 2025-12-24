@@ -1,37 +1,30 @@
 "use client"
 
 import { MainLayout } from "@/components/layout/main-layout"
-import { HelpCircle } from "lucide-react"
+import { HelpCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
-
-const faqs = [
-    {
-        q: "Can I make payments using my preferred method?",
-        a: "Yes, we support a wide range of payment methods, including popular fiat options like Credit Cards as well as various crypto currencies. This enables you to make payments using the method that is most convenient for you.",
-    },
-    {
-        q: "Is it safe to make payments?",
-        a: "Yes, we take security very seriously. We use advanced fraud prevention measures to protect against fraudulent transactions and we do not store sensitive payment information.",
-    },
-    {
-        q: "How do I make a purchase?",
-        a: "Making a purchase is easy. Simply browse the available products and add the ones you wish to purchase to your cart. When you are ready to checkout, you will be prompted to enter your payment information and complete the transaction.",
-    },
-    {
-        q: "What is the return policy for purchases?",
-        a: "The return policy for purchases will vary depending on the specific product being purchased. It is important to review the return policy for each product before making a purchase to ensure that you understand the terms and conditions.",
-    },
-    {
-        q: "Do you offer bulk discounts?",
-        a: "Yes, for many of our digital assets and services, we offer scaled pricing. Check the product page for specific bulk rates or contact support for enterprise inquiries.",
-    },
-    {
-        q: "How fast is delivery?",
-        a: "Digital products are delivered instantly to your email upon payment verification. For services, delivery times are specified on the product page.",
-    }
-]
+import { useEffect, useState } from "react"
+import { getSiteSettings, type SiteSettings } from "@/lib/db/settings"
 
 export default function FAQPage() {
+    const [settings, setSettings] = useState<SiteSettings | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const data = await getSiteSettings()
+                setSettings(data)
+            } catch (error) {
+                console.error("Failed to load FAQ settings:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadSettings()
+    }, [])
+
+    const faqs = settings?.faq?.items || []
     return (
         <MainLayout>
             <div className="container mx-auto px-4 py-16 max-w-5xl">
@@ -44,22 +37,34 @@ export default function FAQPage() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
-                    {faqs.map((faq, i) => (
-                        <div key={i} className="group flex gap-6">
-                            <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center group-hover:border-brand-primary/30 group-hover:bg-brand-primary/5 transition-all duration-300">
-                                <HelpCircle className="w-6 h-6 text-white/20 group-hover:text-brand-primary transition-colors" />
-                            </div>
-                            <div className="space-y-3">
-                                <h4 className="text-xl font-bold text-white group-hover:text-brand-primary transition-colors duration-300 tracking-tight">
-                                    {faq.q}
-                                </h4>
-                                <p className="text-white/40 text-[15px] leading-relaxed font-medium">
-                                    {faq.a}
-                                </p>
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 min-h-[400px]">
+                    {isLoading ? (
+                        <div className="col-span-full flex flex-col items-center justify-center space-y-4">
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary/20" />
+                            <p className="text-white/20 font-medium uppercase tracking-widest text-xs">Loading answers...</p>
                         </div>
-                    ))}
+                    ) : faqs.length > 0 ? (
+                        faqs.map((faq, i) => (
+                            <div key={i} className="group flex gap-6">
+                                <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center group-hover:border-brand-primary/30 group-hover:bg-brand-primary/5 transition-all duration-300">
+                                    <HelpCircle className="w-6 h-6 text-white/20 group-hover:text-brand-primary transition-colors" />
+                                </div>
+                                <div className="space-y-3">
+                                    <h4 className="text-xl font-bold text-white group-hover:text-brand-primary transition-colors duration-300 tracking-tight">
+                                        {faq.q}
+                                    </h4>
+                                    <p className="text-white/40 text-[15px] leading-relaxed font-medium">
+                                        {faq.a}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full flex flex-col items-center justify-center space-y-4 opacity-40">
+                            <HelpCircle className="w-12 h-12 text-white/10" />
+                            <p className="text-white/40 font-medium">No questions found.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-24 p-12 rounded-[2.5rem] bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 text-center">

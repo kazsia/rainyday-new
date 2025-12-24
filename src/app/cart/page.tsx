@@ -3,6 +3,7 @@
 import * as React from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
+import { ShatterButton } from "@/components/ui/shatter-button"
 import { useCart } from "@/context/cart-context"
 import { useCurrency } from "@/context/currency-context"
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react"
@@ -168,23 +169,24 @@ export default function CartPage() {
                                 </div>
                             </div>
 
-                            <Button
+                            <ShatterButton
                                 onClick={handleCheckout}
                                 disabled={isRedirecting}
-                                className="w-full h-16 bg-brand-primary text-black font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-brand-primary/20 gap-3 group"
+                                className="w-full"
+                                shatterColor="#a4f8ff"
                             >
                                 {isRedirecting ? (
-                                    <>
+                                    <span className="flex items-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin" />
                                         Preparing Checkout...
-                                    </>
+                                    </span>
                                 ) : (
-                                    <>
+                                    <span className="flex items-center gap-3">
                                         Secure Checkout
-                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                    </>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </span>
                                 )}
-                            </Button>
+                            </ShatterButton>
 
                             <div className="flex items-center justify-center gap-3 text-[9px] font-black text-white/10 uppercase tracking-widest italic text-center">
                                 <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />

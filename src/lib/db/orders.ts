@@ -45,6 +45,31 @@ export async function createOrder(order: {
 
     if (itemsError) throw itemsError
 
+    // Send invoice created email
+    try {
+        // Refetch order with product names for email
+        const { data: orderWithItems } = await supabase
+            .from("orders")
+            .select(`
+                *,
+                order_items (
+                    *,
+                    product:products (name),
+                    variant:product_variants (name)
+                )
+            `)
+            .eq("id", newOrder.id)
+            .single()
+
+        if (orderWithItems?.email) {
+            const { sendInvoiceCreatedEmail } = await import("@/lib/email/email")
+            await sendInvoiceCreatedEmail(orderWithItems)
+        }
+    } catch (emailError) {
+        console.error("[EMAIL] Invoice created email failed:", emailError)
+        // Don't fail order creation on email error
+    }
+
     return newOrder
 }
 

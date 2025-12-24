@@ -81,15 +81,19 @@ export default function AdminInvoiceDetailsPage() {
     // Helper for status badges (reused style)
     const getStatusBadge = (status: string) => {
         const styles = {
-            paid: "bg-green-500/10 text-green-500 border-green-500/20",
-            completed: "bg-green-500/10 text-green-500 border-green-500/20",
-            delivered: "bg-green-500/10 text-green-500 border-green-500/20",
-            pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-            cancelled: "bg-red-500/10 text-white/40 border-white/10",
-        }[status] || "bg-white/5 text-white/40 border-white/10"
+            paid: "bg-emerald-500/5 text-emerald-400 border-emerald-500/10",
+            completed: "bg-emerald-500/5 text-emerald-400 border-emerald-500/10",
+            delivered: "bg-emerald-500/5 text-emerald-400 border-emerald-500/10",
+            pending: "bg-amber-500/5 text-amber-400 border-amber-500/10",
+            processing: "bg-[var(--sa-accent-muted)] text-[var(--sa-accent)] border-[var(--sa-accent-glow)]",
+            cancelled: "bg-white/5 text-[var(--sa-fg-dim)] border-white/5",
+            refunded: "bg-purple-500/5 text-purple-400 border-purple-500/10",
+            failed: "bg-rose-500/5 text-rose-400 border-rose-500/10",
+            expired: "bg-white/5 text-[var(--sa-fg-dim)] border-white/5",
+        }[status] || "bg-white/5 text-[var(--sa-fg-dim)] border-white/5"
 
         return (
-            <span className={cn("px-2.5 py-0.5 rounded textxs font-medium border uppercase tracking-wider", styles)}>
+            <span className={cn("px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border", styles)}>
                 {status}
             </span>
         )

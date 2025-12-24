@@ -19,7 +19,8 @@ import {
     LayoutList,
     MoreHorizontal,
     FolderOpen,
-    FolderSync
+    FolderSync,
+    RefreshCw
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -46,6 +47,7 @@ export default function AdminProductsPage() {
     const [products, setProducts] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+    const [filterStatus, setFilterStatus] = useState<"all" | "active" | "hidden" | "archived">("all")
     const [selectedProducts, setSelectedProducts] = useState<string[]>([])
 
     // New Dialog states
@@ -95,9 +97,16 @@ export default function AdminProductsPage() {
         })
     }
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredProducts = products.filter((p) => {
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.id.toLowerCase().includes(searchQuery.toLowerCase())
+
+        const matchesStatus = filterStatus === "all" ||
+            (filterStatus === "active" && p.is_active) ||
+            (filterStatus === "hidden" && !p.is_active)
+
+        return matchesSearch && matchesStatus
+    })
 
     const toggleSelectAll = () => {
         if (selectedProducts.length === filteredProducts.length) {
@@ -117,31 +126,18 @@ export default function AdminProductsPage() {
         <AdminLayout>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Products</h1>
-                        <p className="text-sm text-white/40">Manage your product inventory and display priority.</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Products</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Manage your digital products and categories.</p>
                     </div>
-                    <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2">
                         <Button
-                            variant="outline"
-                            onClick={() => setIsCategoryManagerOpen(true)}
-                            className="h-9 bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-[10px] sm:text-xs font-bold uppercase tracking-widest"
+                            asChild
+                            className="h-8 px-4 bg-[var(--sa-accent)] hover:bg-[var(--sa-accent-bright)] text-black text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
                         >
-                            <FolderOpen className="w-3.5 h-3.5 mr-2" />
-                            Categories
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsReorderDialogOpen(true)}
-                            className="h-9 bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-[10px] sm:text-xs font-bold uppercase tracking-widest"
-                        >
-                            <LayoutList className="w-3.5 h-3.5 mr-2" />
-                            Reorder
-                        </Button>
-                        <Button asChild className="col-span-2 sm:col-auto h-10 sm:h-9 bg-brand text-black font-black text-[10px] sm:text-xs border-none shadow-[0_0_20px_rgba(var(--brand-rgb),0.2)] uppercase tracking-widest">
                             <Link href="/admin/products/create">
-                                <Plus className="w-4 h-4 mr-2" />
+                                <Plus className="w-3.5 h-3.5 mr-2 stroke-[3]" />
                                 Create Product
                             </Link>
                         </Button>
@@ -160,69 +156,97 @@ export default function AdminProductsPage() {
                     onUpdate={loadData}
                 />
 
-                {/* Filters */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-background border border-white/5 p-4 rounded-xl">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                        <Button variant="ghost" className="shrink-0 text-white/40 hover:text-white hover:bg-white/5 gap-2 text-[10px] font-bold uppercase tracking-widest">
-                            <Edit2 className="w-3.5 h-3.5" />
-                            Bulk Actions
-                            <ChevronDown className="w-3 h-3" />
+                {/* Toolbar */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 bg-[var(--sa-card)] border border-[var(--sa-border)] p-2 rounded-xl">
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                        <Button
+                            variant="outline"
+                            className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3"
+                            onClick={() => loadData()}
+                        >
+                            <RefreshCw className={cn("w-3.5 h-3.5 mr-2", isLoading && "animate-spin text-[var(--sa-accent)]")} />
+                            Refresh
                         </Button>
+                        <div className="w-px h-4 bg-white/5 mx-1" />
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsCategoryManagerOpen(true)}
+                            className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3"
+                        >
+                            <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
+                            Categories
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsReorderDialogOpen(true)}
+                            className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3"
+                        >
+                            <LayoutList className="w-3.5 h-3.5 mr-1.5" />
+                            Reorder
+                        </Button>
+                        <div className="w-px h-4 bg-white/5 mx-1" />
+                        <div className="relative group">
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value as any)}
+                                className="h-8 pl-8 pr-4 bg-transparent border border-white/5 text-[var(--sa-fg-muted)] hover:text-white rounded-lg appearance-none cursor-pointer transition-all focus:border-[var(--sa-accent-glow)] focus:ring-0 text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                <option value="all">Status</option>
+                                <option value="active">Visible</option>
+                                <option value="hidden">Hidden</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                            <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--sa-fg-dim)] pointer-events-none" />
+                        </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 lg:justify-end">
-                        <Button variant="outline" className="bg-transparent border-white/10 text-white/60 hover:text-white hover:bg-white/5 h-10 gap-2 justify-center text-[10px] font-bold uppercase tracking-widest">
-                            <Filter className="w-3.5 h-3.5" />
-                            Filter
-                        </Button>
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                            <Input
-                                placeholder="Search Products..."
-                                className="pl-10 bg-[#070b14] border-white/10 h-10 text-sm text-white placeholder:text-white/20 focus:border-brand-primary/50"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                    <div className="relative flex-1 lg:max-w-xs ml-auto">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
+                        <Input
+                            placeholder="Quick Search by Name..."
+                            className="pl-9 bg-black/20 border-white/5 h-8 text-[11px] text-white placeholder:text-[var(--sa-fg-dim)] focus:border-[var(--sa-accent-glow)] transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
 
-                {/* Table / Mobile Cards */}
-                <div className="bg-background border border-white/5 rounded-xl overflow-hidden">
-                    {/* Desktop View */}
-                    <div className="hidden md:block overflow-x-auto">
+                {/* Products Table */}
+                <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
+                    <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b border-white/5">
-                                    <th className="px-6 py-4 w-10">
+                                <tr className="border-b border-white/5 bg-black/20">
+                                    <th className="px-5 py-3 w-10">
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-brand-primary transition-all cursor-pointer appearance-none checked:border-brand-primary relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[5px] after:top-[1px] after:w-[5px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
+                                            className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 checked:bg-[var(--sa-accent)] transition-all cursor-pointer appearance-none checked:border-[var(--sa-accent)] relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[4px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-2 after:border-b-2 after:border-black after:rotate-45"
                                             checked={selectedProducts.length > 0 && selectedProducts.length === filteredProducts.length}
                                             onChange={toggleSelectAll}
                                         />
                                     </th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider flex items-center gap-1 cursor-pointer hover:text-white/60">
-                                        ID
-                                        <ChevronDown className="w-3 h-3" />
-                                    </th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Name</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Price</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Stock</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Group</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Visibility</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider">Sales</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-wider text-right"></th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">ID</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Name</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Price</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Stock</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Group</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Visibility</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Sales</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-right"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {isLoading ? (
-                                    <tr>
-                                        <td colSpan={9} className="px-6 py-8 text-center text-white/40 text-sm">Loading products...</td>
-                                    </tr>
+                                    [...Array(5)].map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td colSpan={8} className="px-5 py-6 bg-white/[0.005]" />
+                                        </tr>
+                                    ))
                                 ) : filteredProducts.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-8 text-center text-white/40 text-sm">No products found.</td>
+                                        <td colSpan={8} className="px-5 py-12 text-center text-[var(--sa-fg-dim)] text-[10px] font-bold uppercase tracking-widest">
+                                            No products found
+                                        </td>
                                     </tr>
                                 ) : filteredProducts.map((product) => (
                                     <tr
@@ -230,66 +254,70 @@ export default function AdminProductsPage() {
                                         className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
                                         onClick={() => router.push(`/admin/products/edit/${product.id}`)}
                                     >
-                                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
                                             <input
                                                 type="checkbox"
-                                                className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-brand-primary transition-all cursor-pointer appearance-none checked:border-brand-primary relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[5px] after:top-[1px] after:w-[5px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
+                                                className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 checked:bg-[var(--sa-accent)] transition-all cursor-pointer appearance-none checked:border-[var(--sa-accent)] relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[4px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-2 after:border-b-2 after:border-black after:rotate-45"
                                                 checked={selectedProducts.includes(product.id)}
                                                 onChange={() => toggleSelectProduct(product.id)}
                                             />
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-white/40 font-mono">
-                                            {product.id.slice(0, 6)}
+                                        <td className="px-5 py-3 font-mono text-[10px] text-[var(--sa-fg-dim)]">
+                                            {product.id.slice(0, 8)}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-sm font-medium text-white">{product.name}</span>
-                                            </div>
+                                        <td className="px-5 py-3">
+                                            <span className="text-xs font-bold text-white group-hover:text-[var(--sa-accent)] transition-colors">{product.name}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-white/80 font-medium">
+                                        <td className="px-5 py-3 text-xs text-white/80 font-black">
                                             ${product.price}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-5 py-3">
                                             <span className={cn(
-                                                "text-sm font-medium",
-                                                product.stock_count > 0 ? "text-white/80" : "text-white/40"
+                                                "text-[10px] font-black px-1.5 py-0.5 rounded border",
+                                                product.stock_count > 0
+                                                    ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
+                                                    : "text-rose-400 bg-rose-400/5 border-rose-500/10"
                                             )}>
-                                                {product.stock_count}
+                                                {product.stock_count === -1 ? "∞" : product.stock_count}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-white/60">
-                                            {product.category?.name || "None"}
+                                        <td className="px-5 py-3 text-[11px] text-[var(--sa-fg-dim)]">
+                                            {product.category?.name || "—"}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {product.is_active ? (
-                                                    <span className="text-white text-sm">Public</span>
-                                                ) : (
-                                                    <span className="text-white/40 text-sm">Hidden</span>
-                                                )}
-                                            </div>
+                                        <td className="px-5 py-3">
+                                            <span className={cn(
+                                                "text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border",
+                                                product.is_active
+                                                    ? "bg-sky-500/5 text-sky-400 border-sky-500/10"
+                                                    : "bg-white/5 text-white/20 border-white/5"
+                                            )}>
+                                                {product.is_active ? "Public" : "Hidden"}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-white">
-                                            {product.sales_count || 0}
+                                        <td className="px-5 py-3 text-center">
+                                            <span className="text-xs font-bold text-white">
+                                                {product.sales_count || 0}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white">
-                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--sa-fg-dim)] hover:text-white transition-colors">
+                                                        <MoreHorizontal className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
-                                                    <DropdownMenuItem asChild>
+                                                <DropdownMenuContent align="end" className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white p-1">
+                                                    <DropdownMenuItem asChild className="text-[11px] font-bold cursor-pointer focus:bg-[var(--sa-accent-muted)] focus:text-[var(--sa-accent)]">
                                                         <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
-                                                            <Edit2 className="w-4 h-4" /> Edit
+                                                            <Edit2 className="w-3.5 h-3.5" /> Edit
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleCloneProduct(product.id)} className="flex items-center gap-2">
-                                                        <Copy className="w-4 h-4" /> Clone
+                                                    <DropdownMenuItem onClick={() => handleCloneProduct(product.id)} className="text-[11px] font-bold cursor-pointer focus:bg-[var(--sa-accent-muted)] focus:text-[var(--sa-accent)]">
+                                                        <Copy className="w-3.5 h-3.5" /> Clone
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="flex items-center gap-2 text-red-400 focus:text-red-400">
-                                                        <Trash2 className="w-4 h-4" /> Delete
+                                                    <div className="h-px bg-white/5 my-1" />
+                                                    <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="text-[11px] font-bold cursor-pointer text-rose-400 focus:bg-rose-400/10 focus:text-rose-400">
+                                                        <Trash2 className="w-3.5 h-3.5" /> Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -299,86 +327,86 @@ export default function AdminProductsPage() {
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    {/* Mobile View */}
-                    <div className="md:hidden divide-y divide-white/5">
-                        {isLoading ? (
-                            <div className="px-6 py-8 text-center text-white/40 text-sm">Loading products...</div>
-                        ) : filteredProducts.length === 0 ? (
-                            <div className="px-6 py-8 text-center text-white/40 text-sm">No products found.</div>
-                        ) : filteredProducts.map((product) => (
-                            <div
-                                key={product.id}
-                                className="p-4 space-y-4 hover:bg-white/[0.02] transition-colors"
-                                onClick={() => router.push(`/admin/products/edit/${product.id}`)}
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-3 overflow-hidden">
-                                        <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-brand-primary transition-all cursor-pointer appearance-none checked:border-brand-primary relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[5px] after:top-[1px] after:w-[5px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
-                                                checked={selectedProducts.includes(product.id)}
-                                                onChange={() => toggleSelectProduct(product.id)}
-                                            />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h3 className="text-sm font-bold text-white truncate">{product.name}</h3>
-                                            <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">{product.id.slice(0, 8)}</p>
-                                        </div>
+                {/* Mobile View */}
+                <div className="md:hidden divide-y divide-white/5">
+                    {isLoading ? (
+                        <div className="px-6 py-8 text-center text-white/40 text-sm">Loading products...</div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="px-6 py-8 text-center text-white/40 text-sm">No products found.</div>
+                    ) : filteredProducts.map((product) => (
+                        <div
+                            key={product.id}
+                            className="p-4 space-y-4 hover:bg-white/[0.02] transition-colors"
+                            onClick={() => router.push(`/admin/products/edit/${product.id}`)}
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3 overflow-hidden">
+                                    <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-brand-primary transition-all cursor-pointer appearance-none checked:border-brand-primary relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[5px] after:top-[1px] after:w-[5px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
+                                            checked={selectedProducts.includes(product.id)}
+                                            onChange={() => toggleSelectProduct(product.id)}
+                                        />
                                     </div>
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white">
-                                                    <MoreHorizontal className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
-                                                        <Edit2 className="w-4 h-4" /> Edit
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleCloneProduct(product.id)} className="flex items-center gap-2">
-                                                    <Copy className="w-4 h-4" /> Clone
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="flex items-center gap-2 text-red-400 focus:text-red-400">
-                                                    <Trash2 className="w-4 h-4" /> Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                    <div className="min-w-0">
+                                        <h3 className="text-sm font-bold text-white truncate">{product.name}</h3>
+                                        <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">{product.id.slice(0, 8)}</p>
                                     </div>
                                 </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white">
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/products/edit/${product.id}`} className="flex items-center gap-2">
+                                                    <Edit2 className="w-4 h-4" /> Edit
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleCloneProduct(product.id)} className="flex items-center gap-2">
+                                                <Copy className="w-4 h-4" /> Clone
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="flex items-center gap-2 text-red-400 focus:text-red-400">
+                                                <Trash2 className="w-4 h-4" /> Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Price & Sales</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-white">${product.price}</span>
-                                            <span className="text-[10px] text-white/40">• {product.sales_count || 0} sales</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Stock & Status</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className={cn(
-                                                "text-xs font-bold",
-                                                product.stock_count > 0 ? "text-brand-primary" : "text-red-500"
-                                            )}>{product.stock_count} left</span>
-                                            <span className="text-[10px] text-white/40">• {product.is_active ? 'Public' : 'Hidden'}</span>
-                                        </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Price & Sales</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-white">${product.price}</span>
+                                        <span className="text-[10px] text-white/40">• {product.sales_count || 0} sales</span>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2">
-                                    <div className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                                        {product.category?.name || "Uncategorized"}
+                                <div className="space-y-1">
+                                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Stock & Status</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                            "text-xs font-bold",
+                                            product.stock_count > 0 ? "text-brand-primary" : "text-red-500"
+                                        )}>{product.stock_count} left</span>
+                                        <span className="text-[10px] text-white/40">• {product.is_active ? 'Public' : 'Hidden'}</span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                                    {product.category?.name || "Uncategorized"}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </AdminLayout>

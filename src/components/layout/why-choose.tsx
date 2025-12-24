@@ -1,46 +1,81 @@
-"use client"
-
 import { Card, CardContent } from "@/components/ui/card"
-import { Link2, Zap, ShieldCheck, Globe } from "lucide-react"
 import { motion } from "framer-motion"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { HandWrittenTitle } from "@/components/ui/hand-writing-text"
+import {
+    Zap,
+    Shield,
+    Globe,
+    Star,
+    Cpu,
+    ZapOff,
+    Activity,
+    Clock,
+    Lock,
+    Rocket,
+    Cloud,
+    Download,
+    Eye,
+    LifeBuoy,
+    MousePointer2,
+    Palette,
+    Settings,
+    Smartphone,
+    Trophy,
+    Users
+} from "lucide-react"
 
-const features = [
-    {
-        title: "Cross-Chain Interoperability",
-        description: "Seamless integration between multiple blockchain networks.",
-        icon: Link2,
-    },
-    {
-        title: "Lightning-Fast Transactions",
-        description: "Built for speed with ultra-low latency.",
-        icon: Zap,
-    },
-    {
-        title: "Smart Security Layer",
-        description: "Enterprise-grade protection for all your digital assets.",
-        icon: ShieldCheck,
-    },
-    {
-        title: "Global Network",
-        description: "A decentralized infrastructure spanning across the globe.",
-        icon: Globe,
-    },
-]
+const ICON_MAP: Record<string, any> = {
+    Zap,
+    Shield,
+    Globe,
+    Star,
+    Cpu,
+    ZapOff,
+    Activity,
+    Clock,
+    Lock,
+    Rocket,
+    Cloud,
+    Download,
+    Eye,
+    LifeBuoy,
+    MousePointer2,
+    Palette,
+    Settings,
+    Smartphone,
+    Trophy,
+    Users
+}
 
-export function WhyChoose() {
+interface WhyChooseProps {
+    title?: string
+    subtitle?: string
+    features?: {
+        title: string
+        description: string
+        icon: string
+    }[]
+}
+
+export function WhyChoose({
+    title = "The Ultimate Ecosystem",
+    subtitle = "Why Choose Rainyday?",
+    features = []
+}: WhyChooseProps) {
     return (
         <section className="pt-8 md:pt-12 pb-16 md:pb-24 relative overflow-hidden">
             <div className="container mx-auto px-4 max-w-6xl">
                 <HandWrittenTitle
-                    title="Why Choose Rainyday?"
-                    subtitle="Built for creators, designed for scale"
+                    title={subtitle}
+                    subtitle={title}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {features.map((feature, i) => {
-                        const Icon = feature.icon
+                        // Dynamically resolve icon from map
+                        const IconComponent = ICON_MAP[feature.icon] || Zap
+
                         return (
                             <motion.div
                                 key={i}
@@ -66,7 +101,7 @@ export function WhyChoose() {
                                                     whileHover={{ scale: 1.1, rotate: 5 }}
                                                     className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-brand-accent/5 border border-brand-primary/20 flex items-center justify-center group-hover:border-brand-primary/40 group-hover:shadow-[0_0_20px_rgba(38,188,196,0.15)] transition-all duration-500 shadow-xl"
                                                 >
-                                                    <Icon
+                                                    <IconComponent
                                                         className="w-7 h-7 text-white"
                                                         fill="white"
                                                     />

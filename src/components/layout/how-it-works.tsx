@@ -3,38 +3,48 @@
 import { motion } from "framer-motion"
 import { GooeyText } from "@/components/ui/gooey-text-morphing"
 
-const steps = [
-    {
-        number: "1",
-        title: "Select a product",
-        description: "Explore a wide range of products, tailored to meet your needs. Simply click on the item you desire to learn more about its features, read customer reviews, and add it to your cart with a single click."
-    },
-    {
-        number: "2",
-        title: "Pay the invoice",
-        description: "Proceed to checkout where you can review your selected items and total cost. Choose from multiple payment options to finalize your order. Our secure payment gateway ensures that your transaction is protected."
-    },
-    {
-        number: "3",
-        title: "Receive Product",
-        description: "Once your payment is confirmed, we'll process and ship your order promptly. You'll receive a tracking number so you can monitor your shipment's progress. Enjoy your new purchase and thank you for shopping with us!"
-    }
-]
 
-export function HowItWorks() {
+interface HowItWorksProps {
+    title?: string
+    texts?: string[]
+    steps?: {
+        title: string
+        description: string
+    }[]
+}
+
+export function HowItWorks({
+    title = "Shopping made simple in three easy steps!",
+    texts = ["How It Works", "Simple Process", "Easy Steps"],
+    steps = [
+        {
+            title: "Select a product",
+            description: "Explore a wide range of products, tailored to meet your needs. Simply click on the item you desire to learn more."
+        },
+        {
+            title: "Pay the invoice",
+            description: "Proceed to checkout where you can review your selected items and total cost. Choose from multiple payment options."
+        },
+        {
+            title: "Receive Product",
+            description: "Once your payment is confirmed, we'll process and ship your order promptly. Enjoy your new purchase!"
+        }
+    ]
+}: HowItWorksProps) {
     return (
         <section className="py-16 md:py-24 relative overflow-hidden">
+
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="text-center space-y-4 mb-16">
                     <GooeyText
-                        texts={["How It Works", "Simple Process", "Easy Steps"]}
+                        texts={texts}
                         morphTime={1.5}
                         cooldownTime={2}
                         className="h-16 md:h-20"
                         textClassName="font-heading tracking-tight"
                     />
                     <p className="text-white/30 text-base font-medium pt-4">
-                        Shopping made simple in three easy steps!
+                        {title}
                     </p>
                 </div>
 
@@ -70,7 +80,7 @@ export function HowItWorks() {
                                 {/* Number Circle */}
                                 <div className="relative">
                                     <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-black text-3xl font-black">
-                                        {step.number}
+                                        {i + 1}
                                     </div>
                                 </div>
 

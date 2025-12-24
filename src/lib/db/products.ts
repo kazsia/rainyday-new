@@ -37,12 +37,40 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
             query = query.eq("category_id", options.categoryId)
         }
 
-        // Default to created_at
-        const { data, error } = await query
-            .order("created_at", { ascending: false })
+        const { data, error } = await query.order("created_at", { ascending: false })
 
         if (error) throw error
-        return data
+
+        // Fetch sales data separately
+        const { data: orderItems, error: orderItemsError } = await supabase
+            .from("order_items")
+            .select(`
+                product_id,
+                quantity,
+                order:orders!inner(status)
+            `)
+            .in("order.status", ['paid', 'completed', 'delivered'])
+
+        if (orderItemsError) {
+            console.error("[GET_ORDER_ITEMS_ERROR]", orderItemsError)
+        }
+
+        // Calculate sales count for each product
+        const salesByProduct = (orderItems || []).reduce((acc: Record<string, number>, item: any) => {
+            if (!acc[item.product_id]) {
+                acc[item.product_id] = 0
+            }
+            acc[item.product_id] += item.quantity || 0
+            return acc
+        }, {})
+
+        // Add sales count to products
+        const productsWithSales = data?.map(product => ({
+            ...product,
+            sales_count: salesByProduct[product.id] || 0
+        })) || []
+
+        return productsWithSales
     } catch (e) {
         console.error("[GET_PRODUCTS_CRITICAL]", e)
         return []

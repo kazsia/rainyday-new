@@ -10,6 +10,7 @@ import { twMerge } from "tailwind-merge";
 import { Logo } from "@/components/layout/logo";
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context";
 
+
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -356,7 +357,8 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "Rainyday"
 
     return (
-        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05]" suppressHydrationWarning>
+        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
+
             <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8" suppressHydrationWarning>
                 <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0" suppressHydrationWarning>
                     <Logo variant="footer" />

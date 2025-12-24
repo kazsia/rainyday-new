@@ -85,47 +85,52 @@ export default async function AdminDashboardPage(props: {
                 </div>
 
                 {/* Recent Orders */}
-                <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
-                    <div className="p-5 border-b border-[var(--sa-border)] flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-white">Recent Orders</h3>
-                        <Button variant="ghost" size="sm" className="h-8 text-[11px] text-[var(--sa-fg-muted)] hover:text-white uppercase font-bold tracking-wider" asChild>
+                <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                    <div className="px-5 py-3.5 border-b border-[var(--sa-border)] flex items-center justify-between bg-white/[0.01]">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-[11px] font-bold text-white uppercase tracking-wider">Recent Orders</h3>
+                            <div className="px-1.5 py-0.5 rounded-full bg-[var(--sa-accent-muted)] border border-[var(--sa-accent-glow)] text-[9px] font-bold text-[var(--sa-accent)] uppercase">Live</div>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-[var(--sa-fg-muted)] hover:text-white uppercase font-bold tracking-wider" asChild>
                             <Link href="/admin/orders">View All</Link>
                         </Button>
                     </div>
                     {/* Desktop/Tablet Table View */}
                     <div className="hidden md:block overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left text-sm min-w-[700px]">
+                        <table className="w-full text-left text-xs min-w-[700px]">
                             <thead>
-                                <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-muted)] text-[10px] uppercase font-bold tracking-widest bg-white/[0.01]">
-                                    <th className="px-6 py-4">Product</th>
-                                    <th className="px-6 py-4">Price</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Method</th>
-                                    <th className="px-6 py-4">Customer</th>
-                                    <th className="px-6 py-4 text-right">Time</th>
+                                <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-dim)] text-[9px] uppercase font-bold tracking-widest bg-black/20">
+                                    <th className="px-5 py-3">Product</th>
+                                    <th className="px-5 py-3">Price</th>
+                                    <th className="px-5 py-3">Status</th>
+                                    <th className="px-5 py-3">Method</th>
+                                    <th className="px-5 py-3">Customer</th>
+                                    <th className="px-5 py-3 text-right">Time</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--sa-border)]">
                                 {recentOrders.map((order) => (
                                     <tr key={order.id} className="group hover:bg-[var(--sa-card-hover)] transition-colors">
-                                        <td className="px-6 py-3.5 font-medium text-[var(--sa-fg-bright)]">{order.product}</td>
-                                        <td className="px-6 py-3.5 text-[var(--sa-fg)]">{order.price}</td>
-                                        <td className="px-6 py-3.5">
+                                        <td className="px-5 py-2.5 font-bold text-white">{order.product}</td>
+                                        <td className="px-5 py-2.5 text-[var(--sa-fg-muted)] font-medium">{order.price}</td>
+                                        <td className="px-5 py-2.5">
                                             <span className={cn(
-                                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border",
+                                                "px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
                                                 order.paid === 'Paid'
-                                                    ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/10"
-                                                    : "bg-amber-500/5 text-amber-500 border-amber-500/10"
+                                                    ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
+                                                    : "bg-amber-500/5 text-amber-400 border-amber-500/10"
                                             )}>
                                                 {order.paid}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-3.5 flex items-center gap-2 text-[var(--sa-fg-muted)]">
-                                            <CreditCard className="w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
-                                            <span className="text-xs font-medium">{order.method}</span>
+                                        <td className="px-5 py-2.5">
+                                            <div className="flex items-center gap-1.5 text-[var(--sa-fg-dim)]">
+                                                <CreditCard className="w-3 h-3" />
+                                                <span className="text-[10px] font-bold uppercase tracking-tighter">{order.method}</span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-3.5 text-[var(--sa-fg-muted)] text-xs">{order.email}</td>
-                                        <td className="px-6 py-3.5 text-[var(--sa-fg-dim)] text-right text-xs font-mono">
+                                        <td className="px-5 py-2.5 text-[var(--sa-fg-muted)] text-[11px] truncate max-w-[180px]">{order.email}</td>
+                                        <td className="px-5 py-2.5 text-[var(--sa-fg-dim)] text-right text-[10px] font-mono">
                                             {order.time}
                                         </td>
                                     </tr>

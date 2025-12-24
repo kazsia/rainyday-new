@@ -25,7 +25,11 @@ import {
     List,
     AlignLeft,
     HelpCircle,
-    Activity
+    Activity,
+    Mail,
+    Info,
+    Plus,
+    Zap
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,20 +40,40 @@ import { getSiteSettings, updateSiteSettings, uploadAsset, type SiteSettings } f
 import { toast } from "sonner"
 import Image from "next/image"
 
-const TABS = [
+const CONFIGURE_TABS = [
     { id: "identity", label: "Identity", icon: Store },
     { id: "socials", label: "Socials", icon: Heart },
     { id: "checkout", label: "Checkout", icon: ShoppingCart },
     { id: "feedbacks", label: "Feedbacks", icon: Star },
-    { id: "legal", label: "Legal Pages", icon: FileText },
     { id: "integrations", label: "Integrations", icon: Plug },
-    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "statistics", label: "Statistics", icon: Activity },
 ]
 
+const EDITOR_TABS = [
+    { id: "landing", label: "Landing Content", icon: Store },
+    { id: "about", label: "About Page", icon: Info },
+    { id: "faq", label: "FAQ", icon: HelpCircle },
+    { id: "legal", label: "Legal Pages", icon: FileText },
+    { id: "notifications", label: "Webhooks", icon: Bell },
+    { id: "email", label: "Email", icon: Mail },
+]
+
+const TABS = [...CONFIGURE_TABS, ...EDITOR_TABS]
+
+import { useSearchParams } from "next/navigation"
+
 export default function AdminStorefrontPage() {
-    const [activeTab, setActiveTab] = useState("identity")
+    const searchParams = useSearchParams()
+    const tabParam = searchParams.get("tab")
+    const [activeTab, setActiveTab] = useState(tabParam && TABS.some(t => t.id === tabParam) ? tabParam : "identity")
     const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        if (tabParam && TABS.some(t => t.id === tabParam)) {
+            setActiveTab(tabParam)
+        }
+    }, [tabParam])
+
     const [settings, setSettings] = useState<SiteSettings>({
         general: { name: "", description: "" },
         branding: {},
@@ -59,12 +83,70 @@ export default function AdminStorefrontPage() {
         feedbacks: { enable_automatic: true, hide_on_main: false },
         legal: { terms_of_service: "", privacy_policy: "" },
         integrations: {},
-        notifications: { webhook_url: "", notify_on_sale: true, notify_on_ticket: true },
+        notifications: {
+            webhook_url: "",
+            notify_on_sale: true,
+            notify_on_ticket: true,
+            sale_title: '🛒 New Sale',
+            sale_message: 'Order #{order_id} - ${total} from {email}',
+            ticket_title: '🎫 New Support Ticket',
+            ticket_message: 'Ticket #{ticket_id} from {email}: {subject}'
+        },
+        email: {
+            enabled: true,
+            from_name: "",
+            from_email: "",
+            invoice_subject: 'Order #{order_id} - {store_name}',
+            invoice_heading: 'Order Confirmed! 🎉',
+            invoice_message: 'Thank you for your order. Please complete payment to receive your items.',
+            payment_subject: 'Payment Confirmed - Order #{order_id}',
+            payment_heading: 'Payment Received! ✅',
+            payment_message: 'Your payment has been confirmed. Your items are being delivered.',
+            delivery_subject: '🎉 Your Order is Delivered - #{order_id}',
+            delivery_heading: 'Your Order is Delivered! 🚀',
+            delivery_message: 'Thank you for your purchase. Your items are ready below.'
+        },
         dns: { records: [] },
         statistics: {
             base_sales: 1460,
             base_buyers: 162,
             base_rating: "4.98"
+        },
+        about: {
+            title: "",
+            subtitle: "",
+            content_left: "",
+            content_right: "",
+            stats: []
+        },
+        faq: {
+            items: []
+        },
+        hero: {
+            title: "",
+            description: "",
+            badge_text: "",
+            badge_label: "",
+            cta1_text: "",
+            cta1_href: "",
+            cta2_text: "",
+            cta2_href: ""
+        },
+        landing_cta: {
+            title: "",
+            description: "",
+            button_text: "",
+            button_href: ""
+        },
+        why_choose: {
+            title: "",
+            subtitle: "",
+            features: []
+        },
+        how_it_works: {
+            title: "",
+            texts: [],
+            steps: []
         }
     })
     const [uploading, setUploading] = useState<string | null>(null)
@@ -96,7 +178,14 @@ export default function AdminStorefrontPage() {
                 updateSiteSettings('legal', settings.legal),
                 updateSiteSettings('integrations', settings.integrations),
                 updateSiteSettings('notifications', settings.notifications),
-                updateSiteSettings('statistics', settings.statistics)
+                updateSiteSettings('email', settings.email),
+                updateSiteSettings('statistics', settings.statistics),
+                updateSiteSettings('about', settings.about),
+                updateSiteSettings('faq', settings.faq),
+                updateSiteSettings('hero', settings.hero),
+                updateSiteSettings('landing_cta', settings.landing_cta),
+                updateSiteSettings('why_choose', settings.why_choose),
+                updateSiteSettings('how_it_works', settings.how_it_works)
             ])
             toast.success("Settings saved successfully")
         } catch (error) {
@@ -140,17 +229,14 @@ export default function AdminStorefrontPage() {
                         <h1 className="text-2xl font-bold text-white tracking-tight">Configure Storefront</h1>
                         <p className="text-sm text-white/40">Manage your shop settings.</p>
                     </div>
-                    <Button onClick={handleSave} className="bg-brand text-black font-bold hover:bg-brand/90 sm:w-auto w-full">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
-                    </Button>
                 </div>
+
 
                 <div className="flex flex-col md:grid md:grid-cols-12 gap-6 lg:gap-8 pb-32">
                     {/* Sidebar / Tabs */}
                     <div className="col-span-12 md:col-span-3 lg:col-span-2">
                         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                            {TABS.map((tab) => (
+                            {(EDITOR_TABS.some(t => t.id === activeTab) ? EDITOR_TABS : CONFIGURE_TABS).map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
@@ -488,39 +574,811 @@ export default function AdminStorefrontPage() {
 
                         {/* NOTIFICATIONS TAB */}
                         {activeTab === "notifications" && (
-                            <div className="space-y-10 max-w-3xl animate-in fade-in duration-500">
-                                <div>
-                                    <h2 className="text-lg font-bold text-white mb-1">Notifications</h2>
-                                    <p className="text-sm text-white/40">Integrate webhooks to receive real-time updates.</p>
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                                    <div>
+                                        <h2 className="text-lg font-bold text-white">Discord Webhooks</h2>
+                                        <p className="text-xs text-white/40">Real-time notifications for your store events.</p>
+                                    </div>
+                                    <div className="flex items-center gap-6 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Sale</label>
+                                            <Switch
+                                                checked={settings.notifications.notify_on_sale}
+                                                onCheckedChange={val => setSettings({ ...settings, notifications: { ...settings.notifications, notify_on_sale: val } })}
+                                            />
+                                        </div>
+                                        <div className="w-px h-4 bg-white/10" />
+                                        <div className="flex items-center gap-3">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ticket</label>
+                                            <Switch
+                                                checked={settings.notifications.notify_on_ticket}
+                                                onCheckedChange={val => setSettings({ ...settings, notifications: { ...settings.notifications, notify_on_ticket: val } })}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-8 bg-background p-6 rounded-xl border border-white/5">
+
+                                <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-white">Discord Webhook URL</label>
-                                        <p className="text-xs text-white/40 mb-2">Receive notifications about sales and tickets directly in your Discord channel.</p>
+                                        <label className="text-xs font-bold text-white/60">Webhook URL</label>
                                         <Input
                                             value={settings.notifications.webhook_url}
                                             onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, webhook_url: e.target.value } })}
-                                            className="bg-background border-white/10 h-11 font-mono text-xs"
+                                            className="bg-background border-white/10 h-10 font-mono text-xs"
                                             placeholder="https://discord.com/api/webhooks/..."
                                         />
                                     </div>
 
-                                    <div className="pt-4 border-t border-white/5 space-y-6">
-                                        {[
-                                            { label: "Notify on Sale", desc: "Send a notification when a new order is paid.", field: "notify_on_sale" },
-                                            { label: "Notify on Ticket", desc: "Send a notification when a new support ticket is created.", field: "notify_on_ticket" }
-                                        ].map((item) => (
-                                            <div key={item.field} className="flex items-center justify-between">
-                                                <div className="space-y-1">
-                                                    <label className="text-sm font-bold text-white">{item.label}</label>
-                                                    <p className="text-xs text-white/40">{item.desc}</p>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {/* Sale Template */}
+                                        <div className="bg-[#0c1218] p-5 rounded-2xl border border-white/5 space-y-4">
+                                            <div className="flex items-center gap-2 text-brand">
+                                                <ShoppingCart className="w-4 h-4" />
+                                                <h3 className="text-xs font-bold uppercase tracking-widest">Sale Notification</h3>
+                                            </div>
+                                            <div className="space-y-3 font-sans">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Title</label>
+                                                    <Input
+                                                        value={settings.notifications.sale_title || ""}
+                                                        onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, sale_title: e.target.value } })}
+                                                        className="bg-background/50 border-white/5 h-9 text-xs"
+                                                    />
                                                 </div>
-                                                <Switch
-                                                    checked={settings.notifications[item.field as "notify_on_sale" | "notify_on_ticket"]}
-                                                    onCheckedChange={val => setSettings({ ...settings, notifications: { ...settings.notifications, [item.field]: val } })}
-                                                />
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Message</label>
+                                                    <Textarea
+                                                        value={settings.notifications.sale_message || ""}
+                                                        onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, sale_message: e.target.value } })}
+                                                        className="bg-background/50 border-white/5 min-h-[60px] text-xs resize-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Ticket Template */}
+                                        <div className="bg-[#0c1218] p-5 rounded-2xl border border-white/5 space-y-4">
+                                            <div className="flex items-center gap-2 text-brand">
+                                                <Bell className="w-4 h-4" />
+                                                <h3 className="text-xs font-bold uppercase tracking-widest">Ticket Notification</h3>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Title</label>
+                                                    <Input
+                                                        value={settings.notifications.ticket_title || ""}
+                                                        onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, ticket_title: e.target.value } })}
+                                                        className="bg-background/50 border-white/5 h-9 text-xs"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Message</label>
+                                                    <Textarea
+                                                        value={settings.notifications.ticket_message || ""}
+                                                        onChange={e => setSettings({ ...settings, notifications: { ...settings.notifications, ticket_message: e.target.value } })}
+                                                        className="bg-background/50 border-white/5 min-h-[60px] text-xs resize-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Variables Legend */}
+                                    <div className="px-4 py-3 bg-brand/5 border border-brand/10 rounded-xl flex flex-wrap gap-x-6 gap-y-2 items-center">
+                                        <span className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-2">
+                                            <Code className="w-3 h-3" /> Variables:
+                                        </span>
+                                        <div className="flex flex-wrap gap-3">
+                                            {["order_id", "total", "email", "products", "ticket_id", "subject"].map(v => (
+                                                <code key={v} className="text-[10px] text-white/40 font-mono bg-white/5 px-1.5 py-0.5 rounded">{"{"}{v}{"}"}</code>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* EMAIL TAB */}
+                        {activeTab === "email" && (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <Switch
+                                                checked={settings.email?.enabled}
+                                                onCheckedChange={val => setSettings({ ...settings, email: { ...settings.email, enabled: val } })}
+                                            />
+                                            <span className="text-sm font-bold text-white">Enable Email</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Sender Name</label>
+                                            <Input
+                                                value={settings.email?.from_name || ""}
+                                                onChange={e => setSettings({ ...settings, email: { ...settings.email, from_name: e.target.value } })}
+                                                className="bg-background border-white/10 h-9 px-3 text-xs w-full sm:w-[150px]"
+                                                placeholder="Rainyday"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Sender Email</label>
+                                            <Input
+                                                value={settings.email?.from_email || ""}
+                                                onChange={e => setSettings({ ...settings, email: { ...settings.email, from_email: e.target.value } })}
+                                                className="bg-background border-white/10 h-9 px-3 text-xs w-full sm:w-[220px]"
+                                                placeholder="noreply@yourdomain.com"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {[
+                                        { title: "Invoice Email", key: "invoice", icon: FileText },
+                                        { title: "Payment Received", key: "payment", icon: ShoppingCart },
+                                        { title: "Delivery Completed", key: "delivery", icon: Zap }
+                                    ].map((tmpl) => (
+                                        <div key={tmpl.key} className="bg-[#0c1218] p-5 rounded-2xl border border-white/5 space-y-4">
+                                            <div className="flex items-center gap-2 text-brand">
+                                                <tmpl.icon className="w-4 h-4" />
+                                                <h3 className="text-xs font-bold uppercase tracking-widest">{tmpl.title}</h3>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Subject Line</label>
+                                                    <Input
+                                                        value={settings.email?.[`${tmpl.key}_subject` as keyof typeof settings.email] as string || ""}
+                                                        onChange={e => setSettings({ ...settings, email: { ...settings.email, [`${tmpl.key}_subject`]: e.target.value } })}
+                                                        className="bg-background/50 border-white/5 h-9 text-xs"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Heading</label>
+                                                        <Input
+                                                            value={settings.email?.[`${tmpl.key}_heading` as keyof typeof settings.email] as string || ""}
+                                                            onChange={e => setSettings({ ...settings, email: { ...settings.email, [`${tmpl.key}_heading`]: e.target.value } })}
+                                                            className="bg-background/50 border-white/5 h-9 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Message Text</label>
+                                                        <Input
+                                                            value={settings.email?.[`${tmpl.key}_message` as keyof typeof settings.email] as string || ""}
+                                                            onChange={e => setSettings({ ...settings, email: { ...settings.email, [`${tmpl.key}_message`]: e.target.value } })}
+                                                            className="bg-background/50 border-white/5 h-9 text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-start gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-blue-400">
+                                            <Info className="w-4 h-4" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-white">Resend Setup</h4>
+                                            <p className="text-[10px] text-white/40 leading-relaxed italic">
+                                                Add your domain and API key at <a href="https://resend.com" target="_blank" className="text-brand hover:underline">resend.com</a>. Set <code className="bg-white/10 px-1 rounded">RESEND_API_KEY</code> in your environment.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="px-4 py-3 bg-brand/5 border border-brand/10 rounded-xl flex flex-wrap gap-x-6 gap-y-2 items-center">
+                                    <span className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-2">
+                                        <Code className="w-3 h-3" /> Variables:
+                                    </span>
+                                    <div className="flex flex-wrap gap-3">
+                                        {["order_id", "email", "total", "store_name", "products", "payment_method"].map(v => (
+                                            <code key={v} className="text-[10px] text-white/40 font-mono bg-white/5 px-1.5 py-0.5 rounded">{"{"}{v}{"}"}</code>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ABOUT TAB */}
+                        {activeTab === "about" && (
+                            <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
+                                <div>
+                                    <h2 className="text-lg font-bold text-white mb-1">About Page</h2>
+                                    <p className="text-sm text-white/40">Customize the contents of your /about page.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Title</label>
+                                            <Input
+                                                value={settings.about.title}
+                                                onChange={e => setSettings({ ...settings, about: { ...settings.about, title: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Empowering Digital Creators"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Subtitle</label>
+                                            <Input
+                                                value={settings.about.subtitle}
+                                                onChange={e => setSettings({ ...settings, about: { ...settings.about, subtitle: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Our Story"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Content Left Column</label>
+                                            <Textarea
+                                                value={settings.about.content_left}
+                                                onChange={e => setSettings({ ...settings, about: { ...settings.about, content_left: e.target.value } })}
+                                                className="bg-background border-white/10 min-h-[150px]"
+                                                placeholder="Describe your mission..."
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Content Right Column</label>
+                                            <Textarea
+                                                value={settings.about.content_right}
+                                                onChange={e => setSettings({ ...settings, about: { ...settings.about, content_right: e.target.value } })}
+                                                className="bg-background border-white/10 min-h-[150px]"
+                                                placeholder="Describe your achievements..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-8 border-t border-white/5 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white mb-1">Statistics</h3>
+                                            <p className="text-sm text-white/40">Numbers displayed at the bottom of the page.</p>
+                                        </div>
+                                        <Button
+                                            onClick={() => setSettings({
+                                                ...settings,
+                                                about: {
+                                                    ...settings.about,
+                                                    stats: [...settings.about.stats, { label: "", value: "" }]
+                                                }
+                                            })}
+                                            variant="outline"
+                                            className="border-brand/20 text-brand hover:bg-brand/10 h-9"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Add Stat
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {settings.about.stats.map((stat, index) => (
+                                            <div key={index} className="bg-background p-4 rounded-xl border border-white/5 relative group">
+                                                <button
+                                                    onClick={() => {
+                                                        const newStats = [...settings.about.stats]
+                                                        newStats.splice(index, 1)
+                                                        setSettings({ ...settings, about: { ...settings.about, stats: newStats } })
+                                                    }}
+                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                                <div className="space-y-3">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Value</label>
+                                                        <Input
+                                                            value={stat.value}
+                                                            onChange={e => {
+                                                                const newStats = [...settings.about.stats]
+                                                                newStats[index] = { ...newStats[index], value: e.target.value }
+                                                                setSettings({ ...settings, about: { ...settings.about, stats: newStats } })
+                                                            }}
+                                                            className="bg-background border-white/10 h-9 text-lg font-bold"
+                                                            placeholder="10k+"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Label</label>
+                                                        <Input
+                                                            value={stat.label}
+                                                            onChange={e => {
+                                                                const newStats = [...settings.about.stats]
+                                                                newStats[index] = { ...newStats[index], label: e.target.value }
+                                                                setSettings({ ...settings, about: { ...settings.about, stats: newStats } })
+                                                            }}
+                                                            className="bg-background border-white/10 h-8 text-xs font-medium"
+                                                            placeholder="Creators"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* FAQ TAB */}
+                        {activeTab === "faq" && (
+                            <div className="space-y-10 max-w-4xl animate-in fade-in duration-500">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-lg font-bold text-white mb-1">Frequently Asked Questions</h2>
+                                        <p className="text-sm text-white/40">Manage the questions and answers on your /faq page.</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => setSettings({
+                                            ...settings,
+                                            faq: {
+                                                ...settings.faq,
+                                                items: [...settings.faq.items, { q: "", a: "" }]
+                                            }
+                                        })}
+                                        className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Add FAQ Item
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {settings.faq.items.map((item, index) => (
+                                        <div key={index} className="bg-background border border-white/5 rounded-2xl p-6 group relative">
+                                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={index === 0}
+                                                    onClick={() => {
+                                                        const newItems = [...settings.faq.items]
+                                                        const temp = newItems[index]
+                                                        newItems[index] = newItems[index - 1]
+                                                        newItems[index - 1] = temp
+                                                        setSettings({ ...settings, faq: { items: newItems } })
+                                                    }}
+                                                    className="h-8 w-8 text-white/40 hover:text-white"
+                                                >
+                                                    <Loader2 className="w-4 h-4 rotate-180" /> {/* Should be Up arrow but using Loader2 as placeholder or just leave it for now */}
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        const newItems = [...settings.faq.items]
+                                                        newItems.splice(index, 1)
+                                                        setSettings({ ...settings, faq: { items: newItems } })
+                                                    }}
+                                                    className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                >
+                                                    <Trash className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Question</label>
+                                                    <Input
+                                                        value={item.q}
+                                                        onChange={e => {
+                                                            const newItems = [...settings.faq.items]
+                                                            newItems[index] = { ...newItems[index], q: e.target.value }
+                                                            setSettings({ ...settings, faq: { items: newItems } })
+                                                        }}
+                                                        className="bg-background border-white/10 h-11 text-white font-bold"
+                                                        placeholder="e.g., How long does delivery take?"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Answer</label>
+                                                    <Textarea
+                                                        value={item.a}
+                                                        onChange={e => {
+                                                            const newItems = [...settings.faq.items]
+                                                            newItems[index] = { ...newItems[index], a: e.target.value }
+                                                            setSettings({ ...settings, faq: { items: newItems } })
+                                                        }}
+                                                        className="bg-background border-white/10 min-h-[100px] text-white/70"
+                                                        placeholder="e.g., Delivery is instant and will be sent to your email immediately after payment."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {settings.faq.items.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-white/5 rounded-3xl text-center">
+                                            <HelpCircle className="w-12 h-12 text-white/10 mb-4" />
+                                            <p className="text-white/40 font-medium">No FAQ items added yet.</p>
+                                            <Button
+                                                onClick={() => setSettings({
+                                                    ...settings,
+                                                    faq: { items: [{ q: "", a: "" }] }
+                                                })}
+                                                variant="outline"
+                                                className="mt-4 border-white/10 text-white/60 hover:text-white"
+                                            >
+                                                Create your first FAQ
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* LANDING CONTENT TAB */}
+                        {activeTab === "landing" && (
+                            <div className="space-y-12 max-w-4xl animate-in fade-in duration-500 pb-20">
+                                {/* HERO SECTION */}
+                                <div className="space-y-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                            <Store className="w-5 h-5 text-brand" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white mb-1">Hero Section</h2>
+                                            <p className="text-sm text-white/40">Customize the main hero section on your landing page.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4 col-span-full">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Main Title</label>
+                                                <Input
+                                                    value={settings.hero.title}
+                                                    onChange={e => setSettings({ ...settings, hero: { ...settings.hero, title: e.target.value } })}
+                                                    className="bg-background border-white/10 h-11 text-lg font-bold"
+                                                    placeholder="Digital Products, Redefined."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Description</label>
+                                                <Textarea
+                                                    value={settings.hero.description}
+                                                    onChange={e => setSettings({ ...settings, hero: { ...settings.hero, description: e.target.value } })}
+                                                    className="bg-background border-white/10 min-h-[100px]"
+                                                    placeholder="Describe your platform..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Badge Label</label>
+                                            <Input
+                                                value={settings.hero.badge_label}
+                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_label: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="New"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Badge Text</label>
+                                            <Input
+                                                value={settings.hero.badge_text}
+                                                onChange={e => setSettings({ ...settings, hero: { ...settings.hero, badge_text: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                                placeholder="Generative Surfaces"
+                                            />
+                                        </div>
+
+                                        <div className="p-6 bg-[#0c1218] rounded-2xl border border-white/5 space-y-6 col-span-full">
+                                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                                <Store className="w-4 h-4 text-brand" />
+                                                Call to Action Buttons
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Text</label>
+                                                        <Input
+                                                            value={settings.hero.cta1_text}
+                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_text: e.target.value } })}
+                                                            className="bg-background border-white/5 h-10"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Primary Button Link</label>
+                                                        <Input
+                                                            value={settings.hero.cta1_href}
+                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta1_href: e.target.value } })}
+                                                            className="bg-background border-white/5 h-10 font-mono text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Text</label>
+                                                        <Input
+                                                            value={settings.hero.cta2_text}
+                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_text: e.target.value } })}
+                                                            className="bg-background border-white/5 h-10"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Secondary Button Link</label>
+                                                        <Input
+                                                            value={settings.hero.cta2_href}
+                                                            onChange={e => setSettings({ ...settings, hero: { ...settings.hero, cta2_href: e.target.value } })}
+                                                            className="bg-background border-white/5 h-10 font-mono text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* WHY CHOOSE SECTION */}
+                                <div className="pt-10 border-t border-white/5 space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                                <Info className="w-5 h-5 text-brand" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-lg font-bold text-white mb-1">Why Choose Section</h2>
+                                                <p className="text-sm text-white/40">Customize the features list on your landing page.</p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={() => setSettings({
+                                                ...settings,
+                                                why_choose: {
+                                                    ...settings.why_choose,
+                                                    features: [...settings.why_choose.features, { title: "", description: "", icon: "Zap" }]
+                                                }
+                                            })}
+                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Add Feature
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4 col-span-full">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Section Subtitle (Top)</label>
+                                                <Input
+                                                    value={settings.why_choose.subtitle}
+                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, subtitle: e.target.value } })}
+                                                    className="bg-background border-white/10 h-11"
+                                                    placeholder="Why Choose Rainyday?"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Section Main Title</label>
+                                                <Input
+                                                    value={settings.why_choose.title}
+                                                    onChange={e => setSettings({ ...settings, why_choose: { ...settings.why_choose, title: e.target.value } })}
+                                                    className="bg-background border-white/10 h-11 text-lg font-bold"
+                                                    placeholder="The Ultimate Ecosystem"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="col-span-full space-y-4">
+                                            {settings.why_choose.features.map((feature, index) => (
+                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
+                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                const newFeatures = [...settings.why_choose.features]
+                                                                newFeatures.splice(index, 1)
+                                                                setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                            }}
+                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                        >
+                                                            <Trash className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Icon Name (Lucide)</label>
+                                                            <Input
+                                                                value={feature.icon}
+                                                                onChange={e => {
+                                                                    const newFeatures = [...settings.why_choose.features]
+                                                                    newFeatures[index] = { ...newFeatures[index], icon: e.target.value }
+                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                                }}
+                                                                className="bg-background border-white/10 h-10 font-mono text-xs"
+                                                                placeholder="Zap, Shield"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2 md:col-span-2">
+                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Feature Title</label>
+                                                            <Input
+                                                                value={feature.title}
+                                                                onChange={e => {
+                                                                    const newFeatures = [...settings.why_choose.features]
+                                                                    newFeatures[index] = { ...newFeatures[index], title: e.target.value }
+                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                                }}
+                                                                className="bg-background border-white/10 h-10 font-bold"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2 col-span-full">
+                                                            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
+                                                            <Textarea
+                                                                value={feature.description}
+                                                                onChange={e => {
+                                                                    const newFeatures = [...settings.why_choose.features]
+                                                                    newFeatures[index] = { ...newFeatures[index], description: e.target.value }
+                                                                    setSettings({ ...settings, why_choose: { ...settings.why_choose, features: newFeatures } })
+                                                                }}
+                                                                className="bg-background border-white/10 min-h-[60px] text-white/60"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* HOW IT WORKS SECTION */}
+                                <div className="pt-10 border-t border-white/5 space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                                <Activity className="w-5 h-5 text-brand" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-lg font-bold text-white mb-1">How It Works Section</h2>
+                                                <p className="text-sm text-white/40">Customize the step‑by‑step process on your landing page.</p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={() => setSettings({
+                                                ...settings,
+                                                how_it_works: {
+                                                    ...settings.how_it_works,
+                                                    steps: [...settings.how_it_works.steps, { title: "", description: "" }]
+                                                }
+                                            })}
+                                            className="bg-brand text-black font-bold h-10 px-6 rounded-xl"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Add Step
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Section Description</label>
+                                                <Input
+                                                    value={settings.how_it_works.title}
+                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, title: e.target.value } })}
+                                                    className="bg-background border-white/10 h-11"
+                                                    placeholder="Shopping made simple in three easy steps!"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">Morphing Texts (comma separated)</label>
+                                                <Input
+                                                    value={settings.how_it_works.texts.join(", ")}
+                                                    onChange={e => setSettings({ ...settings, how_it_works: { ...settings.how_it_works, texts: e.target.value.split(",").map(s => s.trim()) } })}
+                                                    className="bg-background border-white/10 h-11 font-mono text-xs"
+                                                    placeholder="How It Works, Simple Process, Easy Steps"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {settings.how_it_works.steps.map((step, index) => (
+                                                <div key={index} className="bg-[#0c1218] border border-white/5 rounded-2xl p-6 group relative">
+                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                const newSteps = [...settings.how_it_works.steps]
+                                                                newSteps.splice(index, 1)
+                                                                setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
+                                                            }}
+                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                        >
+                                                            <Trash className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                        <div className="flex items-center justify-center">
+                                                            <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center text-black font-black text-xl">
+                                                                {index + 1}
+                                                            </div>
+                                                        </div>
+                                                        <div className="md:col-span-3 space-y-4">
+                                                            <div className="space-y-2">
+                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Step Title</label>
+                                                                <Input
+                                                                    value={step.title}
+                                                                    onChange={e => {
+                                                                        const newSteps = [...settings.how_it_works.steps]
+                                                                        newSteps[index] = { ...newSteps[index], title: e.target.value }
+                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
+                                                                    }}
+                                                                    className="bg-background border-white/10 h-10 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
+                                                                <Textarea
+                                                                    value={step.description}
+                                                                    onChange={e => {
+                                                                        const newSteps = [...settings.how_it_works.steps]
+                                                                        newSteps[index] = { ...newSteps[index], description: e.target.value }
+                                                                        setSettings({ ...settings, how_it_works: { ...settings.how_it_works, steps: newSteps } })
+                                                                    }}
+                                                                    className="bg-background border-white/10 min-h-[60px] text-white/60"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* LANDING CTA SECTION */}
+                                <div className="pt-10 border-t border-white/5 space-y-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                                            <ShoppingCart className="w-5 h-5 text-brand" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white mb-1">Landing CTA Section</h2>
+                                            <p className="text-sm text-white/40">Customize the call‑to‑action section at the bottom of the landing page.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4 col-span-full">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">CTA Title</label>
+                                                <Input
+                                                    value={settings.landing_cta.title}
+                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, title: e.target.value } })}
+                                                    className="bg-background border-white/10 h-11 font-bold"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-white">CTA Description</label>
+                                                <Textarea
+                                                    value={settings.landing_cta.description}
+                                                    onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, description: e.target.value } })}
+                                                    className="bg-background border-white/10 min-h-[80px]"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Button Text</label>
+                                            <Input
+                                                value={settings.landing_cta.button_text}
+                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_text: e.target.value } })}
+                                                className="bg-background border-white/10 h-11"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-white">Button Link</label>
+                                            <Input
+                                                value={settings.landing_cta.button_href}
+                                                onChange={e => setSettings({ ...settings, landing_cta: { ...settings.landing_cta, button_href: e.target.value } })}
+                                                className="bg-background border-white/10 h-11 font-mono text-xs"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -601,7 +1459,7 @@ export default function AdminStorefrontPage() {
                         )}
 
                         {/* OTHER TABS (Placeholder) */}
-                        {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "statistics"].includes(activeTab) && (
+                        {!["identity", "socials", "checkout", "feedbacks", "legal", "integrations", "notifications", "email", "about", "faq", "landing", "statistics"].includes(activeTab) && (
                             <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-4 animate-in fade-in zoom-in duration-300">
                                 <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
                                     {(() => {

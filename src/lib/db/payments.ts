@@ -102,22 +102,59 @@ export async function updatePaymentStatus(
         try {
             const { data: order } = await supabase
                 .from("orders")
-                .select("email, total, readable_id")
+                .select(`
+                    email, total, readable_id,
+                    order_items (
+                        quantity, price,
+                        product:products (name),
+                        variant:product_variants (name)
+                    )
+                `)
                 .eq("id", payment.order_id)
                 .single()
 
             if (order) {
+                // Map products for Discord
+                const products = order.order_items?.map((item: any) => ({
+                    name: item.product?.name || "Product",
+                    quantity: item.quantity,
+                    price: item.price,
+                    variant: item.variant?.name
+                })) || []
+
                 const { notifyPaymentConfirmed } = await import("@/lib/actions/create-notification")
                 await notifyPaymentConfirmed(
                     payment.order_id,
                     order.readable_id || payment.order_id.slice(0, 6).toUpperCase(),
                     order.total || payment.amount,
-                    order.email || "Unknown"
+                    order.email || "Unknown",
+                    undefined, // cryptoAmount - we'll pass from details if available
+                    details?.provider, // cryptoCurrency / payment method
+                    details?.provider, // paymentMethod
+                    products
                 )
             }
         } catch (notifyError) {
             // Don't fail payment on notification error
             console.error("Notification creation failed:", notifyError)
+        }
+
+        // ========================
+        // SEND PAYMENT CONFIRMED EMAIL
+        // ========================
+        try {
+            const { data: order } = await supabase
+                .from("orders")
+                .select("id, readable_id, email, total, currency, created_at")
+                .eq("id", payment.order_id)
+                .single()
+
+            if (order?.email) {
+                const { sendPaymentConfirmedEmail } = await import("@/lib/email/email")
+                await sendPaymentConfirmedEmail(order, payment.amount, details?.provider)
+            }
+        } catch (emailError) {
+            console.error("[EMAIL] Payment confirmed email failed:", emailError)
         }
 
         // ========================

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Logo } from "./logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ShoppingCart, Menu, Search, User } from "lucide-react"
+import { ShoppingCart, Menu, Search, User, Star } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { useCart } from "@/context/cart-context"
@@ -25,7 +25,7 @@ import {
     SheetClose,
 } from "@/components/ui/sheet"
 
-import { getStoreStats } from "@/lib/db/stats"
+import { getAverageRating } from "@/lib/db/feedbacks"
 
 const navLinks = [
     { name: "Products", href: "/store" },
@@ -41,9 +41,15 @@ export function ProximaNavbar() {
     const { cartCount, isHydrated: cartHydrated } = useCart()
     const { currency, setCurrency, symbol, isHydrated: currencyHydrated } = useCurrency()
     const [mounted, setMounted] = React.useState(false)
+    const [ratingData, setRatingData] = React.useState<{ average: number, count: number } | null>(null)
 
     React.useEffect(() => {
         setMounted(true)
+        async function loadRating() {
+            const data = await getAverageRating()
+            setRatingData(data)
+        }
+        loadRating()
     }, [])
 
     return (
@@ -58,18 +64,25 @@ export function ProximaNavbar() {
                 <div className="hidden lg:flex items-center gap-1">
                     {navLinks.map((link) => {
                         const isActive = pathname === link.href
+                        const isFeedback = link.name === "Feedback"
                         return (
                             <Link
                                 key={link.name}
                                 href={link.href}
                                 className={cn(
-                                    "h-10 px-4 rounded-lg text-sm font-medium transition-all flex items-center hover:bg-white/5",
+                                    "h-10 px-4 rounded-lg text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/5",
                                     isActive
                                         ? "text-brand-primary"
                                         : "text-muted-foreground hover:text-white"
                                 )}
                             >
                                 {link.name}
+                                {isFeedback && ratingData && ratingData.count > 0 && (
+                                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-[10px] font-bold text-brand-primary border border-brand-primary/20">
+                                        <Star className="w-2.5 h-2.5 fill-current" />
+                                        {ratingData.average}
+                                    </span>
+                                )}
                             </Link>
                         )
                     })}
@@ -125,11 +138,17 @@ export function ProximaNavbar() {
                                             <Link
                                                 href={link.href}
                                                 className={cn(
-                                                    "h-12 px-4 rounded-lg flex items-center text-sm font-medium transition-colors",
+                                                    "h-12 px-4 rounded-lg flex items-center text-sm font-medium transition-colors justify-between",
                                                     pathname === link.href ? "bg-brand-primary/10 text-brand-primary" : "hover:bg-white/5 text-muted-foreground hover:text-white"
                                                 )}
                                             >
                                                 {link.name}
+                                                {link.name === "Feedback" && ratingData && ratingData.count > 0 && (
+                                                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-[10px] font-bold text-brand-primary border border-brand-primary/20">
+                                                        <Star className="w-2.5 h-2.5 fill-current" />
+                                                        {ratingData.average}
+                                                    </span>
+                                                )}
                                             </Link>
                                         </SheetClose>
                                     ))}

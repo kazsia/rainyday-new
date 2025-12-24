@@ -34,18 +34,18 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
 
             <div className="flex-1 flex flex-col bg-[var(--sa-bg)] min-w-0" suppressHydrationWarning>
                 {/* Topbar */}
-                <header className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-[var(--sa-bg)]/80 backdrop-blur-xl sticky top-0 z-40 border-b border-[var(--sa-border)] transition-all">
+                <header className="h-12 flex items-center justify-between px-4 sm:px-6 bg-[var(--sa-bg)]/80 backdrop-blur-xl sticky top-0 z-40 border-b border-[var(--sa-border)] transition-all">
                     <div className="flex items-center gap-3 overflow-hidden" suppressHydrationWarning>
                         {/* Mobile Menu Trigger */}
                         <div className="lg:hidden shrink-0" suppressHydrationWarning>
                             {mounted && (
                                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                                     <SheetTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-[var(--sa-fg-dim)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)]">
-                                            <Menu className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--sa-fg-dim)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)]">
+                                            <Menu className="w-4 h-4" />
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="left" className="p-0 border-r border-[var(--sa-border)] bg-[var(--sa-sidebar)] w-64">
+                                    <SheetContent side="left" className="p-0 border-r border-[var(--sa-border)] bg-[var(--sa-sidebar)] w-60">
                                         <SheetHeader className="sr-only">
                                             <SheetTitle>Admin Navigation</SheetTitle>
                                         </SheetHeader>
@@ -60,18 +60,18 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                         </div>
 
                         <div className="relative group flex items-center gap-2 shrink-0" suppressHydrationWarning>
-                            <Logo className="scale-[0.55] sm:scale-75 origin-left" />
+                            <Logo className="scale-[0.5] origin-left" />
                         </div>
                     </div>
 
-                    <div className="flex items-center shrink-0" suppressHydrationWarning>
+                    <div className="flex items-center gap-2 shrink-0" suppressHydrationWarning>
                         <NotificationBell />
                     </div>
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-                    <div className="max-w-full" suppressHydrationWarning>
+                <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
+                    <div className="max-w-[120rem] mx-auto" suppressHydrationWarning>
                         {children}
                     </div>
                 </main>

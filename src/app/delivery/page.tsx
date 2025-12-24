@@ -12,6 +12,7 @@ import { checkRateLimit } from "@/lib/security/rate-limit"
 import { RateLimits, rateLimitKey } from "@/lib/security/rate-limit-config"
 import { headers } from "next/headers"
 import { DeliveryContent } from "./delivery-content"
+import { FeedbackForm } from "@/components/feedback/feedback-form"
 
 interface DeliveryPageProps {
     searchParams: Promise<{ token?: string; orderId?: string }>
@@ -265,6 +266,15 @@ async function DeliveryPageContent({ searchParams }: DeliveryPageProps) {
                         delivery={delivery}
                         orderItems={order.order_items}
                     />
+
+                    {/* Feedback Section */}
+                    <div className="pt-12 space-y-6 border-t border-white/5">
+                        <div className="flex items-center gap-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.5)]" />
+                            <h2 className="text-xl font-black text-white italic uppercase tracking-tight">Rate Your Delivery</h2>
+                        </div>
+                        <FeedbackForm invoiceId={orderId} />
+                    </div>
                 </div>
             </div>
         </MainLayout>

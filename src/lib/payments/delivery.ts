@@ -129,6 +129,31 @@ export async function deliverProduct(orderId: string) {
             status: 'paid'
         })
 
+    // 6. Send delivery email
+    try {
+        // Refetch order with delivery_url for email
+        const { data: updatedOrder } = await supabase
+            .from("orders")
+            .select("id, readable_id, email, total, currency, created_at, delivery_url")
+            .eq("id", orderId)
+            .single()
+
+        if (updatedOrder?.email) {
+            const { sendDeliveryCompletedEmail } = await import("@/lib/email/email")
+
+            // Map delivered assets with product names
+            const assetsWithNames = deliveredAssets.map((asset: any) => ({
+                content: asset.content || asset,
+                product_name: asset.product_name || undefined
+            }))
+
+            await sendDeliveryCompletedEmail(updatedOrder, assetsWithNames)
+        }
+    } catch (emailError) {
+        console.error("[EMAIL] Delivery email failed:", emailError)
+        // Don't fail delivery on email error
+    }
+
     return { success: true }
 }
 

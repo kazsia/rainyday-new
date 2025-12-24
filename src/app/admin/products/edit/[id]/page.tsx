@@ -191,58 +191,52 @@ export default function EditProductPage() {
         <AdminLayout>
             <form onSubmit={(e) => handleSubmit(e)} className="max-w-[1200px] mx-auto space-y-8 pb-20">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Link href="/admin/products" className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors">
-                                <ChevronLeft className="w-4 h-4" />
-                            </Link>
-                            <h1 className="text-2xl font-bold text-white tracking-tight">Edit Product</h1>
-                        </div>
-                        <p className="text-sm text-white/40 font-medium">Update your product listing details</p>
+                <div className="flex items-center justify-between pb-6">
+                    <div className="flex items-center gap-3">
+                        <Link href="/admin/products" className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors">
+                            <ChevronLeft className="w-4 h-4" />
+                        </Link>
+                        <h1 className="text-2xl font-black text-white tracking-tight">Edit Product</h1>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2">
                         <Button
                             type="button"
                             variant="ghost"
-                            className="flex-1 sm:flex-none h-11 sm:h-9 text-[10px] font-bold text-white/40 hover:text-white hover:bg-white/5 gap-2 uppercase tracking-widest"
+                            size="icon"
+                            className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/5"
                             onClick={() => router.push("/admin/products")}
                         >
                             <X className="w-4 h-4" />
-                            <span className="sm:inline">Cancel</span>
                         </Button>
                         <Button
                             type="button"
-                            variant="outline"
+                            variant="ghost"
+                            size="icon"
                             onClick={handleDelete}
-                            className="flex-1 sm:flex-none h-11 sm:h-9 border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-[10px] font-bold gap-2 uppercase tracking-widest"
+                            className="h-8 w-8 text-red-500/60 hover:text-red-500 hover:bg-red-500/10"
                         >
                             <Trash2 className="w-4 h-4" />
-                            <span className="sm:inline">Delete</span>
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 sm:flex-none h-11 sm:h-9 bg-brand text-black font-black hover:opacity-90 transition-opacity gap-2 min-w-[100px] text-[10px] uppercase tracking-widest border-none"
+                            className="h-8 px-4 bg-[var(--sa-accent)] hover:bg-[var(--sa-accent-bright)] text-black font-black text-[10px] uppercase tracking-widest"
                             disabled={isSubmitting}
                         >
-                            <Save className="w-4 h-4" />
-                            {isSubmitting ? "Saving..." : "Save Changes"}
+                            <Save className="w-3.5 h-3.5 mr-2" />
+                            {isSubmitting ? "Saving..." : "Save"}
                         </Button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className="lg:col-span-2 space-y-6">
                         {/* General Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center">
-                                    <Layout className="w-5 h-5 text-brand-primary" />
-                                </div>
-                                <h2 className="text-lg font-bold text-white">General</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">General</h2>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Name</label>
                                     <Input
@@ -271,41 +265,23 @@ export default function EditProductPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
-                                    <div className="bg-background/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
-                                        <div className="p-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-1 flex-wrap">
-                                            <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><History className="w-4 h-4" /></Button>
-                                            <div className="w-px h-4 bg-white/10 mx-1" />
-                                            <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><b>B</b></Button>
-                                            <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><i>I</i></Button>
-                                            <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><u>U</u></Button>
-                                            <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><Layers className="w-4 h-4" /></Button>
-                                            <div className="w-px h-4 bg-white/10 mx-1" />
-                                            <Button type="button" variant="ghost" className="h-8 px-2 text-[10px] font-bold text-white/40 hover:text-white hover:bg-white/5 gap-1 uppercase tracking-widest">
-                                                Normal
-                                                <ChevronDown className="w-3 h-3" />
-                                            </Button>
-                                        </div>
-                                        <Textarea
-                                            placeholder="Describe your product..."
-                                            className="flex-1 bg-transparent border-0 focus-visible:ring-0 resize-none p-4 min-h-[200px]"
-                                            value={formData.description}
-                                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        />
-                                    </div>
+                                    <Textarea
+                                        placeholder="Describe your product..."
+                                        className="bg-background/40 border-white/10 min-h-[150px] resize-none"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
                                 </div>
                             </div>
                         </div>
 
                         {/* Image Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                                    <ImageIcon className="w-5 h-5 text-orange-500" />
-                                </div>
-                                <h2 className="text-lg font-bold text-white">Image</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Image</h2>
                             </div>
-                            <div className="p-6 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-4 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div
                                         className="aspect-video bg-background/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-brand-primary/20 transition-colors cursor-pointer relative overflow-hidden"
                                         onClick={() => document.getElementById('gallery-upload')?.click()}
@@ -353,44 +329,27 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Instructions Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                                    <FileText className="w-5 h-5 text-purple-500" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-white">Instructions</h2>
-                                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Visible after purchase</p>
-                                </div>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Instructions</h2>
+                                <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider mt-0.5">Visible after purchase</p>
                             </div>
-                            <div className="p-6">
-                                <div className="bg-background/40 border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col">
-                                    <div className="p-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-1 flex-wrap">
-                                        <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><History className="w-4 h-4" /></Button>
-                                        <div className="w-px h-4 bg-white/10 mx-1" />
-                                        <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><b>B</b></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><i>I</i></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/5"><u>U</u></Button>
-                                    </div>
-                                    <Textarea
-                                        placeholder="Add instructions for your customers (e.g. how to redeem, support info)..."
-                                        className="flex-1 bg-transparent border-0 focus-visible:ring-0 resize-none p-4 min-h-[200px]"
-                                        value={formData.instructions}
-                                        onChange={e => setFormData({ ...formData, instructions: e.target.value })}
-                                    />
-                                </div>
+                            <div className="p-4">
+                                <Textarea
+                                    placeholder="Add instructions for your customers (e.g. how to redeem, support info)..."
+                                    className="bg-background/40 border-white/10 min-h-[150px] resize-none"
+                                    value={formData.instructions}
+                                    onChange={e => setFormData({ ...formData, instructions: e.target.value })}
+                                />
                             </div>
                         </div>
 
                         {/* Deliverables Type */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                                    <Zap className="w-5 h-5 text-green-500" />
-                                </div>
-                                <h2 className="text-lg font-bold text-white">Deliverables Type</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Deliverables Type</h2>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 <div className="grid grid-cols-1 gap-4">
                                     {[
                                         { id: "serials", title: "Serials", desc: "Automatically delivers serial keys. Stock count is based on the number of entered serials.", icon: Layers },
@@ -445,28 +404,22 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Variants Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                                    <Plus className="w-5 h-5 text-blue-500" />
-                                </div>
-                                <h2 className="text-lg font-bold text-white">Options & Variants</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Options & Variants</h2>
                             </div>
-                            <div className="p-6">
+                            <div className="p-4">
                                 <VariantManager productId={id as string} deliveryType={formData.delivery_type} />
                             </div>
                         </div>
 
                         {/* Stock Management for Serials */}
                         {formData.delivery_type === 'serials' && (
-                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                                <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center">
-                                        <Layers className="w-5 h-5 text-brand-primary" />
-                                    </div>
-                                    <h2 className="text-lg font-bold text-white">Stock Management</h2>
+                            <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                                <div className="px-4 py-3 border-b border-white/5">
+                                    <h2 className="text-sm font-bold text-white uppercase tracking-wider">Stock Management</h2>
                                 </div>
-                                <div className="p-6">
+                                <div className="p-4">
                                     <StockManager productId={id as string} />
                                 </div>
                             </div>
@@ -474,14 +427,13 @@ export default function EditProductPage() {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {/* Currency & Tax Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <DollarSign className="w-5 h-5 text-white/40" />
-                                <h2 className="text-sm font-bold text-white uppercase tracking-widest">Currency & Tax</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Pricing</h2>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Price</label>
@@ -525,12 +477,11 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Visibility & Group Section */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <Eye className="w-5 h-5 text-white/40" />
-                                <h1 className="text-sm font-bold text-white uppercase tracking-widest">Visibility & Group</h1>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Visibility & Group</h2>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Visibility</label>
                                     <Select
@@ -574,12 +525,11 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Live Stats */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                <Activity className="w-5 h-5 text-white/40" />
-                                <h2 className="text-sm font-bold text-white uppercase tracking-widest">Live Stats</h2>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Live Stats</h2>
                             </div>
-                            <div className="p-6 space-y-4">
+                            <div className="p-4 space-y-3">
                                 {[
                                     { id: "show_view_count", label: "Show Views Count", icon: Eye },
                                     { id: "show_sales_count", label: "Show Sales Count", icon: Monitor },
@@ -609,14 +559,11 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Badges */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5">
-                                <div className="flex items-center gap-3">
-                                    <Award className="w-5 h-5 text-white/40" />
-                                    <h2 className="text-sm font-bold text-white uppercase tracking-widest">Badges</h2>
-                                </div>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Badges</h2>
                             </div>
-                            <div className="p-6">
+                            <div className="p-4">
                                 <BadgeManager
                                     productId={id as string}
                                     initialBadgeIds={(formData as any).badges || []}
@@ -625,18 +572,15 @@ export default function EditProductPage() {
                         </div>
 
                         {/* Status */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Activity className="w-5 h-5 text-white/40" />
-                                    <h2 className="text-sm font-bold text-white uppercase tracking-widest">Status</h2>
-                                </div>
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Status</h2>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
                                     className={cn(
                                         "w-10 h-6 rounded-full transition-colors relative flex items-center px-1",
-                                        formData.is_active ? "bg-brand-primary" : "bg-white/10"
+                                        formData.is_active ? "bg-[var(--sa-accent)]" : "bg-white/10"
                                     )}
                                 >
                                     <div className={cn(
@@ -645,7 +589,7 @@ export default function EditProductPage() {
                                     )} />
                                 </button>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Status Color</label>
                                     <div className="flex items-center gap-2">

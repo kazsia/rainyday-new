@@ -51,25 +51,22 @@
   --color-brand-accent: var(--brand-accent);
   --color-brand-glow: var(--brand-glow);
 
-  /* Rainyday.cc Design System Tokens */
+  /* Rainyday.cc Design System Tokens (Admin Overhaul) */
   --sa-bg: #000000;
-  --sa-sidebar: #000000;
-  --sa-card: #080f10;
-  --sa-card-hover: #142326;
-  --sa-border: #233453;
-  --sa-border-hover: #3F4A60;
+  --sa-sidebar: #010204;
+  --sa-card: #080a0f;
+  --sa-card-hover: #0c0f16;
+  --sa-border: #1a1e26;
+  --sa-border-hover: #2d3440;
 
   --sa-accent: #a4f8ff;
-  --sa-accent-muted: rgba(164, 248, 255, 0.08);
-  --sa-accent-glow: rgba(164, 248, 255, 0.15);
+  --sa-accent-muted: rgba(164, 248, 255, 0.05);
+  --sa-accent-glow: rgba(164, 248, 255, 0.1);
 
-  --sa-fg: #d0fbff;
-  /* Light Font */
+  --sa-fg: #f1f5f9;
   --sa-fg-bright: #ffffff;
-  --sa-fg-muted: #b4aebc;
-  /* Dark Font */
-  --sa-fg-dim: #989ba0;
-  /* Thin Color */
+  --sa-fg-muted: #94a3b8;
+  --sa-fg-dim: #64748b;
 
   --sa-success: #10b981;
   --sa-warning: #f59e0b;

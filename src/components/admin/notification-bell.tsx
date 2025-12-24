@@ -12,7 +12,6 @@ export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false)
     const supabase = createClient()
 
-    // Fetch initial unread count
     const fetchUnreadCount = useCallback(async () => {
         const { count, error } = await supabase
             .from('admin_notifications')
@@ -27,7 +26,6 @@ export function NotificationBell() {
     useEffect(() => {
         fetchUnreadCount()
 
-        // Subscribe to realtime changes
         const channel = supabase
             .channel('admin-notifications')
             .on(
@@ -38,10 +36,7 @@ export function NotificationBell() {
                     table: 'admin_notifications'
                 },
                 () => {
-                    // New notification - increment count
                     setUnreadCount(prev => prev + 1)
-
-                    // Play notification sound
                     const audio = new Audio('/sounds/notification.mp3')
                     audio.volume = 0.5
                     audio.play().catch(() => { })
@@ -55,10 +50,8 @@ export function NotificationBell() {
                     table: 'admin_notifications'
                 },
                 (payload) => {
-                    // Check if notification was marked as read
                     const wasUnread = !payload.old?.read_at
                     const isNowRead = !!payload.new?.read_at
-
                     if (wasUnread && isNowRead) {
                         setUnreadCount(prev => Math.max(0, prev - 1))
                     }
@@ -72,21 +65,22 @@ export function NotificationBell() {
     }, [supabase, fetchUnreadCount])
 
     return (
-        <>
+        <div className="relative">
             <Button
+                data-notification-bell
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(true)}
+                onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "relative text-[var(--sa-fg-dim)] hover:text-[var(--sa-fg-bright)] hover:bg-[var(--sa-card-hover)] rounded-lg h-9 w-9 border border-transparent hover:border-[var(--sa-border)] transition-all",
-                    unreadCount > 0 && "text-[var(--sa-accent)]"
+                    "relative text-white/40 hover:text-white hover:bg-white/5 rounded-lg h-9 w-9 transition-all",
+                    unreadCount > 0 && "text-brand",
+                    isOpen && "bg-white/5 text-white"
                 )}
             >
                 <Bell className="w-4 h-4" />
 
-                {/* Unread badge */}
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full animate-in zoom-in-50 duration-75">
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full">
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
@@ -97,6 +91,6 @@ export function NotificationBell() {
                 onOpenChange={setIsOpen}
                 onNotificationsRead={fetchUnreadCount}
             />
-        </>
+        </div>
     )
 }

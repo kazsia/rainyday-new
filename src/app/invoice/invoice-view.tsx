@@ -41,6 +41,7 @@ import { Logo } from "@/components/layout/logo"
 import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { trackAddressStatus, TransactionStatus } from "@/lib/payments/blockchain-tracking"
+import { FeedbackForm } from "@/components/feedback/feedback-form"
 
 function InvoiceContent() {
     const searchParams = useSearchParams()
@@ -678,6 +679,20 @@ function InvoiceContent() {
                                                 </Button>
                                             </motion.div>
                                         )}
+
+                                        {/* Feedback Section */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.5 }}
+                                            className="pt-12 space-y-6"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.5)]" />
+                                                <h2 className="text-xl font-black text-white italic uppercase tracking-tight">Share Your Experience</h2>
+                                            </div>
+                                            <FeedbackForm invoiceId={order.id} />
+                                        </motion.div>
                                     </div>
                                 ) : (
                                     <div className="space-y-6">

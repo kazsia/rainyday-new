@@ -74,140 +74,152 @@ export default function AdminOrdersPage() {
     return (
         <AdminLayout>
             <div className="space-y-8">
-                <div>
-                    <h1 className="text-3xl font-black mb-2">Orders</h1>
-                    <p className="text-muted-foreground">Monitor and manage customer orders.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+                    <div>
+                        <h1 className="text-xl font-black text-white tracking-tight">Orders</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Transactional history and order management</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3 gap-2" onClick={() => loadData()}>
+                            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+                            Refresh
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3">
+                            <Download className="w-3.5 h-3.5 mr-1.5" />
+                            Export
+                        </Button>
+                    </div>
                 </div>
 
-                <Card className="bg-card border-white/5">
-                    <CardHeader className="border-b border-white/5">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="relative w-full md:w-80">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search orders..."
-                                    className="pl-10 bg-white/5 border-white/10"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" className="gap-2 border-white/10" onClick={() => loadData()}>
-                                    <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
-                                    Refresh
-                                </Button>
-                                <Button variant="outline" size="sm" className="border-white/10">
-                                    Export CSV
-                                </Button>
-                            </div>
+                {/* Filters */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[var(--sa-card)] border border-[var(--sa-border)] p-2.5 rounded-xl">
+                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+                        <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] font-black text-[var(--sa-fg-muted)] uppercase tracking-widest">
+                            Total: {filteredOrders.length}
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {/* Desktop Table View */}
-                        <div className="hidden lg:block">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-transparent border-white/5">
-                                        <TableHead>Order ID</TableHead>
-                                        <TableHead>Customer</TableHead>
-                                        <TableHead>Product</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading orders...</TableCell>
-                                        </TableRow>
-                                    ) : filteredOrders.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No orders found.</TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        filteredOrders.map((order) => (
-                                            <TableRow key={order.id} className="border-white/5 hover:bg-white/[0.02]">
-                                                <TableCell className="font-mono text-xs font-bold">{order.readable_id || order.id.slice(0, 8)}</TableCell>
-                                                <TableCell className="text-sm">{order.email}</TableCell>
-                                                <TableCell className="text-sm max-w-[200px] truncate">{order.items_summary}</TableCell>
-                                                <TableCell className="font-bold">${order.total.toFixed(2)}</TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                                                <TableCell>
-                                                    <Badge className={cn(
-                                                        order.status === "paid" || order.status === "completed" || order.status === "delivered" ? "bg-green-500/10 text-green-500" :
-                                                            order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
-                                                                "bg-red-500/10 text-red-500",
-                                                        "border-none capitalize"
-                                                    )}>
-                                                        {order.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <OrderActions order={order} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                    </div>
 
-                        {/* Mobile Card View */}
-                        <div className="lg:hidden divide-y divide-white/5">
-                            {isLoading ? (
-                                <div className="p-8 text-center text-muted-foreground">Loading orders...</div>
-                            ) : filteredOrders.length === 0 ? (
-                                <div className="p-8 text-center text-muted-foreground">No orders found.</div>
-                            ) : (
-                                filteredOrders.map((order) => (
-                                    <div key={order.id} className="p-4 space-y-4">
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Hash className="w-3 h-3 text-muted-foreground" />
-                                                    <span className="font-mono text-xs font-bold text-white">{order.readable_id || order.id.slice(0, 8)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="w-3 h-3 text-muted-foreground" />
-                                                    <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</span>
-                                                </div>
-                                            </div>
-                                            <Badge className={cn(
-                                                order.status === "paid" || order.status === "completed" || order.status === "delivered" ? "bg-green-500/10 text-green-500" :
-                                                    order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
-                                                        "bg-red-500/10 text-red-500",
-                                                "border-none capitalize text-[10px] py-0 px-2"
-                                            )}>
-                                                {order.status}
-                                            </Badge>
-                                        </div>
+                    <div className="relative w-full lg:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
+                        <Input
+                            placeholder="Search orders, emails, IDs..."
+                            className="pl-9 bg-black/20 border-white/5 h-8 text-[11px] text-white placeholder:text-[var(--sa-fg-dim)] focus:border-[var(--sa-accent-glow)] transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                    {/* Desktop Table View */}
+                    <div className="hidden lg:block overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="border-b border-white/5 bg-black/20">
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Order ID</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Customer</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Product</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Amount</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Date</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Status</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-8 text-[var(--sa-fg-dim)] text-[11px] font-medium">Loading orders...</td>
+                                    </tr>
+                                ) : filteredOrders.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-8 text-[var(--sa-fg-dim)] text-[11px] font-medium">No orders found.</td>
+                                    </tr>
+                                ) : (
+                                    filteredOrders.map((order) => (
+                                        <tr key={order.id} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
+                                            <td className="px-5 py-2.5 font-mono text-[10px] font-bold text-white">{order.readable_id || order.id.slice(0, 8)}</td>
+                                            <td className="px-5 py-2.5 text-[11px] text-[var(--sa-fg-muted)] truncate max-w-[150px]">{order.email}</td>
+                                            <td className="px-5 py-2.5 text-[11px] text-[var(--sa-fg-muted)] max-w-[200px] truncate">{order.items_summary}</td>
+                                            <td className="px-5 py-2.5 text-xs font-black text-white">${order.total.toFixed(2)}</td>
+                                            <td className="px-5 py-2.5 text-[10px] text-[var(--sa-fg-dim)] font-medium">
+                                                {new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </td>
+                                            <td className="px-5 py-2.5">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
+                                                    order.status === "paid" || order.status === "completed" || order.status === "delivered"
+                                                        ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
+                                                        : order.status === "pending"
+                                                            ? "bg-amber-500/5 text-amber-400 border-amber-500/10"
+                                                            : "bg-rose-500/5 text-rose-400 border-rose-500/10"
+                                                )}>
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-2.5 text-right">
+                                                <OrderActions order={order} />
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-                                        <div className="space-y-2">
+                    {/* Mobile Card View */}
+                    <div className="lg:hidden divide-y divide-white/5">
+                        {isLoading ? (
+                            <div className="p-8 text-center text-[var(--sa-fg-dim)] text-[11px]">Loading orders...</div>
+                        ) : filteredOrders.length === 0 ? (
+                            <div className="p-8 text-center text-[var(--sa-fg-dim)] text-[11px]">No orders found.</div>
+                        ) : (
+                            filteredOrders.map((order) => (
+                                <div key={order.id} className="p-4 space-y-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <Mail className="w-3 h-3 text-muted-foreground" />
-                                                <span className="text-xs text-white truncate">{order.email}</span>
+                                                <span className="px-1 py-0.5 rounded bg-white/5 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase">ID</span>
+                                                <span className="font-mono text-xs font-black text-white">{order.readable_id || order.id.slice(0, 8)}</span>
                                             </div>
-                                            <div className="bg-white/5 rounded-lg p-3">
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Products</p>
-                                                <p className="text-xs text-white line-clamp-2">{order.items_summary}</p>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-3 h-3 text-[var(--sa-fg-dim)]" />
+                                                <span className="text-[10px] text-[var(--sa-fg-dim)] font-medium">{new Date(order.created_at).toLocaleString()}</span>
                                             </div>
                                         </div>
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
+                                            order.status === "paid" || order.status === "completed" || order.status === "delivered"
+                                                ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
+                                                : order.status === "pending"
+                                                    ? "bg-amber-500/5 text-amber-400 border-amber-500/10"
+                                                    : "bg-rose-500/5 text-rose-400 border-rose-500/10"
+                                        )}>
+                                            {order.status}
+                                        </span>
+                                    </div>
 
-                                        <div className="flex items-center justify-between pt-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Total</span>
-                                                <span className="text-lg font-black text-brand-primary">${order.total.toFixed(2)}</span>
-                                            </div>
-                                            <OrderActions order={order} />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Mail className="w-3 h-3 text-[var(--sa-fg-dim)]" />
+                                            <span className="text-[11px] text-[var(--sa-fg-muted)] truncate font-medium">{order.email}</span>
+                                        </div>
+                                        <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2.5">
+                                            <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-wider mb-1">Products</p>
+                                            <p className="text-[11px] text-white font-medium line-clamp-1">{order.items_summary}</p>
                                         </div>
                                     </div>
-                                ))
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Total</span>
+                                            <span className="text-lg font-black text-[var(--sa-accent)]">${order.total.toFixed(2)}</span>
+                                        </div>
+                                        <OrderActions order={order} />
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
             </div>
         </AdminLayout>
     )

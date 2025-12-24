@@ -21,7 +21,29 @@ const defaultSettings: SiteSettings = {
     feedbacks: { enable_automatic: true, hide_on_main: false },
     legal: { terms_of_service: '', privacy_policy: '' },
     integrations: {},
-    notifications: { webhook_url: '', notify_on_sale: true, notify_on_ticket: true },
+    notifications: {
+        webhook_url: '',
+        notify_on_sale: true,
+        notify_on_ticket: true,
+        sale_title: '🛒 New Sale',
+        sale_message: 'Order #{order_id} - ${total} from {email}',
+        ticket_title: '🎫 New Support Ticket',
+        ticket_message: 'Ticket #{ticket_id} from {email}: {subject}'
+    },
+    email: {
+        enabled: true,
+        from_name: 'Rainyday',
+        from_email: 'noreply@rainyday.cc',
+        invoice_subject: 'Order #{order_id} - {store_name}',
+        invoice_heading: 'Order Confirmed! 🎉',
+        invoice_message: 'Thank you for your order. Please complete payment to receive your items.',
+        payment_subject: 'Payment Confirmed - Order #{order_id}',
+        payment_heading: 'Payment Received! ✅',
+        payment_message: 'Your payment has been confirmed. Your items are being delivered.',
+        delivery_subject: '🎉 Your Order is Delivered - #{order_id}',
+        delivery_heading: 'Your Order is Delivered! 🚀',
+        delivery_message: 'Thank you for your purchase. Your items are ready below.'
+    },
     statistics: { base_sales: 0, base_buyers: 0, base_rating: "5.0" },
     dns: { records: [] }
 }

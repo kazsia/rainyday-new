@@ -73,36 +73,36 @@ export default function AdminExportPage() {
 
     return (
         <AdminLayout>
-            <div className="max-w-6xl mx-auto space-y-12 pb-20">
-                <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-black text-white italic tracking-tight uppercase">Data Forge</h1>
-                        <p className="text-white/40 text-sm">Extract and export platform data into portable formats.</p>
+            <div className="max-w-5xl mx-auto space-y-6 pb-20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
+                    <div>
+                        <h1 className="text-xl font-black text-white tracking-tight">Data Forge</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Extract and export platform data into portable formats</p>
                     </div>
-                    <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.02] border border-white/5 rounded-2xl">
-                        <Database className="w-4 h-4 text-brand/40" />
-                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">Database Snapshot Ready</span>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded bg-black/20 border border-white/5">
+                        <Database className="w-3 h-3 text-[var(--sa-accent)]/40" />
+                        <span className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Snapshot Ready</span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <ExportCard
                         title="Platform Orders"
-                        description="Comprehensive list of all transactions, including status and totals."
+                        description="Transaction history, status and financial totals."
                         icon={ShoppingCart}
                         onExport={handleExportOrders}
                         isLoading={isExporting === 'orders'}
                     />
                     <ExportCard
                         title="Customer Base"
-                        description="Complete user directory with profile metadata and registration dates."
+                        description="User directory with identity and metadata."
                         icon={Users}
                         onExport={handleExportCustomers}
                         isLoading={isExporting === 'customers'}
                     />
                     <ExportCard
                         title="Inventory Sync"
-                        description="Full stock list with pricing, categories, and availability status."
+                        description="Stock list with pricing and availability."
                         icon={Package}
                         onExport={() => toast.info("Inventory export sync coming in next cluster")}
                     />
@@ -110,24 +110,24 @@ export default function AdminExportPage() {
 
                 {/* Security Audit Log Export - Advanced Section */}
                 <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-brand/20 to-purple-500/20 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                    <div className="relative bg-background border border-white/5 p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="flex items-start gap-6">
-                            <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center border border-brand/20 shrink-0">
-                                <ShieldCheck className="w-8 h-8 text-brand" />
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--sa-accent)]/20 to-purple-500/20 rounded-xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
+                    <div className="relative sa-card-premium p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-[var(--sa-accent)]/5 flex items-center justify-center border border-[var(--sa-accent)]/10 shrink-0">
+                                <ShieldCheck className="w-6 h-6 text-[var(--sa-accent)]" />
                             </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-black text-white italic uppercase tracking-tight">Advanced Audit Logs</h3>
-                                <p className="text-white/40 text-sm max-w-xl">Download high-fidelity interaction logs for security audits. Includes IP tracking, admin actions, and system events.</p>
+                            <div className="space-y-0.5">
+                                <h3 className="text-sm font-black text-white uppercase tracking-tight">Advanced Audit Logs</h3>
+                                <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] max-w-lg leading-relaxed">Download high-fidelity interaction logs for security audits, including IP tracking and admin events.</p>
                             </div>
                         </div>
                         <Button
                             variant="outline"
-                            className="h-14 px-10 border-brand/20 text-brand font-black uppercase tracking-[0.2em] italic rounded-2xl hover:bg-brand hover:text-black transition-all group/btn"
+                            className="h-10 px-6 border-white/5 bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-white/10 transition-all cursor-not-allowed"
                             disabled
                         >
-                            <FileSpreadsheet className="w-5 h-5 mr-3 group-hover/btn:scale-110 transition-transform" />
-                            Export Audit
+                            <FileSpreadsheet className="w-3.5 h-3.5 mr-2" />
+                            Lock Active
                         </Button>
                     </div>
                 </div>
@@ -138,18 +138,18 @@ export default function AdminExportPage() {
 
 function ExportCard({ title, description, icon: Icon, onExport, isLoading }: { title: string, description: string, icon: any, onExport: () => void, isLoading?: boolean }) {
     return (
-        <div className="bg-background border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center group hover:border-brand/20 transition-all hover:bg-white/[0.01]">
-            <div className="w-20 h-20 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Icon className="w-10 h-10 text-white/20 group-hover:text-brand transition-colors" />
+        <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl p-6 flex flex-col items-center text-center group hover:bg-white/[0.01] transition-all shadow-sm">
+            <div className="w-12 h-12 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-[var(--sa-accent-muted)] transition-all">
+                <Icon className="w-6 h-6 text-[var(--sa-fg-dim)] group-hover:text-[var(--sa-accent)] transition-colors" />
             </div>
-            <h3 className="text-xl font-black text-white italic uppercase tracking-tight mb-2">{title}</h3>
-            <p className="text-white/40 text-sm leading-relaxed mb-8">{description}</p>
+            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-1.5">{title}</h3>
+            <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] leading-relaxed mb-6">{description}</p>
             <Button
                 onClick={onExport}
                 disabled={isLoading}
-                className="w-full h-12 bg-white/5 border border-white/5 text-white/60 hover:text-white hover:bg-brand/10 hover:border-brand/40 font-black uppercase tracking-widest italic rounded-xl transition-all"
+                className="w-full h-8 bg-black/20 border border-white/5 text-[10px] text-white/60 hover:text-white hover:bg-[var(--sa-accent)] hover:text-black font-black uppercase tracking-widest rounded-lg transition-all"
             >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1.5" />}
                 Export CSV
             </Button>
         </div>

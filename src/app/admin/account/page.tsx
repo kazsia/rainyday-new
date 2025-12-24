@@ -208,219 +208,215 @@ export default function AdminAccountPage() {
 
     return (
         <AdminLayout>
-            <div className="max-w-6xl mx-auto space-y-10 pb-20">
+            <div className="max-w-5xl mx-auto space-y-6 pb-20">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
                     <div>
-                        <h1 className="text-3xl font-black text-white italic tracking-tight uppercase">Account Management</h1>
-                        <p className="text-white/40 text-sm">Securely manage your administrative profile and settings.</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Account Management</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Securely manage your administrative profile and settings</p>
                     </div>
-                    <Badge variant="outline" className="bg-brand-primary/10 text-brand-primary border-brand-primary/20 py-1 px-4 text-xs font-black tracking-widest uppercase italic">
-                        <ShieldCheck className="w-3.5 h-3.5 mr-2" />
-                        Admin Access Verified
-                    </Badge>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--sa-accent-muted)] border border-[var(--sa-accent-glow)]">
+                        <ShieldCheck className="w-3 h-3 text-[var(--sa-accent)]" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-[var(--sa-accent)]">Verified Admin</span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Profile & Overview */}
-                    <div className="lg:col-span-1 space-y-8">
+                    <div className="lg:col-span-1 space-y-6">
                         {/* Profile Card */}
-                        <div className="bg-background border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="sa-card-premium p-6 flex flex-col items-center text-center relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-b from-[var(--sa-accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            <div className="relative w-24 h-24 rounded-full border-4 border-white/5 bg-white/5 mb-6 overflow-hidden flex items-center justify-center group/avatar">
+                            <div className="relative w-20 h-20 rounded-lg border border-white/10 bg-black/40 mb-4 overflow-hidden flex items-center justify-center group/avatar">
                                 {profile?.avatar_url ? (
                                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                                 ) : (
-                                    <User className="w-10 h-10 text-white/20" />
+                                    <User className="w-8 h-8 text-[var(--sa-fg-dim)]" />
                                 )}
-                                <label className="absolute inset-0 bg-background/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                                    <Plus className="w-6 h-6 text-white" />
+                                <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                    <Plus className="w-5 h-5 text-white" />
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={isSaving} />
                                 </label>
                             </div>
 
-                            <h2 className="text-xl font-black text-white italic tracking-tight uppercase">{profile?.full_name || "Admin User"}</h2>
-                            <p className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mb-6">{user?.email}</p>
+                            <h2 className="text-base font-black text-white uppercase tracking-tight">{profile?.full_name || "Admin User"}</h2>
+                            <p className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest mt-1 mb-6">{user?.email}</p>
 
-                            <div className="w-full space-y-3 pt-6 border-t border-white/5">
-                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/20 italic">
+                            <div className="w-full space-y-2 pt-4 border-t border-white/5">
+                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-dim)]">
                                     <span>Status</span>
-                                    <span className="text-brand-primary">Active</span>
+                                    <span className="text-[var(--sa-accent)]">Live</span>
                                 </div>
-                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/20 italic">
-                                    <span>Joined</span>
+                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-dim)]">
+                                    <span>Member Since</span>
                                     <span className="text-white/60">{new Date(profile?.created_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="bg-background border border-white/5 rounded-3xl p-6 grid grid-cols-2 gap-4">
-                            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Sessions</p>
-                                <p className="text-lg font-black text-white">1 Active</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3.5 rounded-xl bg-[var(--sa-card)] border border-[var(--sa-border)]">
+                                <p className="text-[8px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest mb-0.5">Active Sessions</p>
+                                <p className="text-sm font-black text-white">01</p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Audit Logs</p>
-                                <p className="text-lg font-black text-white">{auditLogs.length}</p>
+                            <div className="p-3.5 rounded-xl bg-[var(--sa-card)] border border-[var(--sa-border)]">
+                                <p className="text-[8px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest mb-0.5">Logs Audit</p>
+                                <p className="text-sm font-black text-white">{auditLogs.length}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Right Column: Detailed Sections */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className="lg:col-span-2 space-y-6">
                         {/* Profile Settings */}
-                        <section className="bg-background border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                            <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <User className="w-5 h-5 text-brand-primary" />
-                                    <h3 className="font-black text-white italic tracking-tight uppercase">Profile Settings</h3>
+                        <section className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-white/5 bg-black/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <User className="w-4 h-4 text-[var(--sa-accent)]" />
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Identity Matrix</h3>
                                 </div>
                             </div>
-                            <form onSubmit={handleProfileUpdate} className="p-8 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest italic ml-1">Display Name</label>
+                            <form onSubmit={handleProfileUpdate} className="p-5 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-0.5">Full Name</label>
                                         <Input
                                             name="display_name"
                                             defaultValue={profile?.full_name}
                                             placeholder="Your Name"
-                                            className="h-12 bg-background/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-brand-primary/30 transition-all"
+                                            className="h-9 bg-black/40 border-white/5 rounded-lg text-xs font-bold text-white placeholder:text-white/10 focus:border-[var(--sa-accent-glow)] transition-all"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest italic ml-1">Email Address</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-0.5">System Email</label>
                                         <Input
                                             value={user?.email}
                                             readOnly
-                                            className="h-12 bg-background/20 border-white/5 rounded-xl text-white/40 cursor-not-allowed italic font-bold"
+                                            className="h-9 bg-black/20 border-white/5 rounded-lg text-xs font-medium text-[var(--sa-fg-muted)] cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
                                 <div className="flex justify-end">
-                                    <Button type="submit" disabled={isSaving} className="h-11 px-8 bg-brand-primary text-black font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all italic">
-                                        {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Update Profile"}
+                                    <Button type="submit" disabled={isSaving} className="h-8 px-5 bg-[var(--sa-accent)] text-black font-black text-[10px] uppercase tracking-widest rounded-lg hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(164,248,255,0.1)]">
+                                        {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Save Profile"}
                                     </Button>
                                 </div>
                             </form>
                         </section>
 
                         {/* Security Section */}
-                        <section className="bg-background border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                            <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
-                                <Shield className="w-5 h-5 text-orange-400" />
-                                <h3 className="font-black text-white italic tracking-tight uppercase">Security & Password</h3>
+                        <section className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-white/5 bg-black/20 flex items-center gap-2.5">
+                                <Shield className="w-4 h-4 text-orange-400" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-white">Security Protocol</h3>
                             </div>
-                            <form onSubmit={handlePasswordChange} className="p-8 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest italic ml-1">New Password</label>
+                            <form onSubmit={handlePasswordChange} className="p-5 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-0.5">New Password</label>
                                         <div className="relative">
                                             <Input
                                                 name="new_password"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                className="h-12 bg-background/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
+                                                className="h-9 bg-black/40 border-white/5 rounded-lg text-xs font-bold text-white placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-10"
                                                 required
                                             />
-                                            <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
+                                            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/10" />
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest italic ml-1">Confirm Password</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-0.5">Confirm Identity</label>
                                         <div className="relative">
                                             <Input
                                                 name="confirm_password"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                className="h-12 bg-background/40 border-white/5 rounded-xl text-white font-bold placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-12"
+                                                className="h-9 bg-black/40 border-white/5 rounded-lg text-xs font-bold text-white placeholder:text-white/10 focus:border-orange-400/30 transition-all pr-10"
                                                 required
                                             />
-                                            <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
+                                            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/10" />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-6 rounded-2xl bg-orange-400/5 border border-orange-400/10 flex items-start gap-4">
-                                    <CircleAlert className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-bold text-white">Security Recommendation</p>
-                                        <p className="text-xs text-white/40 leading-relaxed">Changing your password will invalidate all other active sessions for this account. You will need to log back in on your other devices.</p>
+                                <div className="p-4 rounded-xl bg-orange-400/5 border border-orange-400/10 flex items-start gap-3">
+                                    <CircleAlert className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                                    <div className="space-y-0.5">
+                                        <p className="text-[11px] font-bold text-white">Session Invalidation Alert</p>
+                                        <p className="text-[10px] text-[var(--sa-fg-muted)] leading-relaxed">Updating your master key will instantly terminate all other active administrative sessions across every platform and device.</p>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-2">
-                                    <Button type="submit" disabled={isSaving} className="h-11 px-8 bg-orange-500 text-white font-black uppercase tracking-widest rounded-xl hover:bg-orange-600 transition-all italic">
-                                        {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Update Password"}
+                                <div className="flex justify-end">
+                                    <Button type="submit" disabled={isSaving} className="h-8 px-5 bg-orange-500/10 border border-orange-500/20 text-orange-400 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-orange-500/20 transition-all">
+                                        {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Rotate Master Key"}
                                     </Button>
                                 </div>
                             </form>
                         </section>
 
                         {/* Preferences */}
-                        <section className="bg-background border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                            <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
-                                <Settings className="w-5 h-5 text-purple-400" />
-                                <h3 className="font-black text-white italic tracking-tight uppercase">Admin Preferences</h3>
+                        <section className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-white/5 bg-black/20 flex items-center gap-2.5">
+                                <Settings className="w-4 h-4 text-purple-400" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-white">Terminal Preferences</h3>
                             </div>
-                            <div className="p-8 space-y-6">
-                                <div className="space-y-4">
-                                    {[
-                                        { id: 'rt', label: 'Realtime Dashboard Updates', desc: 'Sync data instantly without page refresh', checked: preferences?.realtime_notifications },
-                                        { id: 'dm', label: 'Enforce Dark Mode', desc: 'Lock the admin UI to high-performance dark theme', checked: preferences?.dark_mode_lock },
-                                        { id: 'nd', label: 'Sales Notifications', desc: 'Play sound effects when new orders are placed', checked: true }
-                                    ].map(pref => (
-                                        <div key={pref.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 group hover:bg-white/[0.04] transition-all">
-                                            <div className="space-y-1">
-                                                <p className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">{pref.label}</p>
-                                                <p className="text-[10px] text-white/20 font-black uppercase tracking-widest italic">{pref.desc}</p>
-                                            </div>
-                                            <div
-                                                onClick={() => handlePreferenceToggle(pref.id, !!pref.checked)}
-                                                className={cn(
-                                                    "w-12 h-6 rounded-full p-1 cursor-pointer transition-all duration-500",
-                                                    pref.checked ? "bg-purple-500" : "bg-white/10"
-                                                )}
-                                            >
-                                                <div className={cn("w-4 h-4 rounded-full bg-white shadow-xl transition-all duration-500", pref.checked && "translate-x-6")} />
-                                            </div>
+                            <div className="p-2.5 space-y-1">
+                                {[
+                                    { id: 'rt', label: 'Realtime Data Matrix', desc: 'Sync state instantly across all network nodes', checked: preferences?.realtime_notifications },
+                                    { id: 'dm', label: 'Photophobic Logic', desc: 'Enforce high-contrast dark environment', checked: preferences?.dark_mode_lock },
+                                    { id: 'nd', label: 'Auditory Feedback', desc: 'Signal system events via audio cues', checked: true }
+                                ].map(pref => (
+                                    <div key={pref.id} className="flex items-center justify-between p-3.5 rounded-lg hover:bg-white/[0.02] transition-all group">
+                                        <div className="space-y-0.5">
+                                            <p className="text-[11px] font-bold text-white group-hover:text-purple-400 transition-colors">{pref.label}</p>
+                                            <p className="text-[9px] text-[var(--sa-fg-dim)] font-black uppercase tracking-widest leading-none">{pref.desc}</p>
                                         </div>
-                                    ))}
-                                </div>
+                                        <div
+                                            onClick={() => handlePreferenceToggle(pref.id, !!pref.checked)}
+                                            className={cn(
+                                                "w-9 h-4.5 rounded-full p-0.5 cursor-pointer transition-all duration-300",
+                                                pref.checked ? "bg-purple-500" : "bg-white/10"
+                                            )}
+                                        >
+                                            <div className={cn("w-3.5 h-3.5 rounded-full bg-white shadow-lg transition-all duration-300", pref.checked ? "translate-x-4.5" : "translate-x-0")} />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </section>
 
                         {/* API Keys */}
-                        <section className="bg-background border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                            <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Key className="w-5 h-5 text-brand-primary" />
-                                    <h3 className="font-black text-white italic tracking-tight uppercase">API Keys</h3>
+                        <section className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-white/5 bg-black/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <Key className="w-4 h-4 text-[var(--sa-accent)]" />
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Access Credentials</h3>
                                 </div>
                                 <Button
                                     onClick={handleCreateApiKey}
-                                    size="sm"
-                                    className="bg-brand-primary/10 text-brand-primary border border-brand-primary/20 hover:bg-brand-primary/20 text-[10px] font-black uppercase tracking-widest"
+                                    className="h-7 bg-[var(--sa-accent)]/10 text-[var(--sa-accent)] border border-[var(--sa-accent-glow)] hover:bg-[var(--sa-accent)] hover:text-black text-[9px] font-black uppercase tracking-widest px-3"
                                 >
-                                    <Plus className="w-3.5 h-3.5 mr-2" />
-                                    Generate Key
+                                    <Plus className="w-3 h-3 mr-1.5" />
+                                    New Token
                                 </Button>
                             </div>
-                            <div className="p-8 space-y-6">
+                            <div className="p-4 space-y-2">
                                 {apiKeys.length > 0 ? (
-                                    <div className="space-y-3">
+                                    <div className="space-y-1.5">
                                         {apiKeys.map(key => (
-                                            <div key={key.id} className="flex items-center justify-between p-4 rounded-xl bg-background/40 border border-white/5">
-                                                <div className="space-y-1">
-                                                    <p className="text-sm font-bold text-white">{key.label}</p>
-                                                    <code className="text-[10px] text-white/20 font-black uppercase">{key.prefix}••••••••••••</code>
+                                            <div key={key.id} className="flex items-center justify-between p-3 rounded-lg bg-black/40 border border-white/5 hover:border-white/10 transition-colors">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[11px] font-bold text-white">{key.label}</p>
+                                                    <code className="text-[9px] text-[var(--sa-fg-dim)] font-black uppercase tracking-tighter">{key.prefix}••••••••••••</code>
                                                 </div>
                                                 <Button
                                                     onClick={() => handleRevokeApiKey(key.id)}
                                                     variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] font-black uppercase tracking-widest"
+                                                    className="h-7 px-2.5 text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 text-[9px] font-black uppercase tracking-widest"
                                                 >
                                                     Revoke
                                                 </Button>
@@ -428,41 +424,45 @@ export default function AdminAccountPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-10 rounded-2xl border-2 border-dashed border-white/5">
-                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">No API keys found</p>
+                                    <div className="text-center py-8 rounded-lg border border-dashed border-white/5 bg-black/10">
+                                        <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-center">No structural keys found</p>
                                     </div>
                                 )}
                             </div>
                         </section>
 
                         {/* Recent Activity */}
-                        <section className="bg-background border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                            <div className="px-8 py-5 border-b border-white/5 bg-white/[0.01] flex items-center gap-3">
-                                <History className="w-5 h-5 text-green-400" />
-                                <h3 className="font-black text-white italic tracking-tight uppercase">Account Activity</h3>
+                        <section className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-white/5 bg-black/20 flex items-center gap-2.5">
+                                <History className="w-4 h-4 text-green-400" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-white">Event Horizon</h3>
                             </div>
                             <div className="p-0">
-                                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                                     {auditLogs.length > 0 ? (
                                         <div className="divide-y divide-white/5">
                                             {auditLogs.map(log => (
-                                                <div key={log.id} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
-                                                    <div className="space-y-1">
-                                                        <p className="text-sm font-bold text-white flex items-center gap-2">
-                                                            {log.action.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                                                            <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">{log.target_table}</span>
-                                                        </p>
-                                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{new Date(log.created_at).toLocaleString()}</p>
+                                                <div key={log.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.01] transition-colors group">
+                                                    <div className="space-y-0.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-[11px] font-bold text-white group-hover:text-green-400 transition-colors capitalize">
+                                                                {log.action.replace(/_/g, ' ')}
+                                                            </p>
+                                                            <span className="text-[8px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest py-0.5 px-1.5 bg-white/5 rounded leading-none">
+                                                                {log.target_table}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">{new Date(log.created_at).toLocaleString()}</p>
                                                     </div>
-                                                    <Badge variant="outline" className="text-[8px] font-black uppercase border-white/5 text-white/20">
-                                                        {log.id.slice(0, 8)}
-                                                    </Badge>
+                                                    <span className="text-[8px] font-black uppercase text-[var(--sa-fg-dim)]">
+                                                        #{log.id.slice(0, 6)}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="py-20 text-center">
-                                            <p className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">No activity logs recorded</p>
+                                        <div className="py-12 text-center">
+                                            <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">No spectral events recorded</p>
                                         </div>
                                     )}
                                 </div>

@@ -71,46 +71,46 @@ export default function AdminTeamPage() {
         <AdminLayout>
             <div className="space-y-6 max-w-[100rem] mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Team Members</h1>
-                        <p className="text-sm text-white/40">Manage your shop team members and their permissions.</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Team Members</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Manage shop administration and access control</p>
                     </div>
 
                     <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-brand text-black font-bold hover:bg-brand/90">
-                                <Plus className="w-4 h-4 mr-2" />
+                            <Button className="h-8 bg-[var(--sa-accent)] text-black font-black text-[10px] border-none shadow-[0_0_15px_rgba(164,248,255,0.2)] uppercase tracking-widest px-4">
+                                <Plus className="w-3.5 h-3.5 mr-1.5" />
                                 Invite User
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-background border-white/5 text-white sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Invite New Member</DialogTitle>
-                                <DialogDescription className="text-white/40">
-                                    Invite a new member to your team by entering their email address.
+                        <DialogContent className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white sm:max-w-[400px] p-0 overflow-hidden shadow-2xl">
+                            <DialogHeader className="p-5 bg-black/20 border-b border-white/5">
+                                <DialogTitle className="text-sm font-black uppercase tracking-widest">Invite New Member</DialogTitle>
+                                <DialogDescription className="text-[11px] font-medium text-[var(--sa-fg-dim)]">
+                                    Promote an existing user to the administration team.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-white">Email Address</label>
+                            <div className="p-5 space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Email Address</label>
                                     <Input
                                         placeholder="user@example.com"
                                         value={inviteEmail}
                                         onChange={(e) => setInviteEmail(e.target.value)}
-                                        className="bg-[#080c10] border-white/10"
+                                        className="bg-black/40 border-white/5 h-9 text-xs focus:ring-0 focus:border-[var(--sa-accent-glow)] transition-all"
                                     />
-                                    <p className="text-[10px] text-white/40">
-                                        The user must already have an account on the platform to be promoted.
+                                    <p className="text-[9px] text-[var(--sa-fg-muted)] font-medium leading-tight">
+                                        The user must already have an account on the platform to be promoted to admin.
                                     </p>
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button variant="ghost" onClick={() => setIsInviteOpen(false)} className="text-white/60 hover:text-white hover:bg-white/5">
+                            <DialogFooter className="p-5 bg-black/20 border-t border-white/5 sm:justify-end gap-2">
+                                <Button variant="ghost" onClick={() => setIsInviteOpen(false)} className="h-8 text-[10px] font-bold uppercase tracking-widest text-[var(--sa-fg-dim)] hover:text-white hover:bg-white/5">
                                     Cancel
                                 </Button>
-                                <Button onClick={handleInvite} disabled={isInviting} className="bg-brand text-black font-bold hover:bg-brand/90">
-                                    {isInviting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                <Button onClick={handleInvite} disabled={isInviting} className="h-8 bg-[var(--sa-accent)] text-black font-black text-[10px] border-none shadow-[0_0_10px_rgba(164,248,255,0.1)] uppercase tracking-widest px-4">
+                                    {isInviting && <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />}
                                     Invite
                                 </Button>
                             </DialogFooter>
@@ -118,29 +118,32 @@ export default function AdminTeamPage() {
                     </Dialog>
                 </div>
 
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-white">Active Users</h2>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-[11px] font-black text-[var(--sa-fg-muted)] uppercase tracking-[0.2em]">Active Administrative Team</h2>
+                        <div className="h-px flex-1 bg-white/5"></div>
+                    </div>
 
                     {isLoading ? (
-                        <div className="flex items-center justify-center h-64 bg-background border border-white/5 rounded-2xl">
-                            <Loader2 className="w-8 h-8 animate-spin text-white/20" />
+                        <div className="flex items-center justify-center h-48 bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl">
+                            <Loader2 className="w-6 h-6 animate-spin text-[var(--sa-accent)]" />
                         </div>
                     ) : (
-                        <div className="bg-background border border-white/5 rounded-2xl overflow-hidden">
-                            <table className="w-full text-left border-collapse">
+                        <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left">
                                 <thead>
-                                    <tr className="border-b border-white/5">
-                                        <th className="p-6 text-xs font-bold text-white/40 uppercase tracking-wider">Username</th>
-                                        <th className="p-6 text-xs font-bold text-white/40 uppercase tracking-wider">E-mail</th>
-                                        <th className="p-6 text-xs font-bold text-white/40 uppercase tracking-wider">Role</th>
-                                        <th className="p-6 text-xs font-bold text-white/40 uppercase tracking-wider">Permissions</th>
+                                    <tr className="border-b border-white/5 bg-black/20">
+                                        <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Identity</th>
+                                        <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Contact</th>
+                                        <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Role</th>
+                                        <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Permissions & Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {members.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="p-6 text-center text-white/40 text-sm">
-                                                No team members found.
+                                            <td colSpan={4} className="px-5 py-8 text-center text-[var(--sa-fg-dim)] text-[11px] font-medium">
+                                                No administrative team members found.
                                             </td>
                                         </tr>
                                     ) : (
@@ -155,33 +158,39 @@ export default function AdminTeamPage() {
 
                                             return (
                                                 <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors">
-                                                    <td className="p-6">
-                                                        <span className="text-sm font-medium text-white">{member.full_name || member.email.split('@')[0]}</span>
+                                                    <td className="px-5 py-2.5">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center">
+                                                                <User className="w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
+                                                            </div>
+                                                            <span className="text-xs font-bold text-white uppercase tracking-tight">{member.full_name || member.email.split('@')[0]}</span>
+                                                        </div>
                                                     </td>
-                                                    <td className="p-6">
-                                                        <span className="text-sm text-white/80">{member.email}</span>
+                                                    <td className="px-5 py-2.5">
+                                                        <span className="text-[11px] font-medium text-[var(--sa-fg-muted)]">{member.email}</span>
                                                     </td>
-                                                    <td className="p-6">
-                                                        <span className={cn(
-                                                            "text-xs font-medium px-2 py-1 rounded-md bg-white/10 text-white"
-                                                        )}>
+                                                    <td className="px-5 py-2.5">
+                                                        <span className="px-2 py-0.5 rounded bg-[var(--sa-accent-muted)] text-[var(--sa-accent)] border border-[var(--sa-accent-glow)] text-[9px] font-black uppercase tracking-widest">
                                                             {displayRole}
                                                         </span>
                                                     </td>
-                                                    <td className="p-6">
+                                                    <td className="px-5 py-2.5">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-white/60">{permissions}</span>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Shield className="w-3 h-3 text-[var(--sa-fg-dim)]" />
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--sa-fg-dim)]">All Permissions</span>
+                                                            </div>
 
-                                                            <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button className="flex items-center gap-2 text-xs font-bold text-brand hover:text-brand/80 transition-colors">
+                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-[var(--sa-accent)] transition-colors bg-white/5 rounded border border-white/5">
                                                                     <Pencil className="w-3 h-3" />
-                                                                    Manage Permissions
+                                                                    Permissions
                                                                 </button>
-                                                                <button className="flex items-center gap-2 text-xs font-bold text-orange-500 hover:text-orange-400 transition-colors">
+                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-amber-400 transition-colors bg-white/5 rounded border border-white/5">
                                                                     <UserCircle className="w-3 h-3" />
-                                                                    Transfer Ownership
+                                                                    Transfer
                                                                 </button>
-                                                                <button className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-400 transition-colors">
+                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors bg-rose-500/5 rounded border border-rose-500/10">
                                                                     <Trash className="w-3 h-3" />
                                                                     Remove
                                                                 </button>

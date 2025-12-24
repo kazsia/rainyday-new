@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FlowButton } from "@/components/ui/flow-button";
+import { Button } from "@/components/ui/button";
 import { Ghost } from 'lucide-react';
 
 const easing = [0.43, 0.13, 0.23, 0.96] as const;
@@ -184,7 +184,9 @@ export function GhostNotFound() {
                         className="flex justify-center"
                     >
                         <Link href="/">
-                            <FlowButton text="Find shelter" />
+                            <Button className="bg-white text-black hover:bg-white/90 font-bold px-8 py-6 rounded-xl">
+                                Find shelter
+                            </Button>
                         </Link>
                     </motion.div>
 

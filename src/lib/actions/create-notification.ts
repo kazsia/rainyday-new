@@ -168,10 +168,15 @@ export async function notifyPaymentConfirmed(
     orderId: string,
     orderReadableId: string,
     total: number,
-    email: string
+    email: string,
+    cryptoAmount?: string,
+    cryptoCurrency?: string,
+    paymentMethod?: string,
+    products?: Array<{ name: string; quantity: number; price: number; variant?: string }>
 ): Promise<void> {
     const isHighValue = total >= 100
 
+    // Create in-app admin notification
     await createAdminNotification(
         isHighValue ? 'high_value_sale' : 'payment_confirmed',
         isHighValue ? '💰 High-Value Sale!' : 'Payment Confirmed',
@@ -179,9 +184,17 @@ export async function notifyPaymentConfirmed(
         {
             severity: isHighValue ? 'critical' : 'info',
             relatedOrderId: orderId,
-            metadata: { total, email, orderReadableId }
+            metadata: { total, email, orderReadableId, paymentMethod }
         }
     )
+
+    // Send Discord webhook notification
+    try {
+        const { notifyDiscordSale } = await import('@/lib/notifications/discord-webhook')
+        await notifyDiscordSale(orderId, orderReadableId, total, email, cryptoAmount, cryptoCurrency, paymentMethod, products)
+    } catch (error) {
+        console.error('[Notification] Discord webhook failed:', error)
+    }
 }
 
 /**

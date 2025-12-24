@@ -116,41 +116,41 @@ export default function AdminBlacklistPage() {
         <AdminLayout>
             <div className="space-y-6 max-w-[100rem] mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Blacklist</h1>
-                        <p className="text-sm text-white/40">Manage banned users, IPs, and email domains</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Security Blacklist</h1>
+                        <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Automated ban protocols for bad actors and VPN/Proxy traffic</p>
                     </div>
 
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-brand text-black font-bold hover:bg-brand/90">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create Entry
+                            <Button className="h-8 bg-[var(--sa-accent)] text-black font-black text-[10px] border-none shadow-[0_0_15px_rgba(164,248,255,0.2)] uppercase tracking-widest px-4">
+                                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                                Add Rule
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-background border-white/5 text-white max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Create Blacklist Entry</DialogTitle>
-                                <DialogDescription className="text-white/40">
-                                    Fill in the details below to create a new blacklist entry.
+                        <DialogContent className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white sm:max-w-[500px] p-0 overflow-hidden shadow-2xl">
+                            <DialogHeader className="p-5 bg-black/20 border-b border-white/5">
+                                <DialogTitle className="text-sm font-black uppercase tracking-widest">Create Detection Rule</DialogTitle>
+                                <DialogDescription className="text-[11px] font-medium text-[var(--sa-fg-dim)]">
+                                    Configure a new automated rejection node for the firewall.
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="space-y-6 py-4">
+                            <div className="p-5 space-y-5">
                                 {/* Type Selection */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-white">Type</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-1">Entity Type</label>
+                                    <div className="flex flex-wrap gap-1.5">
                                         {ENTRY_TYPES.map((type) => (
                                             <button
                                                 key={type.id}
                                                 onClick={() => setSelectedType(type.id)}
                                                 className={cn(
-                                                    "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                                                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
                                                     selectedType === type.id
-                                                        ? "bg-brand/10 border-brand text-brand"
-                                                        : "bg-white/5 border-transparent text-white/60 hover:text-white hover:bg-white/10"
+                                                        ? "bg-[var(--sa-accent)] text-black border-none"
+                                                        : "bg-white/5 border-white/5 text-[var(--sa-fg-dim)] hover:text-white hover:bg-white/10"
                                                 )}
                                             >
                                                 {type.label}
@@ -160,73 +160,57 @@ export default function AdminBlacklistPage() {
                                 </div>
 
                                 {/* Match Type */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-white">Match Type</label>
-                                    <div className="flex gap-2">
-                                        {(['exact', 'regex'] as const).map((type) => (
-                                            <button
-                                                key={type}
-                                                onClick={() => setMatchType(type)}
-                                                className={cn(
-                                                    "px-4 py-2 rounded-lg text-sm font-medium transition-all border capitalize",
-                                                    matchType === type
-                                                        ? "bg-brand/10 border-brand text-brand"
-                                                        : "bg-white/5 border-transparent text-white/60 hover:text-white hover:bg-white/10"
-                                                )}
-                                            >
-                                                {type === 'regex' ? 'Regex' : 'Exact Match'}
-                                            </button>
-                                        ))}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-1">Logic Pattern</label>
+                                        <div className="flex gap-1.5">
+                                            {(['exact', 'regex'] as const).map((type) => (
+                                                <button
+                                                    key={type}
+                                                    onClick={() => setMatchType(type)}
+                                                    className={cn(
+                                                        "flex-1 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
+                                                        matchType === type
+                                                            ? "bg-[var(--sa-accent-muted)] border-[var(--sa-accent-glow)] text-[var(--sa-accent)]"
+                                                            : "bg-white/5 border-white/5 text-[var(--sa-fg-dim)] hover:text-white hover:bg-white/10"
+                                                    )}
+                                                >
+                                                    {type === 'regex' ? 'Regex' : 'Exact Match'}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Value Input */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-white capitalize">{selectedType.replace('_', ' ')}</label>
-                                    <Input
-                                        value={value}
-                                        onChange={e => setValue(e.target.value)}
-                                        placeholder={`Enter ${selectedType.replace('_', ' ')}...`}
-                                        className="bg-[#080c10] border-white/10 h-11"
-                                    />
+                                    {/* Value Input */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-1">{selectedType.replace('_', ' ')} Identifier</label>
+                                        <Input
+                                            value={value}
+                                            onChange={e => setValue(e.target.value)}
+                                            placeholder={`Value...`}
+                                            className="bg-black/40 border-white/5 h-9 text-xs focus:ring-0 focus:border-[var(--sa-accent-glow)]"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Reason Input */}
                                 <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <label className="text-sm font-bold text-white">Reason <span className="text-white/40 font-normal">(optional)</span></label>
-                                    </div>
+                                    <label className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest ml-1">Incident Report <span className="text-[10px] opacity-30 font-medium lowercase">(optional)</span></label>
                                     <Textarea
                                         value={reason}
                                         onChange={e => setReason(e.target.value)}
-                                        placeholder="Why is this entry being blacklisted?"
-                                        className="bg-[#080c10] border-white/10 min-h-[80px]"
+                                        placeholder="Internal notes regarding this blacklist entry..."
+                                        className="bg-black/40 border-white/5 min-h-[70px] text-xs resize-none"
                                     />
                                 </div>
-
-                                {/* Placeholder for Payment Methods (Optional/Advanced) */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-white">Applicable Payment Methods <span className="text-white/40 font-normal">(optional)</span></label>
-                                    <p className="text-xs text-white/40">If left empty, the blacklist rule will apply to every payment method.</p>
-                                    <Select>
-                                        <SelectTrigger className="bg-[#080c10] border-white/10 h-11 text-white/40">
-                                            <SelectValue placeholder="Applicable Payment Methods" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Methods</SelectItem>
-                                            {/* Add more methods later */}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
                             </div>
 
-                            <DialogFooter>
-                                <Button variant="ghost" onClick={() => setIsCreateOpen(false)} className="text-white/60 hover:text-white hover:bg-white/5">
+                            <DialogFooter className="p-5 bg-black/20 border-t border-white/5 sm:justify-end gap-2">
+                                <Button variant="ghost" onClick={() => setIsCreateOpen(false)} className="h-8 text-[10px] font-bold uppercase tracking-widest text-[var(--sa-fg-dim)] hover:text-white hover:bg-white/5">
                                     Cancel
                                 </Button>
-                                <Button onClick={handleCreate} disabled={isCreating} className="bg-brand text-black font-bold hover:bg-brand/90 min-w-[100px]">
-                                    {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+                                <Button onClick={handleCreate} disabled={isCreating} className="h-8 bg-rose-500/20 border border-rose-500/30 text-rose-500 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-rose-500/30 transition-all">
+                                    {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Authorize Ban"}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -234,65 +218,64 @@ export default function AdminBlacklistPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                <div className="flex items-center gap-4 bg-[var(--sa-card)] p-2.5 rounded-xl border border-[var(--sa-border)] shadow-sm">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
                         <Input
-                            placeholder="Search blacklisted entries..."
-                            className="pl-10 bg-background/20 border-white/10"
+                            placeholder="Filter active blacklist protocols..."
+                            className="h-9 pl-9 bg-black/20 border-white/5 text-[11px] font-medium"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
 
-                {/* Blacklist Items */}
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-64 bg-white/5 border border-white/5 rounded-2xl">
-                        <Loader2 className="w-8 h-8 animate-spin text-white/20" />
+                    <div className="flex items-center justify-center h-48 bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl">
+                        <Loader2 className="w-6 h-6 animate-spin text-[var(--sa-accent)]" />
                     </div>
                 ) : (
-                    <div className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
+                    <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
                         {filteredEntries.length === 0 ? (
-                            <div className="p-12 text-center text-white/40">
-                                <ShieldAlert className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                <p>No blacklisted entries found.</p>
+                            <div className="p-12 text-center">
+                                <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-[var(--sa-fg-dim)] opacity-20" />
+                                <p className="text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-[0.2em]">Zero Threats Detected</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-white/5">
                                 {filteredEntries.map((item) => (
-                                    <div key={item.id} className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.02] transition-colors group">
+                                    <div key={item.id} className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors group">
                                         <div className="flex items-center gap-4 flex-1">
-                                            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-                                                <Ban className="w-6 h-6 text-red-500" />
+                                            <div className="w-10 h-10 rounded-lg bg-rose-500/5 border border-rose-500/10 flex items-center justify-center shrink-0">
+                                                <Ban className="w-5 h-5 text-rose-500/60" />
                                             </div>
-                                            <div className="space-y-1">
+                                            <div className="space-y-0.5">
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-white">{item.value}</h3>
-                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/10 text-white/40 uppercase tracking-wider">
+                                                    <h3 className="text-sm font-black text-white tracking-tight">{item.value}</h3>
+                                                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[var(--sa-fg-dim)] uppercase tracking-widest border border-white/5">
                                                         {item.type.replace('_', ' ')}
                                                     </span>
                                                     {item.match_type === 'regex' && (
-                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 uppercase tracking-wider border border-purple-500/20">
+                                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-purple-500/5 text-purple-400/60 uppercase tracking-widest border border-purple-500/10">
                                                             REGEX
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-white/60 font-medium">{item.reason || "No reason provided"}</p>
+                                                <p className="text-[10px] text-[var(--sa-fg-dim)] font-black uppercase tracking-widest leading-none">{item.reason || "No incident description"}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-8">
+                                        <div className="flex items-center gap-6">
                                             <div className="text-right hidden md:block">
-                                                <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-1">Created</p>
-                                                <p className="text-sm text-white/60 font-medium">{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>
+                                                <p className="text-[8px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest mb-0.5 italic">Isolation Log</p>
+                                                <p className="text-[10px] text-white/60 font-medium">{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>
                                             </div>
                                             <Button
                                                 onClick={() => handleDelete(item.id)}
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-10 w-10 text-white/20 hover:text-red-500 hover:bg-red-500/10"
+                                                className="h-8 w-8 text-white/20 hover:text-rose-500 hover:bg-rose-500/5 rounded-lg border border-transparent hover:border-rose-500/10 transition-all"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </Button>
                                         </div>
                                     </div>

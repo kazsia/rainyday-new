@@ -11,7 +11,8 @@ import {
     Users,
     MessageCircle,
     Send,
-    Megaphone
+    Megaphone,
+    Settings
 } from "lucide-react"
 import {
     LineChart,
@@ -58,80 +59,93 @@ export function DashboardClient({ stats, orders, chartData }: DashboardClientPro
     return (
         <div className="space-y-6" suppressHydrationWarning>
             {/* Header */}
-            <div suppressHydrationWarning>
-                <h1 className="text-2xl font-black text-white mb-1">Dashboard</h1>
-                <p className="text-white/40 text-sm">Discover the latest updates and insights regarding your store today.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4" suppressHydrationWarning>
+                <div>
+                    <h1 className="text-xl font-black text-white tracking-tight">Dashboard</h1>
+                    <p className="text-[11px] font-medium text-[var(--sa-fg-dim)] mt-0.5">Discover the latest updates and insights regarding your store today.</p>
+                </div>
+                <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
+                    <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold text-white/40 hover:text-white px-2">
+                        Today
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/40 hover:text-white">
+                        <Settings className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6" suppressHydrationWarning>
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6" suppressHydrationWarning>
                 {/* Main Content - 3 columns */}
-                <div className="lg:col-span-3 space-y-6" suppressHydrationWarning>
+                <div className="xl:col-span-3 space-y-6" suppressHydrationWarning>
                     {/* Stats Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4" suppressHydrationWarning>
-                        <Card className="bg-[#0d1321] border-white/5" suppressHydrationWarning>
-                            <CardContent className="p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-white/60 text-sm font-medium">Revenue</span>
-                                    <DollarSign className="w-5 h-5 text-white/20" />
+                        <Card className="bg-[var(--sa-card)] border-[var(--sa-border)]" suppressHydrationWarning>
+                            <CardContent className="p-5 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[var(--sa-fg-dim)] text-[10px] font-black uppercase tracking-widest mb-1 block">Revenue</span>
+                                    <p className="text-2xl font-black text-white">${stats.revenue.value}</p>
+                                    <div className={cn(
+                                        "flex items-center gap-1 text-[10px] font-bold mt-1",
+                                        stats.revenue.trending === "up" ? "text-emerald-400" : "text-rose-400"
+                                    )}>
+                                        <span>{stats.revenue.change}%</span>
+                                    </div>
                                 </div>
-                                <p className="text-3xl font-black text-white mb-2">${stats.revenue.value}</p>
-                                <div className={cn(
-                                    "flex items-center gap-1 text-xs",
-                                    stats.revenue.trending === "up" ? "text-green-400" : "text-red-400"
-                                )}>
-                                    {stats.revenue.trending === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                    <span>{stats.revenue.change}%</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-[#0d1321] border-white/5">
-                            <CardContent className="p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-white/60 text-sm font-medium">New Orders</span>
-                                    <ShoppingCart className="w-5 h-5 text-white/20" />
-                                </div>
-                                <p className="text-3xl font-black text-white mb-2">{stats.orders.value}</p>
-                                <div className={cn(
-                                    "flex items-center gap-1 text-xs",
-                                    stats.orders.trending === "up" ? "text-green-400" : "text-red-400"
-                                )}>
-                                    {stats.orders.trending === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                    <span>{stats.orders.change}%</span>
+                                <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center">
+                                    <DollarSign className="w-5 h-5 text-white/40 transition-colors group-hover:text-[var(--sa-accent)]" />
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-[#0d1321] border-white/5">
-                            <CardContent className="p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-white/60 text-sm font-medium">New Customers</span>
-                                    <Users className="w-5 h-5 text-white/20" />
+                        <Card className="bg-[var(--sa-card)] border-[var(--sa-border)]">
+                            <CardContent className="p-5 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[var(--sa-fg-dim)] text-[10px] font-black uppercase tracking-widest mb-1 block">New Orders</span>
+                                    <p className="text-2xl font-black text-white">{stats.orders.value}</p>
+                                    <div className={cn(
+                                        "flex items-center gap-1 text-[10px] font-bold mt-1",
+                                        stats.orders.trending === "up" ? "text-emerald-400" : "text-rose-400"
+                                    )}>
+                                        <span>{stats.orders.change}%</span>
+                                    </div>
                                 </div>
-                                <p className="text-3xl font-black text-white mb-2">{stats.customers.value}</p>
-                                <div className={cn(
-                                    "flex items-center gap-1 text-xs",
-                                    stats.customers.trending === "up" ? "text-green-400" : "text-red-400"
-                                )}>
-                                    {stats.customers.trending === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                    <span>{stats.customers.change}%</span>
+                                <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center">
+                                    <ShoppingCart className="w-5 h-5 text-white/40" />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-[var(--sa-card)] border-[var(--sa-border)]">
+                            <CardContent className="p-5 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[var(--sa-fg-dim)] text-[10px] font-black uppercase tracking-widest mb-1 block">New Customers</span>
+                                    <p className="text-2xl font-black text-white">{stats.customers.value}</p>
+                                    <div className={cn(
+                                        "flex items-center gap-1 text-[10px] font-bold mt-1",
+                                        stats.customers.trending === "up" ? "text-emerald-400" : "text-rose-400"
+                                    )}>
+                                        <span>{stats.customers.change}%</span>
+                                    </div>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center">
+                                    <Users className="w-5 h-5 text-white/40" />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Chart */}
-                    <Card className="bg-[#0d1321] border-white/5" suppressHydrationWarning>
-                        <CardHeader className="pb-2" suppressHydrationWarning>
+                    <Card className="bg-[var(--sa-card)] border-[var(--sa-border)] overflow-hidden" suppressHydrationWarning>
+                        <CardHeader className="pb-2 border-b border-white/[0.02] bg-white/[0.01]" suppressHydrationWarning>
                             <div className="flex items-center justify-between" suppressHydrationWarning>
-                                <CardTitle className="text-lg font-bold text-white">{"Revenue & Orders"}</CardTitle>
-                                <div className="flex items-center gap-2" suppressHydrationWarning>
-                                    {["1D", "7D", "1M", "3M", "1Y", "ALL"].map((period) => (
+                                <CardTitle className="text-sm font-black text-white uppercase tracking-widest">Revenue & Orders</CardTitle>
+                                <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-md border border-white/5" suppressHydrationWarning>
+                                    {["1D", "7D", "1M", "ALL"].map((period) => (
                                         <button
                                             key={period}
                                             className={cn(
-                                                "px-2 py-1 rounded text-xs font-medium",
-                                                period === "1D" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"
+                                                "px-2 py-1 rounded text-[9px] font-black transition-all",
+                                                period === "1D" ? "bg-white/10 text-white shadow-sm" : "text-white/30 hover:text-white/60"
                                             )}
                                         >
                                             {period}
@@ -140,38 +154,37 @@ export function DashboardClient({ stats, orders, chartData }: DashboardClientPro
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="h-[300px] pt-4">
+                        <CardContent className="h-[320px] pt-6 pr-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                                     <XAxis
                                         dataKey="name"
-                                        stroke="#ffffff40"
-                                        fontSize={10}
+                                        stroke="#ffffff20"
+                                        fontSize={9}
                                         tickLine={false}
                                         axisLine={false}
+                                        dy={10}
                                     />
                                     <YAxis
-                                        stroke="#ffffff40"
-                                        fontSize={10}
+                                        stroke="#ffffff20"
+                                        fontSize={9}
                                         tickLine={false}
                                         axisLine={false}
+                                        dx={-10}
                                     />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: "#0d1321", border: "1px solid #ffffff10", borderRadius: "8px" }}
-                                        labelStyle={{ color: "#ffffff60" }}
-                                    />
-                                    <Legend
-                                        wrapperStyle={{ paddingTop: "20px" }}
-                                        formatter={(value) => <span className="text-white/60 text-xs">{value}</span>}
+                                        contentStyle={{ backgroundColor: "#080a0f", border: "1px solid #1a1e26", borderRadius: "12px", fontSize: "11px" }}
+                                        labelStyle={{ color: "#ffffff40", fontWeight: "900", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="revenue"
                                         name="Revenue"
-                                        stroke="#3b82f6"
-                                        strokeWidth={2}
+                                        stroke="var(--sa-accent)"
+                                        strokeWidth={2.5}
                                         dot={false}
+                                        animationDuration={1500}
                                     />
                                     <Line
                                         type="monotone"
@@ -180,6 +193,7 @@ export function DashboardClient({ stats, orders, chartData }: DashboardClientPro
                                         stroke="#f97316"
                                         strokeWidth={2}
                                         dot={false}
+                                        strokeDasharray="4 4"
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -187,47 +201,47 @@ export function DashboardClient({ stats, orders, chartData }: DashboardClientPro
                     </Card>
 
                     {/* Latest Orders Table */}
-                    <Card className="bg-[#0d1321] border-white/5" suppressHydrationWarning>
-                        <CardHeader suppressHydrationWarning>
-                            <CardTitle className="text-lg font-bold text-white">{"Latest Completed Orders"}</CardTitle>
+                    <Card className="bg-[var(--sa-card)] border-[var(--sa-border)]" suppressHydrationWarning>
+                        <CardHeader className="pb-0" suppressHydrationWarning>
+                            <CardTitle className="text-sm font-black text-white uppercase tracking-widest">Latest Completed Orders</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-4">
                             {orders.length === 0 ? (
-                                <div className="text-center py-8 text-white/40">
-                                    <p>No orders yet</p>
-                                    <p className="text-sm mt-1">Orders will appear here once customers make purchases</p>
+                                <div className="text-center py-12 text-white/20">
+                                    <ShoppingCart className="w-8 h-8 mx-auto mb-3 opacity-10" />
+                                    <p className="text-xs font-bold uppercase tracking-widest">No orders yet</p>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
                                         <thead>
-                                            <tr className="text-left text-white/40 text-xs uppercase tracking-wider">
-                                                <th className="pb-4 font-medium">Products</th>
-                                                <th className="pb-4 font-medium">Price</th>
-                                                <th className="pb-4 font-medium">Paid</th>
-                                                <th className="pb-4 font-medium">Payment Method</th>
-                                                <th className="pb-4 font-medium">E-mail</th>
-                                                <th className="pb-4 font-medium">Time</th>
+                                            <tr className="text-left text-[var(--sa-fg-dim)] text-[9px] font-black uppercase tracking-widest border-b border-white/5">
+                                                <th className="pb-3 px-1">Products</th>
+                                                <th className="pb-3 px-1">Price</th>
+                                                <th className="pb-3 px-1">Paid</th>
+                                                <th className="pb-3 px-1">Payment Method</th>
+                                                <th className="pb-3 px-1">E-mail</th>
+                                                <th className="pb-3 px-1 text-right">Time</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="text-sm">
+                                        <tbody className="text-[11px]">
                                             {orders.map((order) => (
-                                                <tr key={order.id} className="border-t border-white/5">
-                                                    <td className="py-4 text-white">{order.product}</td>
-                                                    <td className="py-4 text-white/60">{order.price}</td>
-                                                    <td className="py-4">
+                                                <tr key={order.id} className="border-b border-white/[0.02] last:border-0 hover:bg-white/[0.01] transition-colors">
+                                                    <td className="py-3 px-1 font-bold text-white">{order.product}</td>
+                                                    <td className="py-3 px-1 text-[var(--sa-fg-dim)]">${order.price}</td>
+                                                    <td className="py-3 px-1">
                                                         <span className={cn(
-                                                            "px-2 py-1 rounded text-xs font-medium",
+                                                            "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
                                                             order.status === "paid" || order.status === "delivered"
-                                                                ? "bg-green-500/10 text-green-400"
-                                                                : "bg-yellow-500/10 text-yellow-400"
+                                                                ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
+                                                                : "bg-amber-500/5 text-amber-400 border-amber-500/10"
                                                         )}>
                                                             {order.paid}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 text-white/60">{order.method}</td>
-                                                    <td className="py-4 text-brand">{order.email}</td>
-                                                    <td className="py-4 text-white/40">{order.time}</td>
+                                                    <td className="py-3 px-1 text-[var(--sa-fg-dim)]">{order.method}</td>
+                                                    <td className="py-3 px-1 text-[var(--sa-fg-muted)]">{order.email}</td>
+                                                    <td className="py-3 px-1 text-right text-[var(--sa-fg-dim)]">{order.time}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -241,44 +255,41 @@ export function DashboardClient({ stats, orders, chartData }: DashboardClientPro
                 {/* Right Sidebar - 1 column */}
                 <div className="space-y-6">
                     {/* Stay Up To Date */}
-                    <Card className="bg-[#0d1321] border-white/5">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-bold text-white">
-                                Stay Up To Date With <span className="text-brand">Rainyday</span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm">
-                                <MessageCircle className="w-4 h-4" />
+                    <Card className="bg-[var(--sa-card)] border-[var(--sa-border)] overflow-hidden">
+                        <div className="bg-gradient-to-br from-[var(--sa-accent-muted)] to-transparent p-4 border-b border-white/5">
+                            <h3 className="text-xs font-black text-white uppercase tracking-widest">Stay Up To Date</h3>
+                            <p className="text-[10px] text-[var(--sa-fg-dim)] mt-1 font-medium">Join our community channels</p>
+                        </div>
+                        <CardContent className="p-4 space-y-2">
+                            <Button variant="outline" className="w-full justify-start gap-2.5 bg-white/[0.02] border-white/5 hover:bg-white/5 text-white/70 hover:text-white text-[11px] font-bold h-9">
+                                <div className="w-5 h-5 rounded-md bg-indigo-500/20 flex items-center justify-center">
+                                    <MessageCircle className="w-3.5 h-3.5 text-indigo-400" />
+                                </div>
                                 Join Discord
                             </Button>
-                            <Button variant="outline" className="w-full justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm">
-                                <Send className="w-4 h-4" />
+                            <Button variant="outline" className="w-full justify-start gap-2.5 bg-white/[0.02] border-white/5 hover:bg-white/5 text-white/70 hover:text-white text-[11px] font-bold h-9">
+                                <div className="w-5 h-5 rounded-md bg-sky-500/20 flex items-center justify-center">
+                                    <Send className="w-3.5 h-3.5 text-sky-400" />
+                                </div>
                                 Join Telegram
                             </Button>
                         </CardContent>
                     </Card>
 
                     {/* Announcements */}
-                    <Card className="bg-[#0d1321] border-white/5">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                                <span className="text-brand">Rainyday</span> Announcements
-                            </CardTitle>
+                    <Card className="bg-[var(--sa-card)] border-[var(--sa-border)]">
+                        <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-xs font-black text-white uppercase tracking-widest">Announcements</CardTitle>
+                            <Megaphone className="w-4 h-4 text-[var(--sa-accent)]" />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {announcements.map((item, i) => (
-                                <div key={i} className="flex gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
-                                        <Megaphone className="w-4 h-4 text-brand" />
+                                <div key={i} className="group relative pl-4 before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-white/[0.03] hover:before:bg-[var(--sa-accent-glow)] transition-all">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <p className="text-[11px] font-bold text-white group-hover:text-[var(--sa-accent)] transition-colors truncate">{item.title}</p>
+                                        <span className="text-[9px] text-[var(--sa-fg-dim)] whitespace-nowrap">{item.time}</span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <p className="text-sm font-medium text-white truncate">{item.title}</p>
-                                            <span className="text-[10px] text-white/30 whitespace-nowrap">{item.time}</span>
-                                        </div>
-                                        <p className="text-xs text-white/40 truncate">{item.desc}</p>
-                                    </div>
+                                    <p className="text-[10px] text-[var(--sa-fg-dim)] line-clamp-2 leading-relaxed">{item.desc}</p>
                                 </div>
                             ))}
                         </CardContent>

@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
@@ -29,30 +28,25 @@ const neonButtonVariants = cva(
 
 export interface NeonButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof neonButtonVariants> {
-    asChild?: boolean
-}
+    VariantProps<typeof neonButtonVariants> { }
 
 const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>(
-    ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-        const Comp = asChild ? Slot : "button"
+    ({ className, variant, size, children, ...props }, ref) => {
         return (
-            <Comp
+            <button
                 className={cn(neonButtonVariants({ variant, size, className }))}
                 ref={ref}
                 {...props}
             >
-                {/* Neon glow effect */}
-                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-brand/20 via-brand/40 to-brand/20 blur-xl" />
-
-                {/* Top shine */}
-                <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                {/* Glow effects */}
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-brand/20 via-brand/40 to-brand/20 blur-xl pointer-events-none" />
+                <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                 {/* Content */}
                 <span className="relative z-10 flex items-center gap-2">
                     {children}
                 </span>
-            </Comp>
+            </button>
         )
     }
 )
