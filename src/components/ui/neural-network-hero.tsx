@@ -7,25 +7,9 @@ import * as THREE from 'three';
 
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { SplitText } from 'gsap/SplitText';
 
-// Register plugins safely
-if (typeof window !== 'undefined') {
-    gsap.registerPlugin(useGSAP);
-    // SplitText is a premium plugin and might not be available in the free version of GSAP installed via npm.
-    // If it's not available, we needs a fallback or assumption that the user has it.
-    // For standard npm install, SplitText is NOT included. 
-    // However, I must follow the user's provided code. 
-    // I will try to register it, but might need to comment it out or handle it if it fails in a real env without the Club GSAP token.
-    // For the sake of this task, I will include it as requested, but I'll add a check or try/catch if possible, 
-    // or just follow existing pattern if project has premium gsap.
-    // Given I cannot know for sure, I will attempt to register it.
-    try {
-        gsap.registerPlugin(SplitText);
-    } catch (e) {
-        console.warn("SplitText not found, text animations might be limited.");
-    }
-}
+// Note: SplitText is a premium GSAP plugin and cannot be used in open implementations.
+// Logic has been adapted to standard GSAP animations.
 
 // ===================== SHADER =====================
 const vertexShader = `
@@ -43,8 +27,6 @@ const fragmentShader = `
   uniform float iTime;
   uniform vec2 iResolution;
   varying vec2 vUv;
-  
-
   
   vec4 sigmoid(vec4 x) { return 1. / (1. + exp(-x)); }
   
@@ -167,18 +149,7 @@ const fragmentShader = `
   
   void main() {
     vec2 uv = vUv * 2.0 - 1.0; uv.y *= -1.0;
-    vec4 noise = cppn_fn(uv, 0.1 * sin(0.3 * iTime), 0.1 * sin(0.69 * iTime), 0.1 * sin(0.44 * iTime));
-    
-    // Convert multi-color noise to grayscale intensity
-    float intensity = (noise.r + noise.g + noise.b) / 3.0;
-    
-    // Tint with #a4f8ff (RGB: 0.643, 0.972, 1.0)
-    vec3 brandColor = vec3(0.643, 0.972, 1.0);
-    
-    // Apply contrast and tint
-    vec3 finalColor = brandColor * pow(intensity, 1.2) * 1.5;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
+    gl_FragColor = cppn_fn(uv, 0.1 * sin(0.3 * iTime), 0.1 * sin(0.69 * iTime), 0.1 * sin(0.44 * iTime));
   }
 `;
 
@@ -214,8 +185,24 @@ function ShaderBackground() {
 
     const camera = useMemo(() => ({ position: [0, 0, 1] as [number, number, number], fov: 75, near: 0.1, far: 1000 }), []);
 
-    // Removed GSAP animation for background to ensure it never vanishes
-    // useGSAP removed to rely on simple CSS/React rendering
+    // Clean initialization without complex GSAP transitions that might hide the canvas
+    useGSAP(
+        () => {
+            if (!canvasRef.current) return;
+            gsap.set(canvasRef.current, {
+                filter: 'blur(10px)',
+                scale: 1,
+                autoAlpha: 1
+            });
+
+            gsap.to(canvasRef.current, {
+                filter: 'blur(0px)',
+                duration: 1.5,
+                ease: 'power3.out'
+            });
+        },
+        { scope: canvasRef }
+    );
 
     return (
         <div ref={canvasRef} className="bg-black absolute inset-0 -z-10 w-full h-full" aria-hidden>
@@ -268,7 +255,7 @@ export default function NeuralNetworkHero({
             if (!headerRef.current) return;
 
             document.fonts.ready.then(() => {
-                // Simplified animation without SplitText plugin dependency to prevent crashes
+                // Standard GSAP text animation fallback since SplitText is not available
                 const lines = [headerRef.current];
 
                 gsap.set(lines, {
@@ -353,8 +340,8 @@ export default function NeuralNetworkHero({
                             key={index}
                             href={button.href}
                             className={`rounded-2xl border border-white/10 px-5 py-3 text-sm font-light tracking-tight transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 duration-300 ${button.primary
-                                ? "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                                : "text-white/80 hover:bg-white/5"
+                                    ? "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                                    : "text-white/80 hover:bg-white/5"
                                 }`}
                         >
                             {button.text}
