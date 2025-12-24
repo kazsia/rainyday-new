@@ -237,8 +237,12 @@ export default function AdminStorefrontPage() {
             <div className="space-y-6 max-w-[100rem] mx-auto">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Configure Storefront</h1>
-                        <p className="text-sm text-white/40">Manage your shop settings.</p>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">
+                            {CONFIGURE_TABS.some(t => t.id === activeTab) ? 'Configure Storefront' : 'Storefront Editor'}
+                        </h1>
+                        <p className="text-sm text-white/40">
+                            {CONFIGURE_TABS.some(t => t.id === activeTab) ? 'Manage your shop settings.' : 'Edit your landing page content.'}
+                        </p>
                     </div>
                 </div>
 
