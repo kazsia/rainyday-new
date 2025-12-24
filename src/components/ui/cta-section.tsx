@@ -23,7 +23,7 @@ export function CTASection({
     return (
         <section className={cn("relative py-24 md:py-32 overflow-hidden", className)}>
             {/* Background with gradient glow effects in brand cyan color */}
-            <div className="absolute inset-0 bg-black">
+            <div className="absolute inset-0">
                 {/* Main cyan gradient orb - left */}
                 <motion.div
                     initial={{ opacity: 0.3 }}
