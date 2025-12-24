@@ -45,7 +45,59 @@ const defaultSettings: SiteSettings = {
         delivery_message: 'Thank you for your purchase. Your items are ready below.'
     },
     statistics: { base_sales: 0, base_buyers: 0, base_rating: "5.0" },
-    dns: { records: [] }
+    dns: { records: [] },
+    about: {
+        title: "Empowering Digital Creators",
+        subtitle: "Our Story",
+        content_left: "Rainyday was founded with a simple mission: to bridge the gap between digital creators and their global audience.",
+        content_right: "Since our inception, we've helped thousands of creators monetize their work and reach customers worldwide.",
+        stats: [
+            { label: "Creators", value: "10k+" },
+            { label: "Transactions", value: "1M+" },
+            { label: "Countries", value: "150+" },
+            { label: "Uptime", value: "99.9%" }
+        ]
+    },
+    faq: {
+        items: [
+            { q: "Can I make payments using my preferred method?", a: "Yes, we support a wide range of payment methods." },
+            { q: "Is it safe to make payments?", a: "Yes, we take security very seriously." }
+        ]
+    },
+    hero: {
+        title: "Digital Products, Redefined.",
+        description: "Experience the future of digital assets with our secure and intuitive platform.",
+        badge_text: "Generative Surfaces",
+        badge_label: "New",
+        cta1_text: "Get Started",
+        cta1_href: "/store",
+        cta2_text: "View Products",
+        cta2_href: "/store"
+    },
+    landing_cta: {
+        title: "Ready to dive into digital products?",
+        description: "Connect with our community and experience hassle-free digital product exchanges today!",
+        button_text: "Get Started",
+        button_href: "/store"
+    },
+    why_choose: {
+        title: "The Ultimate Ecosystem",
+        subtitle: "Why Choose Rainyday?",
+        features: [
+            { title: "Decentralized Payments", description: "Experience the freedom of peer-to-peer transactions.", icon: "Zap" },
+            { title: "Instant Fulfillment", description: "Digital assets are delivered instantly.", icon: "Shield" },
+            { title: "Lowest Fees", description: "Our optimized smart contracts ensure you keep more.", icon: "Globe" }
+        ]
+    },
+    how_it_works: {
+        title: "Shopping made simple in three easy steps!",
+        texts: ["How It Works", "Simple Process", "Easy Steps"],
+        steps: [
+            { title: "Select a product", description: "Explore a wide range of products tailored to meet your needs." },
+            { title: "Pay the invoice", description: "Proceed to checkout and choose from multiple payment options." },
+            { title: "Receive Product", description: "Once payment is confirmed, we'll deliver your order promptly." }
+        ]
+    }
 }
 
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
