@@ -28,7 +28,7 @@ export function FAQSection() {
     return (
         <section id="faq" className="py-16 md:py-24 relative overflow-hidden">
             {/* Background with gradient glow effects */}
-            <div className="absolute inset-0 bg-black">
+            <div className="absolute inset-0">
                 {/* Main cyan gradient orb - left */}
                 <motion.div
                     initial={{ opacity: 0.3 }}

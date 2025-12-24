@@ -360,7 +360,7 @@ export const FlickeringFooter = () => {
     return (
         <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
             {/* Background with gradient glow effects */}
-            <div className="absolute inset-0 bg-black pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none">
                 {/* Main cyan gradient orb - left */}
                 <motion.div
                     initial={{ opacity: 0.3 }}
