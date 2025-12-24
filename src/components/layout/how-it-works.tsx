@@ -32,7 +32,7 @@ export function HowItWorks({
     ]
 }: HowItWorksProps) {
     return (
-        <section className="pb-16 md:pb-24 relative overflow-hidden">
+        <section className="-mt-16 md:-mt-24 pb-16 md:pb-24 relative overflow-hidden">
             {/* Background with gradient glow effects */}
             <div className="absolute inset-0">
                 {/* Center cyan gradient orb */}
