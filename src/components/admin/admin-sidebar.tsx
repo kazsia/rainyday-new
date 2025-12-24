@@ -4,16 +4,16 @@
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import {
-    Home,
-    Package,
-    ShoppingCart,
-    Settings,
-    User,
-    ChevronDown,
-    ExternalLink,
-    Layout,
-} from "lucide-react"
+// Use individual imports to avoid HMR module factory issues in Turbopack
+import { Home } from "lucide-react"
+import { Package } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
+import { Settings } from "lucide-react"
+import { User } from "lucide-react"
+import { ChevronDown } from "lucide-react"
+import { ExternalLink } from "lucide-react"
+import { Layout } from "lucide-react"
+
 import { useState, useEffect, Suspense } from "react"
 import { Logo } from "@/components/layout/logo"
 import { SheetClose } from "@/components/ui/sheet"
