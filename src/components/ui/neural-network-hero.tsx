@@ -218,9 +218,9 @@ function ShaderBackground() {
             if (!canvasRef.current) return;
 
             gsap.set(canvasRef.current, {
-                filter: 'blur(20px)',
+                filter: 'blur(10px)',
                 scale: 1.1,
-                autoAlpha: 0.7
+                autoAlpha: 1
             });
 
             gsap.to(canvasRef.current, {
@@ -229,7 +229,6 @@ function ShaderBackground() {
                 autoAlpha: 1,
                 duration: 1.5,
                 ease: 'power3.out',
-                delay: 0.3
             });
         },
         { scope: canvasRef }
