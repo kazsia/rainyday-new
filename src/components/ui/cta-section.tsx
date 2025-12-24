@@ -21,7 +21,7 @@ export function CTASection({
     className,
 }: CTAProps) {
     return (
-        <section className={cn("relative py-24 md:py-32 overflow-hidden", className)}>
+        <section className={cn("relative -mt-16 md:-mt-24 pb-24 md:pb-32 overflow-hidden", className)}>
             {/* Background with gradient glow effects in brand cyan color */}
             <div className="absolute inset-0 bg-black">
                 {/* Main cyan gradient orb - left */}
