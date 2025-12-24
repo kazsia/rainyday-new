@@ -66,7 +66,7 @@ export function WhyChoose({
     return (
         <section className="py-16 md:py-24 relative overflow-hidden">
             {/* Background with gradient glow effects */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-black">
                 {/* Top left cyan gradient orb */}
                 <motion.div
                     initial={{ opacity: 0.3 }}
