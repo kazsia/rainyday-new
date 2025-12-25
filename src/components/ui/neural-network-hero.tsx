@@ -324,10 +324,10 @@ export default function NeuralNetworkHero({
     );
 
     return (
-        <section ref={sectionRef} className="relative h-screen w-screen overflow-hidden bg-black" suppressHydrationWarning>
+        <section ref={sectionRef} className="relative h-screen w-full overflow-hidden bg-black" suppressHydrationWarning>
             <HeroBackgroundShader />
 
-            <div className="relative mx-auto flex max-w-7xl flex-col items-center text-center gap-6 px-6 pb-24 pt-36 sm:gap-8 sm:pt-44 md:px-10 lg:px-16">
+            <div className="relative mx-auto flex max-w-7xl flex-col items-center text-center gap-6 px-6 pb-24 pt-36 sm:gap-8 sm:pt-44 md:px-10 lg:px-16 z-10">
                 <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">
                     <span className="text-[10px] font-light uppercase tracking-[0.08em] text-white/70">{badgeLabel}</span>
                     <span className="h-1 w-1 rounded-full bg-white/40" />
@@ -366,7 +366,7 @@ export default function NeuralNetworkHero({
                 </ul>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-10" />
         </section>
     );
 }

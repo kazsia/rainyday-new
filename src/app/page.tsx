@@ -35,7 +35,7 @@ export default function HomePage() {
         className="min-h-screen bg-black"
         suppressHydrationWarning
       >
-        <div className="-mt-20 min-h-screen relative overflow-hidden" suppressHydrationWarning>
+        <div className="-mt-20 min-h-screen relative" suppressHydrationWarning>
           <NeuralNetworkHero
             title={settings?.hero?.title}
             description={settings?.hero?.description}
