@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { MainLayout } from "@/components/layout/main-layout"
-import { ProductCard } from "@/components/shop/product-card"
+import { ProductCard } from "@/components/shop/product-display-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, ShoppingCart, Loader2, ChevronDown } from "lucide-react"
@@ -129,6 +129,7 @@ export default function StorePage() {
                                 badge_links={product.badge_links}
                                 status_label={product.status_label}
                                 status_color={product.status_color}
+                                description={product.description}
                             />
                         ))}
                     </div>
