@@ -66,7 +66,7 @@ const defaultSettings: SiteSettings = {
     },
     hero: {
         title: "Digital Products, Redefined.",
-        description: "Experience the future of digital assets with our secure and intuitive platform.",
+        description: "Experience the future of digital assets with our secure and intuitive platform. Built for the next generation of creators.",
         badge_text: "Generative Surfaces",
         badge_label: "New",
         cta1_text: "Get Started",

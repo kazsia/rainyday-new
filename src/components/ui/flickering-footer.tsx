@@ -358,9 +358,9 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "Rainyday"
 
     return (
-        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-visible" suppressHydrationWarning>
+        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
             {/* Background with gradient glow effects */}
-            <div className="absolute -inset-32 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Main cyan gradient orb - left */}
                 <motion.div
                     initial={{ opacity: 0.3 }}
