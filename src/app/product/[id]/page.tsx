@@ -70,10 +70,19 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     loadProduct()
   }, [id])
 
+  const minQty = product?.min_quantity || 1
+  const maxQty = product?.max_quantity || 1000000
   const currentPrice = selectedVariant ? selectedVariant.price : product?.price
   const currentStock = selectedVariant ? selectedVariant.stock_count : product?.stock_count
   const isOutOfStock = currentStock <= 0
   const totalPrice = currentPrice * quantity
+
+  // Synchronize initial quantity with min_quantity
+  React.useEffect(() => {
+    if (product?.min_quantity) {
+      setQuantity(product.min_quantity)
+    }
+  }, [product?.id])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -81,8 +90,16 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       toast.error("This product is out of stock")
       return
     }
-    if (quantity > currentStock) {
-      toast.error(`Only ${currentStock} items available in stock`)
+    if (quantity < minQty) {
+      toast.error(`Minimum order quantity is ${minQty}`)
+      return
+    }
+    if (quantity > Math.min(maxQty, currentStock)) {
+      if (quantity > currentStock) {
+        toast.error(`Only ${currentStock} items available in stock`)
+      } else {
+        toast.error(`Maximum order quantity is ${maxQty}`)
+      }
       return
     }
     setIsAddingToCart(true)
@@ -93,7 +110,10 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       quantity: quantity,
       image: product.image_url,
       variantId: selectedVariant?.id,
-      variantName: selectedVariant?.name
+      variantName: selectedVariant?.name,
+      min_quantity: product.min_quantity,
+      max_quantity: product.max_quantity,
+      custom_fields: product.custom_fields
     })
     toast.success(`Added ${quantity}x ${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''} to cart`)
     setTimeout(() => setIsAddingToCart(false), 600)
@@ -105,8 +125,16 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       toast.error("This product is out of stock")
       return
     }
-    if (quantity > currentStock) {
-      toast.error(`Only ${currentStock} items available in stock`)
+    if (quantity < minQty) {
+      toast.error(`Minimum order quantity is ${minQty}`)
+      return
+    }
+    if (quantity > Math.min(maxQty, currentStock)) {
+      if (quantity > currentStock) {
+        toast.error(`Only ${currentStock} items available in stock`)
+      } else {
+        toast.error(`Maximum order quantity is ${maxQty}`)
+      }
       return
     }
 
@@ -119,7 +147,8 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
           variant_id: selectedVariant?.id || null,
           quantity: quantity,
           price: currentPrice
-        }]
+        }],
+        custom_fields: product.custom_fields ? {} : null // Initialize empty object for values if product has field definitions
       })
       router.push(`/checkout/${order.readable_id}`)
     } catch (error) {
@@ -404,12 +433,12 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-primary/20 via-brand-primary/10 to-brand-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur transition-opacity duration-300" />
                       <div className="relative flex items-center bg-[#0d1a1d] rounded-2xl border border-white/[0.08] overflow-hidden transition-all group-hover:border-brand-primary/30">
                         <motion.button
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          onClick={() => setQuantity(Math.max(minQty, quantity - 1))}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity <= 1}
+                          disabled={quantity <= minQty}
                           className={cn(
                             "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity <= 1
+                            quantity <= minQty
                               ? "text-white/10 cursor-not-allowed"
                               : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                           )}
@@ -421,19 +450,19 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             type="number"
                             value={quantity}
                             onChange={(e) => {
-                              const val = parseInt(e.target.value) || 1
-                              setQuantity(Math.min(Math.max(1, val), currentStock))
+                              const val = parseInt(e.target.value) || minQty
+                              setQuantity(Math.min(Math.max(minQty, val), Math.min(maxQty, currentStock)))
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
                           />
                         </div>
                         <motion.button
-                          onClick={() => setQuantity(Math.min(quantity + 1, currentStock))}
+                          onClick={() => setQuantity(Math.min(quantity + 1, Math.min(maxQty, currentStock)))}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity >= currentStock}
+                          disabled={quantity >= Math.min(maxQty, currentStock)}
                           className={cn(
                             "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity >= currentStock
+                            quantity >= Math.min(maxQty, currentStock)
                               ? "text-white/10 cursor-not-allowed"
                               : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                           )}

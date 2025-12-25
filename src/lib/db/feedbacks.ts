@@ -24,62 +24,143 @@ export type Feedback = {
  */
 export async function submitFeedback(data: {
     invoice_id: string
+    order_id?: string
     rating: number
     title?: string
     message: string
 }) {
-    const supabase = await createClient()
+    try {
+        const supabase = await createClient()
 
-    // 1. Validate Invoice & Payment
-    const { data: invoice, error: invoiceError } = await supabase
-        .from("invoices")
-        .select("*, orders(*)")
-        .eq("id", data.invoice_id)
-        .single()
+        // 1. Resolve Invoice & Order IDs
+        // The frontend might pass order_id as invoice_id or vice versa.
+        // We try to find a valid invoice matching either ID.
+        let { data: invoice, error: invoiceError } = await supabase
+            .from("invoices")
+            .select("*, orders(*)")
+            .or(`id.eq.${data.invoice_id},order_id.eq.${data.invoice_id}`)
+            .single()
 
-    if (invoiceError || !invoice) throw new Error("Invoice not found")
-    if (invoice.status !== "paid") throw new Error("Invoice must be paid to leave feedback")
+        // Fallback: If still not found and order_id was provided separately, try that
+        if ((invoiceError || !invoice) && data.order_id) {
+            const { data: fallbackInvoice, error: fallbackError } = await supabase
+                .from("invoices")
+                .select("*, orders(*)")
+                .or(`id.eq.${data.order_id},order_id.eq.${data.order_id}`)
+                .single()
 
-    // 2. Check for existing feedback
-    const { data: existing } = await supabase
-        .from("feedbacks")
-        .select("id")
-        .eq("invoice_id", data.invoice_id)
-        .single()
+            if (!fallbackError && fallbackInvoice) {
+                invoice = fallbackInvoice
+                invoiceError = null
+            }
+        }
 
-    if (existing) throw new Error("Feedback already submitted for this invoice")
+        if (invoiceError || !invoice) {
+            // Check if it's a valid paid order. If so, create invoice on the fly.
+            const searchId = data.order_id || data.invoice_id
+            const { data: orderData, error: orderError } = await supabase
+                .from("orders")
+                .select("*")
+                .eq("id", searchId)
+                .single()
 
-    // 3. Get user info
-    const { data: { user } } = await supabase.auth.getUser()
+            if (!orderError && orderData && ['paid', 'delivered', 'completed'].includes(orderData.status)) {
+                const invoiceNumber = `INV-AUTO-${Date.now()}-${orderData.id.split('-')[0]}`;
 
-    // 4. Determine auto-approval status
-    const settings = await getSiteSettings()
-    const autoApprove = settings.feedbacks.enable_automatic
+                // Determination of columns to try
+                const columnsToTry = [
+                    { order_id: orderData.id, invoice_number: invoiceNumber, status: 'paid' },
+                    { order_id: orderData.id, invoice_number: invoiceNumber },
+                    { order_id: orderData.id, status: 'paid' },
+                    { order_id: orderData.id }
+                ];
 
-    // 5. Insert feedback
-    const { data: feedback, error } = await supabase
-        .from("feedbacks")
-        .insert({
-            invoice_id: data.invoice_id,
-            order_id: invoice.orders.id,
-            customer_id: user?.id,
-            email: invoice.orders.email,
-            rating: data.rating,
-            title: data.title,
-            message: data.message,
-            is_approved: autoApprove,
-            is_public: true,
-            is_admin_added: false
-        })
-        .select()
-        .single()
+                let lastInsertError = null;
+                const adminSupabase = await createAdminClient();
 
-    if (error) {
-        console.error("[SUBMIT_FEEDBACK_ERROR]", error)
-        throw new Error("Failed to submit feedback")
+                for (const payload of columnsToTry) {
+                    const { data: newInvoice, error: createError } = await adminSupabase
+                        .from("invoices")
+                        .insert(payload)
+                        .select()
+                        .single();
+
+                    if (!createError && newInvoice) {
+                        invoice = { ...newInvoice, orders: orderData };
+                        lastInsertError = null;
+                        break;
+                    }
+                    lastInsertError = createError;
+                    console.warn(`[SUBMIT_FEEDBACK] Invoice insert attempt failed for payload keys: ${Object.keys(payload).join(', ')}. Error: ${createError?.message}`);
+                }
+
+                if (lastInsertError) {
+                    console.error("[SUBMIT_FEEDBACK] All invoice auto-creation attempts failed. LAST ERROR:", JSON.stringify(lastInsertError, null, 2));
+                    throw new Error(`Could not initialize feedback: Invoice record missing and auto-creation failed. Error: ${lastInsertError?.message || 'Unknown error'}`);
+                }
+            } else {
+                console.error("[SUBMIT_FEEDBACK] Invoice/Order not found or not paid:", {
+                    provided_invoice_id: data.invoice_id,
+                    provided_order_id: data.order_id,
+                    order_found: !!orderData,
+                    status: orderData?.status
+                })
+                throw new Error("Invalid order reference. Please ensure your payment is confirmed before leaving feedback.")
+            }
+        }
+
+        // Handle case where orders might be returned as an array or object
+        const order = Array.isArray(invoice.orders) ? invoice.orders[0] : invoice.orders
+        if (!order) throw new Error("Internal error: Order not found for this invoice.")
+
+        if (invoice.status !== "paid" && order.status !== "paid" && order.status !== "delivered" && order.status !== "completed") {
+            throw new Error("Feedback can only be left for paid or completed orders.")
+        }
+
+        // 2. Check for existing feedback
+        const { data: existing } = await supabase
+            .from("feedbacks")
+            .select("id")
+            .eq("invoice_id", invoice.id)
+            .single()
+
+        if (existing) throw new Error("You have already submitted feedback for this order.")
+
+        // 3. Get user info
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // 4. Determine auto-approval status
+        const settings = await getSiteSettings()
+        const autoApprove = settings.feedbacks.enable_automatic
+
+        // 5. Insert feedback
+        const { data: feedback, error } = await supabase
+            .from("feedbacks")
+            .insert({
+                invoice_id: invoice.id,
+                order_id: order.id,
+                customer_id: user?.id,
+                email: order.email,
+                rating: data.rating,
+                title: data.title,
+                message: data.message,
+                is_approved: autoApprove,
+                is_public: true,
+                is_admin_added: false
+            })
+            .select()
+            .single()
+
+        if (error) {
+            console.error("[SUBMIT_FEEDBACK_DB_ERROR]", error)
+            throw new Error("Failed to save feedback to database.")
+        }
+
+        return feedback
+    } catch (e: any) {
+        console.error("[SUBMIT_FEEDBACK_ERROR]", e)
+        throw new Error(e.message || "An unexpected error occurred during submission.")
     }
-
-    return feedback
 }
 
 /**

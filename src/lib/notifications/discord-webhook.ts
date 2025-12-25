@@ -71,7 +71,8 @@ export async function notifyDiscordSale(
     cryptoAmount?: string,
     cryptoCurrency?: string,
     paymentMethod?: string,
-    products?: Array<{ name: string; quantity: number; price: number; variant?: string }>
+    products?: Array<{ name: string; quantity: number; price: number; variant?: string }>,
+    customFields?: Record<string, any>
 ): Promise<void> {
     try {
         const settings = await getSiteSettings()
@@ -142,6 +143,21 @@ export async function notifyDiscordSale(
                 value: productsText.length > 1024 ? productsText.slice(0, 1021) + '...' : productsText,
                 inline: false
             })
+        }
+
+        // Custom Fields
+        if (customFields && Object.keys(customFields).length > 0) {
+            const customFieldsText = Object.entries(customFields)
+                .map(([key, value]) => `• **${key.split('_').pop()}**: ${value}`)
+                .join('\n')
+
+            if (customFieldsText) {
+                fields.push({
+                    name: '📝 Custom Fields',
+                    value: customFieldsText.length > 1024 ? customFieldsText.slice(0, 1021) + '...' : customFieldsText,
+                    inline: false
+                })
+            }
         }
 
         // Invoice URL

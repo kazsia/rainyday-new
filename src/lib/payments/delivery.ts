@@ -176,6 +176,12 @@ async function deliverDynamic(product: any, item: any, order: any, secret: strin
         customer: {
             email: order.email,
         },
+        custom_fields: order.custom_fields ? Object.entries(order.custom_fields as Record<string, any>)
+            .filter(([key]) => key.startsWith(`${product.id}_`))
+            .reduce((acc, [key, value]) => ({
+                ...acc,
+                [key.replace(`${product.id}_`, "")]: value
+            }), {}) : {},
         item: {
             id: item.id,
             product_id: product.id,

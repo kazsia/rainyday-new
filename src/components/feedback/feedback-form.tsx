@@ -10,10 +10,11 @@ import { cn } from "@/lib/utils"
 
 interface FeedbackFormProps {
   invoiceId: string
+  orderId?: string
   onSuccess?: () => void
 }
 
-export function FeedbackForm({ invoiceId, onSuccess }: FeedbackFormProps) {
+export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProps) {
   const [rating, setRating] = React.useState(0)
   const [hoverRating, setHoverRating] = React.useState(0)
   const [title, setTitle] = React.useState("")
@@ -36,6 +37,7 @@ export function FeedbackForm({ invoiceId, onSuccess }: FeedbackFormProps) {
     try {
       await submitFeedback({
         invoice_id: invoiceId,
+        order_id: orderId,
         rating,
         title: title.trim() || undefined,
         message: message.trim()

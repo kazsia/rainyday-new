@@ -27,7 +27,8 @@ import {
   CircleAlert,
   Minus,
   Plus,
-  Trash2
+  Trash2,
+  FileText
 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
@@ -116,7 +117,21 @@ function CheckoutMainContent() {
   }, [urlOrderId, isHydrated])
 
   const handleUpdateQuantity = (item: any, delta: number) => {
-    if (item.quantity + delta >= 0) {
+    const newQuantity = item.quantity + delta
+    const minQty = item.min_quantity || 1
+    const maxQty = item.max_quantity || 1000000
+
+    if (delta > 0 && newQuantity > maxQty) {
+      toast.error(`Maximum order quantity for this item is ${maxQty}`)
+      return
+    }
+
+    if (delta < 0 && newQuantity < minQty && newQuantity > 0) {
+      toast.error(`Minimum order quantity for this item is ${minQty}`)
+      return
+    }
+
+    if (newQuantity >= 0) {
       addToCart({ ...item, quantity: delta })
     }
   }
@@ -128,6 +143,7 @@ function CheckoutMainContent() {
   const [email, setEmail] = React.useState("")
   const [orderId, setOrderId] = React.useState("")
   const [savedTotal, setSavedTotal] = React.useState(0) // Store total before clearing cart
+  const [customFieldValues, setCustomFieldValues] = React.useState<Record<string, string>>({})
 
   // Promo Code State
   const [couponCode, setCouponCode] = React.useState("")
@@ -266,6 +282,40 @@ function CheckoutMainContent() {
           quantity: item.quantity,
           price: item.price
         }))
+        const customFields = customFieldValues
+
+        // Handle $0.00 orders (100% discount)
+        if (total === 0) {
+          const { createOrder, updateOrder } = await import("@/lib/db/orders")
+          const { completeFreeOrder } = await import("@/lib/actions/checkout")
+
+          let order;
+          if (existingOrder) {
+            order = await updateOrder(existingOrder.id, {
+              email,
+              total,
+              items,
+              custom_fields: customFields
+            })
+          } else {
+            order = await createOrder({
+              email,
+              total,
+              items,
+              custom_fields: customFields
+            })
+          }
+
+          const result = await completeFreeOrder(order.id, appliedCoupon?.code)
+          if (result.success) {
+            clearCart()
+            toast.success("Order completed! Your items are being delivered.")
+            router.push(`/invoice?id=${order.id}`)
+            return
+          } else {
+            throw new Error(result.error)
+          }
+        }
 
         // Pass total directly.
         let order;
@@ -273,13 +323,15 @@ function CheckoutMainContent() {
           order = await updateOrder(existingOrder.id, {
             email,
             total,
-            items
+            items,
+            custom_fields: customFields
           })
         } else {
           order = await createOrder({
             email,
             total,
-            items
+            items,
+            custom_fields: customFields
           })
         }
 
@@ -698,6 +750,43 @@ function CheckoutMainContent() {
                             </button>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Dynamic Custom Fields */}
+                    {cart.some(item => item.custom_fields && item.custom_fields.length > 0) && (
+                      <div className="space-y-6">
+                        {cart.filter(item => item.custom_fields && item.custom_fields.length > 0).map((item) => (
+                          <div key={item.id} className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-2.5 h-2.5 text-brand-primary" />
+                              <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                {item.title} - Extra Info
+                              </label>
+                            </div>
+                            <div className="space-y-4">
+                              {item.custom_fields?.map((field: any) => (
+                                <div key={field.name} className="space-y-2">
+                                  <label className="text-[10px] font-bold text-white/60 uppercase tracking-widest pl-1">
+                                    {field.name} {field.required && <span className="text-red-500">*</span>}
+                                  </label>
+                                  <div className="relative group">
+                                    <Input
+                                      value={customFieldValues[`${item.id}_${field.name}`] || field.default_value || ""}
+                                      onChange={(e) => setCustomFieldValues({
+                                        ...customFieldValues,
+                                        [`${item.id}_${field.name}`]: e.target.value
+                                      })}
+                                      placeholder={field.hint || `Enter ${field.name}...`}
+                                      className="h-14 px-6 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm"
+                                    />
+                                    <div className="absolute inset-0 rounded-2xl border border-white/0 group-focus-within:border-brand-primary/20 pointer-events-none transition-all" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
 

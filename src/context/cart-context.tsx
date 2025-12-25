@@ -10,6 +10,9 @@ export interface CartItem {
     image: string
     variantId?: string
     variantName?: string
+    min_quantity?: number
+    max_quantity?: number
+    custom_fields?: any[]
 }
 
 interface CartContextType {

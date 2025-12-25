@@ -108,7 +108,8 @@ export async function updatePaymentStatus(
                         quantity, price,
                         product:products (name),
                         variant:product_variants (name)
-                    )
+                    ),
+                    custom_fields
                 `)
                 .eq("id", payment.order_id)
                 .single()
@@ -131,7 +132,8 @@ export async function updatePaymentStatus(
                     undefined, // cryptoAmount - we'll pass from details if available
                     details?.provider, // cryptoCurrency / payment method
                     details?.provider, // paymentMethod
-                    products
+                    products,
+                    order.custom_fields || undefined
                 )
             }
         } catch (notifyError) {

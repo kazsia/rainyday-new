@@ -7,6 +7,7 @@ export async function createOrder(order: {
     total: number
     currency?: string
     items: Array<{ product_id: string; variant_id?: string | null; quantity: number; price: number }>
+    custom_fields?: Record<string, string> | null
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -24,6 +25,7 @@ export async function createOrder(order: {
             total: order.total,
             currency: order.currency || "USD",
             readable_id: readableId,
+            custom_fields: order.custom_fields || null,
         })
         .select()
         .single()
@@ -77,6 +79,7 @@ export async function updateOrder(id: string, updates: {
     email?: string
     total?: number
     items?: Array<{ product_id: string; variant_id?: string | null; quantity: number; price: number }>
+    custom_fields?: Record<string, string> | null
 }) {
     const supabase = await createClient()
 
@@ -84,6 +87,7 @@ export async function updateOrder(id: string, updates: {
     const orderUpdate: any = { updated_at: new Date().toISOString() }
     if (updates.email) orderUpdate.email = updates.email
     if (updates.total !== undefined) orderUpdate.total = updates.total
+    if (updates.custom_fields !== undefined) orderUpdate.custom_fields = updates.custom_fields || null
 
     const { data: updatedOrder, error: orderError } = await supabase
         .from("orders")

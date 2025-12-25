@@ -691,7 +691,10 @@ function InvoiceContent() {
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.5)]" />
                         <h2 className="text-xl font-black text-white uppercase tracking-tight">Share Your Experience</h2>
                       </div>
-                      <FeedbackForm invoiceId={order.id} />
+                      <FeedbackForm
+                        invoiceId={order.invoices?.[0]?.id || order.id}
+                        orderId={order.id}
+                      />
                     </motion.div>
                   </div>
                 ) : (

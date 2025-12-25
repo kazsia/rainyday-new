@@ -72,7 +72,8 @@ export default function CreateProductPage() {
         show_sales_count: true,
         show_sales_notifications: true,
         min_quantity: 1,
-        max_quantity: 10
+        max_quantity: 10,
+        custom_fields: [] as any[]
     })
 
     useEffect(() => {
@@ -158,7 +159,8 @@ export default function CreateProductPage() {
                     show_sales_count: true,
                     show_sales_notifications: true,
                     min_quantity: 1,
-                    max_quantity: 10
+                    max_quantity: 10,
+                    custom_fields: []
                 })
             }
         } catch (error) {
@@ -426,6 +428,126 @@ export default function CreateProductPage() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Custom Fields Section */}
+                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                    <h2 className="text-lg font-bold text-white">Custom Fields</h2>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-[10px] font-bold text-brand-primary hover:bg-white/5 gap-2 uppercase tracking-widest"
+                                    onClick={() => setFormData({
+                                        ...formData,
+                                        custom_fields: [...formData.custom_fields, { id: Math.random().toString(36).substr(2, 9), name: "", hint: "", default_value: "", required: false }]
+                                    })}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add Field
+                                </Button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                {formData.custom_fields.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-white/5 rounded-2xl">
+                                        <FileText className="w-10 h-10 text-white/10 mb-3" />
+                                        <p className="text-sm text-white/20 font-bold uppercase tracking-widest">No custom fields defined</p>
+                                        <p className="text-[10px] text-white/10 mt-1">Add fields to collect extra info from customers during checkout</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {formData.custom_fields.map((field, idx) => (
+                                            <div key={field.id || idx} className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-4 group">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/20 group-hover:text-white/40 transition-colors">
+                                                            <Layers className="w-4 h-4" />
+                                                        </div>
+                                                        <Input
+                                                            placeholder="Field Name (e.g. Invite)"
+                                                            className="bg-transparent border-0 focus-visible:ring-0 h-8 text-sm font-bold text-white p-0 w-64"
+                                                            value={field.name}
+                                                            onChange={(e) => {
+                                                                const newFields = [...formData.custom_fields]
+                                                                newFields[idx].name = e.target.value
+                                                                setFormData({ ...formData, custom_fields: newFields })
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-white/10 hover:text-red-500 hover:bg-red-500/10 rounded-lg"
+                                                        onClick={() => {
+                                                            const newFields = formData.custom_fields.filter((_, i) => i !== idx)
+                                                            setFormData({ ...formData, custom_fields: newFields })
+                                                        }}
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest">Hint / Description</label>
+                                                        <Input
+                                                            placeholder="Help text for the field"
+                                                            className="bg-background/40 border-white/10 h-10"
+                                                            value={field.hint}
+                                                            onChange={(e) => {
+                                                                const newFields = [...formData.custom_fields]
+                                                                newFields[idx].hint = e.target.value
+                                                                setFormData({ ...formData, custom_fields: newFields })
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest">Default Value</label>
+                                                        <Input
+                                                            placeholder="Optional default value"
+                                                            className="bg-background/40 border-white/10 h-10"
+                                                            value={field.default_value}
+                                                            onChange={(e) => {
+                                                                const newFields = [...formData.custom_fields]
+                                                                newFields[idx].default_value = e.target.value
+                                                                setFormData({ ...formData, custom_fields: newFields })
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Required Field</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newFields = [...formData.custom_fields]
+                                                                newFields[idx].required = !newFields[idx].required
+                                                                setFormData({ ...formData, custom_fields: newFields })
+                                                            }}
+                                                            className={cn(
+                                                                "w-9 h-5 rounded-full transition-colors relative flex items-center px-1",
+                                                                field.required ? "bg-brand-primary" : "bg-white/10"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-3 h-3 bg-white rounded-full transition-all",
+                                                                field.required ? "translate-x-4" : "translate-x-0"
+                                                            )} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Sidebar */}
@@ -474,6 +596,30 @@ export default function CreateProductPage() {
                                             <option value="GBP">GBP (£)</option>
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Min Quantity <span className="text-[8px] opacity-40 lowercase normal-case">(optional)</span></label>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="1"
+                                            className="bg-background/40 border-white/10 h-10"
+                                            value={formData.min_quantity}
+                                            onChange={e => setFormData({ ...formData, min_quantity: parseInt(e.target.value) || 1 })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Max Quantity <span className="text-[8px] opacity-40 lowercase normal-case">(optional)</span></label>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="10"
+                                            className="bg-background/40 border-white/10 h-10"
+                                            value={formData.max_quantity}
+                                            onChange={e => setFormData({ ...formData, max_quantity: parseInt(e.target.value) || 1 })}
+                                        />
                                     </div>
                                 </div>
                             </div>

@@ -60,3 +60,25 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
         return { valid: false, message: "Error validating coupon" }
     }
 }
+export async function incrementCouponUsage(code: string) {
+    const supabase = await createClient()
+    const { data: coupon, error: fetchError } = await supabase
+        .from("coupons")
+        .select("id, used_count")
+        .eq("code", code)
+        .single()
+
+    if (fetchError || !coupon) {
+        console.error("Failed to find coupon for usage increment:", fetchError)
+        return
+    }
+
+    const { error: updateError } = await supabase
+        .from("coupons")
+        .update({ used_count: coupon.used_count + 1 })
+        .eq("id", coupon.id)
+
+    if (updateError) {
+        console.error("Failed to increment coupon usage:", updateError)
+    }
+}

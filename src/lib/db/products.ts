@@ -131,7 +131,8 @@ export async function createProduct(product: any) {
         min_quantity: Number(product.min_quantity) || 1,
         max_quantity: Number(product.max_quantity) || 10,
         category_id: product.category_id && product.category_id !== "" ? product.category_id : null,
-        webhook_url: product.webhook_url && product.webhook_url !== "" ? product.webhook_url : null
+        webhook_url: product.webhook_url && product.webhook_url !== "" ? product.webhook_url : null,
+        custom_fields: product.custom_fields || null
     }
 
     const { data, error } = await supabaseAdmin
@@ -162,6 +163,7 @@ export async function updateProduct(id: string, updates: any) {
     if (cleanUpdates.show_view_count !== undefined) cleanUpdates.show_view_count = !!cleanUpdates.show_view_count
     if (cleanUpdates.show_sales_count !== undefined) cleanUpdates.show_sales_count = !!cleanUpdates.show_sales_count
     if (cleanUpdates.show_sales_notifications !== undefined) cleanUpdates.show_sales_notifications = !!cleanUpdates.show_sales_notifications
+    if (cleanUpdates.custom_fields !== undefined) cleanUpdates.custom_fields = cleanUpdates.custom_fields || null
 
     const { data, error } = await supabaseAdmin
         .from("products")

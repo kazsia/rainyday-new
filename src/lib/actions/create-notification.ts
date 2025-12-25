@@ -172,7 +172,8 @@ export async function notifyPaymentConfirmed(
     cryptoAmount?: string,
     cryptoCurrency?: string,
     paymentMethod?: string,
-    products?: Array<{ name: string; quantity: number; price: number; variant?: string }>
+    products?: Array<{ name: string; quantity: number; price: number; variant?: string }>,
+    customFields?: Record<string, any>
 ): Promise<void> {
     const isHighValue = total >= 100
 
@@ -191,7 +192,7 @@ export async function notifyPaymentConfirmed(
     // Send Discord webhook notification
     try {
         const { notifyDiscordSale } = await import('@/lib/notifications/discord-webhook')
-        await notifyDiscordSale(orderId, orderReadableId, total, email, cryptoAmount, cryptoCurrency, paymentMethod, products)
+        await notifyDiscordSale(orderId, orderReadableId, total, email, cryptoAmount, cryptoCurrency, paymentMethod, products, customFields)
     } catch (error) {
         console.error('[Notification] Discord webhook failed:', error)
     }
