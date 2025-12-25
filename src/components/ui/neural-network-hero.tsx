@@ -167,12 +167,12 @@ const CPPNShaderMaterial = shaderMaterial(
 
 extend({ CPPNShaderMaterial });
 
-function ShaderPlane() {
+function ShaderPlane({ isVisible }: { isVisible: boolean }) {
     const meshRef = useRef<THREE.Mesh>(null!);
     const materialRef = useRef<any>(null!);
 
     useFrame((state) => {
-        if (!materialRef.current) return;
+        if (!materialRef.current || !isVisible) return;
         materialRef.current.iTime = state.clock.elapsedTime;
         const { width, height } = state.size;
         materialRef.current.iResolution.set(width, height);
@@ -186,7 +186,7 @@ function ShaderPlane() {
     );
 }
 
-const HeroBackgroundShader = memo(() => {
+const HeroBackgroundShader = memo(({ isVisible }: { isVisible: boolean }) => {
     const [mounted, setMounted] = useState(false);
     const canvasRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,7 +201,12 @@ const HeroBackgroundShader = memo(() => {
             if (!mounted || !canvasRef.current) return;
 
             // Use gsap.set for initial state instead of CSS classes to avoid React reconciliation flashes
-            gsap.set(canvasRef.current, { autoAlpha: 0, filter: 'blur(10px)', scale: 1.05 });
+            gsap.set(canvasRef.current, {
+                autoAlpha: 0,
+                filter: 'blur(10px)',
+                scale: 1.05,
+                willChange: 'transform, opacity, filter'
+            });
 
             gsap.to(canvasRef.current, {
                 filter: 'blur(0px)',
@@ -209,6 +214,7 @@ const HeroBackgroundShader = memo(() => {
                 autoAlpha: 1,
                 duration: 1.2,
                 ease: 'power2.out',
+                clearProps: 'willChange'
             });
         },
         { scope: canvasRef, dependencies: [mounted] }
@@ -219,11 +225,16 @@ const HeroBackgroundShader = memo(() => {
             {mounted && (
                 <Canvas
                     camera={camera}
-                    gl={{ antialias: true, alpha: false }}
-                    dpr={[1, 2]}
+                    gl={{
+                        antialias: false, // Performance: Antialiasing is expensive for full-screen shaders
+                        alpha: false,
+                        powerPreference: "high-performance"
+                    }}
+                    dpr={[1, 1.5]} // Cap DPR at 1.5 instead of 2 for significant performance gains on Retina
                     style={{ width: '100%', height: '100%' }}
+                    frameloop={isVisible ? 'always' : 'never'} // Completely stop the loop when not visible
                 >
-                    <ShaderPlane />
+                    <ShaderPlane isVisible={isVisible} />
                 </Canvas>
             )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
@@ -260,6 +271,21 @@ export default function NeuralNetworkHero({
     const ctaRef = useRef<HTMLDivElement | null>(null);
     const badgeRef = useRef<HTMLDivElement | null>(null);
     const microItemRefs = useRef<(HTMLLIElement | null)[]>([]);
+    const [isVisible, setIsVisible] = useState(true);
+
+    useEffect(() => {
+        if (!sectionRef.current) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsVisible(entry.isIntersecting);
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(sectionRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     useGSAP(
         () => {
@@ -277,20 +303,21 @@ export default function NeuralNetworkHero({
                 autoAlpha: 0,
                 scale: 1.06,
                 transformOrigin: '50% 100%',
+                willChange: 'transform, opacity, filter'
             });
 
-            if (badgeRef.current) gsap.set(badgeRef.current, { autoAlpha: 0, y: -8 });
-            if (paraRef.current) gsap.set(paraRef.current, { autoAlpha: 0, y: 8 });
-            if (ctaRef.current) gsap.set(ctaRef.current, { autoAlpha: 0, y: 8 });
+            if (badgeRef.current) gsap.set(badgeRef.current, { autoAlpha: 0, y: -8, willChange: 'transform, opacity' });
+            if (paraRef.current) gsap.set(paraRef.current, { autoAlpha: 0, y: 8, willChange: 'transform, opacity' });
+            if (ctaRef.current) gsap.set(ctaRef.current, { autoAlpha: 0, y: 8, willChange: 'transform, opacity' });
             const microItems = microItemRefs.current.filter(Boolean);
-            if (microItems.length > 0) gsap.set(microItems, { autoAlpha: 0, y: 6 });
+            if (microItems.length > 0) gsap.set(microItems, { autoAlpha: 0, y: 6, willChange: 'transform, opacity' });
 
             const tl = gsap.timeline({
                 defaults: { ease: 'power3.out' },
             });
 
             if (badgeRef.current) {
-                tl.to(badgeRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.0);
+                tl.to(badgeRef.current, { autoAlpha: 1, y: 0, duration: 0.5, clearProps: 'willChange' }, 0.0);
             }
 
             tl.to(
@@ -302,18 +329,19 @@ export default function NeuralNetworkHero({
                     scale: 1,
                     duration: 0.9,
                     stagger: 0.15,
+                    clearProps: 'willChange'
                 },
                 0.1,
             );
 
             if (paraRef.current) {
-                tl.to(paraRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, '-=0.55');
+                tl.to(paraRef.current, { autoAlpha: 1, y: 0, duration: 0.5, clearProps: 'willChange' }, '-=0.55');
             }
             if (ctaRef.current) {
-                tl.to(ctaRef.current, { autoAlpha: 1, y: 0, duration: 0.5 }, '-=0.35');
+                tl.to(ctaRef.current, { autoAlpha: 1, y: 0, duration: 0.5, clearProps: 'willChange' }, '-=0.35');
             }
             if (microItems.length > 0) {
-                tl.to(microItems, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1 }, '-=0.25');
+                tl.to(microItems, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1, clearProps: 'willChange' }, '-=0.25');
             }
 
             return () => {
@@ -325,7 +353,7 @@ export default function NeuralNetworkHero({
 
     return (
         <section ref={sectionRef} className="relative h-screen w-full overflow-hidden bg-black" suppressHydrationWarning>
-            <HeroBackgroundShader />
+            <HeroBackgroundShader isVisible={isVisible} />
 
             <div className="relative mx-auto flex max-w-7xl flex-col items-center text-center gap-6 px-6 pb-24 pt-36 sm:gap-8 sm:pt-44 md:px-10 lg:px-16 z-10">
                 <div ref={badgeRef} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">

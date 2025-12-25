@@ -68,8 +68,8 @@ export default function HomePage() {
             buttonText={settings?.landing_cta?.button_text || "Get Started"}
             buttonHref={settings?.landing_cta?.button_href || "/store"}
           />
+          <FlickeringFooter />
         </div>
-        <FlickeringFooter />
       </motion.div>
     </ProximaLayout >
   )

@@ -358,33 +358,7 @@ export const FlickeringFooter = () => {
     const siteName = settings?.general.name || "Rainyday"
 
     return (
-        <footer id="footer" className="w-full pb-0 border-t border-white/[0.05] relative overflow-hidden" suppressHydrationWarning>
-            {/* Background with gradient glow effects */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {/* Main cyan gradient orb - left */}
-                <motion.div
-                    initial={{ opacity: 0.3 }}
-                    animate={{ opacity: [0.3, 0.5, 0.3] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-1/2 left-[15%] -translate-y-1/2 w-[1200px] h-[1000px] bg-[#a4f8ff]/20 blur-[200px] rounded-full"
-                />
-
-                {/* Secondary cyan orb - right */}
-                <motion.div
-                    initial={{ opacity: 0.25 }}
-                    animate={{ opacity: [0.25, 0.4, 0.25] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[1000px] h-[900px] bg-cyan-500/20 blur-[180px] rounded-full"
-                />
-
-                {/* Center accent glow */}
-                <motion.div
-                    initial={{ opacity: 0.2 }}
-                    animate={{ opacity: [0.2, 0.35, 0.2] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[800px] bg-teal-500/15 blur-[150px] rounded-full"
-                />
-            </div>
+        <footer id="footer" className="w-full pb-0 relative overflow-hidden" suppressHydrationWarning>
 
             <div className="container mx-auto flex flex-col md:flex-row md:items-start md:justify-between p-8 md:p-10 gap-x-10 gap-y-8 relative z-10" suppressHydrationWarning>
                 <div className="flex flex-col items-start justify-start gap-y-6 max-w-xs mx-0" suppressHydrationWarning>
@@ -418,7 +392,7 @@ export const FlickeringFooter = () => {
                 </div>
             </div>
             <div className="w-full h-48 md:h-64 relative z-0 overflow-hidden" suppressHydrationWarning>
-                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#000000]/50 to-[#000000] z-10" suppressHydrationWarning />
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/20 to-transparent z-10" suppressHydrationWarning />
                 <div className="absolute inset-0 mx-6" suppressHydrationWarning>
                     <FlickeringGrid
                         text={siteName.toUpperCase()}
@@ -433,7 +407,7 @@ export const FlickeringFooter = () => {
                     />
                 </div>
             </div>
-            <div className="container mx-auto px-10 py-8 border-t border-white/[0.05] flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
+            <div className="container mx-auto px-10 py-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20" suppressHydrationWarning>
                 <p suppressHydrationWarning>© {new Date().getFullYear()} {siteName} Digital. All rights reserved.</p>
                 <div className="flex gap-8" suppressHydrationWarning>
                     <Link href="/terms" className="hover:text-brand transition-colors">Terms</Link>
