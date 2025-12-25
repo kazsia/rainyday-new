@@ -29,8 +29,7 @@ export function HowItWorks({
             title: "Receive Product",
             description: "Once your payment is confirmed, we'll process and ship your order promptly. Enjoy your new purchase!"
         }
-    ],
-    hideBackground = false
+    ]
 }: HowItWorksProps) {
     return (
         <section className="py-16 md:py-24 relative overflow-visible">
