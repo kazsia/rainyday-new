@@ -26,6 +26,12 @@ interface ProductCardProps {
 const ProductCard = React.memo(({ id, title, price, category, image, productCount = 1, priceRange, badge_links, status_label, status_color, description }: ProductCardProps & { description?: string }) => {
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
+    const [imageLoaded, setImageLoaded] = React.useState(false)
+
+    const isNitro = title.toLowerCase().includes('nitro')
+    const isBoost = title.toLowerCase().includes('boost')
+    const isToken = title.toLowerCase().includes('token')
+    const hasDefaultImage = image === '/logo.png' || !image
 
     const isOutOfStock = productCount <= 0
 
@@ -61,16 +67,43 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
             className="group relative"
         >
             <Link href={`/product/${id}`} className="block h-full">
-                <div className="flex flex-col h-full bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
+                <div className="flex flex-col h-full bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
                     {/* Banner Section */}
                     <div className="relative aspect-[4/3] w-full overflow-hidden">
-                        <Image
-                            src={image}
-                            alt={title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
+                        {!imageLoaded && (
+                            <div className="absolute inset-0 bg-white/5 animate-pulse" />
+                        )}
+
+                        {(hasDefaultImage && (isNitro || isBoost || isToken)) ? (
+                            <div className={cn(
+                                "absolute inset-0 flex items-center justify-center bg-gradient-to-br transition-transform duration-700 group-hover:scale-110",
+                                isNitro ? "from-[#5865F2]/20 via-[#43b581]/10 to-transparent" :
+                                    isBoost ? "from-[#ff73fa]/20 via-[#5865F2]/10 to-transparent" :
+                                        "from-brand-primary/20 via-brand-primary/5 to-transparent"
+                            )}>
+                                <div className="relative">
+                                    <div className={cn(
+                                        "absolute inset-0 blur-3xl rounded-full scale-150 animate-pulse",
+                                        isNitro ? "bg-[#43b581]/20" : isBoost ? "bg-[#ff73fa]/20" : "bg-brand-primary/20"
+                                    )} />
+                                    <div className="font-black text-4xl tracking-tighter opacity-20 group-hover:opacity-40 transition-opacity">
+                                        {isNitro ? "NITRO" : isBoost ? "BOOST" : "TOKEN"}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <Image
+                                src={image || "/logo.png"}
+                                alt={title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className={cn(
+                                    "object-cover transition-transform duration-700 group-hover:scale-110",
+                                    !imageLoaded && "opacity-0"
+                                )}
+                                onLoad={() => setImageLoaded(true)}
+                            />
+                        )}
 
                         {/* Status Badge */}
                         <div className="absolute top-4 right-4 z-10">

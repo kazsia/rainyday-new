@@ -37,7 +37,27 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
             query = query.eq("category_id", options.categoryId)
         }
 
-        const { data, error } = await query.order("created_at", { ascending: false })
+        let { data, error } = await query
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: false })
+
+        // Fallback if sort_order column doesn't exist yet
+        if (error && error.code === '42703') {
+            console.warn("[GET_PRODUCTS_FALLBACK] sort_order missing, falling back to created_at");
+            const fallback = await supabase
+                .from("products")
+                .select(`
+                    *,
+                    category:product_categories (*),
+                    variants:product_variants (*),
+                    badge_links:product_badge_links(badge:product_badges(*))
+                `)
+                .neq("is_deleted", true)
+                .order("created_at", { ascending: false })
+
+            data = fallback.data
+            error = fallback.error
+        }
 
         if (error) throw error
 
@@ -241,19 +261,30 @@ export async function cloneProduct(id: string) {
 }
 
 export async function updateProductOrder(orders: { id: string, sort_order: number }[]) {
-    const supabaseAdmin = await getAdminClient()
-    // We use a Promise.all with upserts for simplicity in small sets
-    // For large sets, a dedicated RPC would be better
-    const updates = orders.map(item =>
-        supabaseAdmin
-            .from("products")
-            .update({ sort_order: item.sort_order })
-            .eq("id", item.id)
-    )
+    try {
+        const supabaseAdmin = await getAdminClient()
 
-    const results = await Promise.all(updates)
-    const error = results.find(r => r.error)
-    if (error) throw error.error
+        // Use a loop for sequential updates to avoid potential race conditions 
+        // or concurrency issues with Supabase during bulk updates in Server Actions
+        for (const item of orders) {
+            const { error } = await supabaseAdmin
+                .from("products")
+                .update({ sort_order: item.sort_order })
+                .eq("id", item.id)
+
+            if (error) {
+                console.error(`[UPDATE_PRODUCT_ORDER_ERROR] ID: ${item.id}`, error)
+                throw error
+            }
+        }
+
+        revalidatePath('/admin/products')
+        revalidatePath('/store')
+        return { success: true }
+    } catch (e: any) {
+        console.error("[UPDATE_PRODUCT_ORDER_CRITICAL]", e)
+        throw new Error(e.message || "Failed to update product order")
+    }
 }
 
 export async function getCategories() {
@@ -296,6 +327,19 @@ export async function createCategory(name: string) {
 
     if (error) throw error
     return data?.[0]
+}
+
+export async function updateCategory(id: string, updates: { name?: string; slug?: string }) {
+    const supabaseAdmin = await getAdminClient()
+    const { data, error } = await supabaseAdmin
+        .from('product_categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
 }
 
 export async function deleteCategory(id: string) {

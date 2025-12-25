@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -124,6 +125,9 @@ export function CategoryManager({ isOpen, onClose, onUpdate }: CategoryManagerPr
             <FolderOpen className="w-5 h-5 text-brand" />
             Category Manager
           </DialogTitle>
+          <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-2">
+            Manage your product groups and set their display order.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4 flex-1 overflow-y-auto pr-2">
@@ -146,7 +150,6 @@ export function CategoryManager({ isOpen, onClose, onUpdate }: CategoryManagerPr
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4">Current Categories (Drag to Reorder)</p>
             {isLoading ? (
               <div className="flex justify-center py-10 opacity-20">
                 <Loader2 className="w-8 h-8 animate-spin" />

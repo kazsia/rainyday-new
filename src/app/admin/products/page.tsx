@@ -18,9 +18,8 @@ import {
     HelpCircle,
     LayoutList,
     MoreHorizontal,
-    FolderOpen,
-    FolderSync,
-    RefreshCw
+    RefreshCw,
+    FolderTree
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -134,6 +133,16 @@ export default function AdminProductsPage() {
                     <div className="flex items-center gap-2">
                         <Button
                             asChild
+                            variant="outline"
+                            className="h-8 px-4 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+                        >
+                            <Link href="/admin/group">
+                                <FolderTree className="w-3.5 h-3.5 mr-2 stroke-[3]" />
+                                Manage Groups
+                            </Link>
+                        </Button>
+                        <Button
+                            asChild
                             className="h-8 px-4 bg-[var(--sa-accent)] hover:bg-[var(--sa-accent-bright)] text-black text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
                         >
                             <Link href="/admin/products/create">
@@ -168,14 +177,6 @@ export default function AdminProductsPage() {
                             Refresh
                         </Button>
                         <div className="w-px h-4 bg-white/5 mx-1" />
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsCategoryManagerOpen(true)}
-                            className="h-8 bg-white/5 border-white/5 text-[var(--sa-fg-muted)] hover:text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest px-3"
-                        >
-                            <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
-                            Categories
-                        </Button>
                         <Button
                             variant="outline"
                             onClick={() => setIsReorderDialogOpen(true)}

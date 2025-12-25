@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import {
@@ -85,12 +86,12 @@ export function ProductReorderDialog({ isOpen, onClose, onUpdate }: ProductReord
             <LayoutList className="w-5 h-5 text-brand" />
             Reorder Products
           </DialogTitle>
+          <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-2">
+            Drag or use arrows to set display priority for your products.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4 flex-1 overflow-y-auto pr-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
-            Drag or use arrows to set display priority
-          </p>
 
           {isLoading ? (
             <div className="flex justify-center py-20 opacity-20">
