@@ -9,6 +9,7 @@ import { HowItWorks } from "@/components/layout/how-it-works"
 import { FlickeringFooter } from "@/components/ui/flickering-footer"
 import { FAQSection } from "@/components/layout/faq-section"
 import { CTASection } from "@/components/ui/cta-section"
+import { LandingBackground } from "@/components/layout/landing-background"
 import { motion } from "framer-motion"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 
@@ -35,7 +36,7 @@ export default function HomePage() {
         className="min-h-screen bg-black"
         suppressHydrationWarning
       >
-        <div className="-mt-20 min-h-screen relative" suppressHydrationWarning>
+        <div className="-mt-20 min-h-screen relative overflow-x-hidden" suppressHydrationWarning>
           <NeuralNetworkHero
             title={settings?.hero?.title}
             description={settings?.hero?.description}
@@ -48,23 +49,26 @@ export default function HomePage() {
           />
         </div>
 
-        <WhyChoose
-          title={settings?.why_choose?.title}
-          subtitle={settings?.why_choose?.subtitle}
-          features={settings?.why_choose?.features}
-        />
-        <HowItWorks
-          title={settings?.how_it_works?.title}
-          texts={settings?.how_it_works?.texts}
-          steps={settings?.how_it_works?.steps}
-        />
-        <FAQSection />
-        <CTASection
-          title={settings?.landing_cta?.title || "Ready to dive into digital products?"}
-          description={settings?.landing_cta?.description || "Connect with our community today!"}
-          buttonText={settings?.landing_cta?.button_text || "Get Started"}
-          buttonHref={settings?.landing_cta?.button_href || "/store"}
-        />
+        <div className="relative">
+          <LandingBackground />
+          <WhyChoose
+            title={settings?.why_choose?.title}
+            subtitle={settings?.why_choose?.subtitle}
+            features={settings?.why_choose?.features}
+          />
+          <HowItWorks
+            title={settings?.how_it_works?.title}
+            texts={settings?.how_it_works?.texts}
+            steps={settings?.how_it_works?.steps}
+          />
+          <FAQSection />
+          <CTASection
+            title={settings?.landing_cta?.title || "Ready to dive into digital products?"}
+            description={settings?.landing_cta?.description || "Connect with our community today!"}
+            buttonText={settings?.landing_cta?.button_text || "Get Started"}
+            buttonHref={settings?.landing_cta?.button_href || "/store"}
+          />
+        </div>
         <FlickeringFooter />
       </motion.div>
     </ProximaLayout >
