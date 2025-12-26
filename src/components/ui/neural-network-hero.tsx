@@ -8,7 +8,9 @@ import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { SplitText } from 'gsap/SplitText';
-import { LiquidButton } from './liquid-button';
+import { Button } from './button';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(SplitText, useGSAP);
@@ -371,14 +373,22 @@ export default function NeuralNetworkHero({
                     {description}
                 </p>
 
-                <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-4 pt-4">
                     {ctaButtons.map((button, index) => (
-                        <LiquidButton
+                        <Button
                             key={index}
-                            text={button.text}
-                            href={button.href}
-                            className="w-44 h-12"
-                        />
+                            variant={index === 0 ? "default" : "outline"}
+                            size="lg"
+                            asChild
+                            className={cn(
+                                "rounded-xl font-medium tracking-tight h-12 px-8 min-w-[160px]",
+                                index === 1 && "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                            )}
+                        >
+                            <Link href={button.href}>
+                                {button.text}
+                            </Link>
+                        </Button>
                     ))}
                 </div>
 
