@@ -12,7 +12,7 @@ export type AnimatedGenerateButtonProps = {
   disabled?: boolean;
   id?: string;
   ariaLabel?: string;
-  Icon?: React.ElementType;
+  Icon?: React.ComponentType<{ className?: string }>;
   hFull?: boolean;
 };
 
