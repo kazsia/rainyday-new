@@ -13,10 +13,6 @@ import Link from 'next/link';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
-
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(SplitText, useGSAP);
 }
@@ -273,6 +269,7 @@ export default function NeuralNetworkHero({
     ],
     microDetails = ["Low‑weight font", "Tight tracking", "Subtle motion"]
 }: HeroProps) {
+    const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
     const sectionRef = useRef<HTMLElement | null>(null);
     const headerRef = useRef<HTMLHeadingElement | null>(null);
     const paraRef = useRef<HTMLParagraphElement | null>(null);
