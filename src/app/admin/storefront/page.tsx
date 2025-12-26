@@ -47,7 +47,7 @@ import { toast } from "sonner"
 import Image from "next/image"
 import dynamic from "next/dynamic"
 
-const NeuralNetworkHero = dynamic(() => import("@/components/ui/neural-network-hero"), { ssr: false })
+const NeuralNetworkHero = dynamic(() => import("@/components/ui/proxima-hero"), { ssr: false })
 
 const CONFIGURE_TABS = [
   { id: "identity", label: "Identity", icon: Store },
