@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { createOrder } from "@/lib/db/orders"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
+import AnimatedGenerateButton from "@/components/ui/animated-generate-button"
+import { Button as ThreeDButton } from "@/components/ui/3d-button"
 
 import { useCart } from "@/context/cart-context"
 import { useRouter } from "next/navigation"
@@ -493,62 +495,37 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                   {/* Enhanced Action Buttons */}
                   <div className="space-y-3">
                     <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        onClick={handleAddToCart}
-                        disabled={isOutOfStock || isAddingToCart}
-                        className={cn(
-                          "w-full h-16 font-black text-sm uppercase tracking-[0.15em] gap-3 rounded-2xl transition-all relative overflow-hidden group/btn",
-                          isOutOfStock
-                            ? "bg-white/10 text-white/40 cursor-not-allowed shadow-none"
-                            : "bg-gradient-to-r from-brand-primary to-[#7afcff] hover:from-[#7afcff] hover:to-brand-primary text-black shadow-[0_0_30px_rgba(164,248,255,0.3)] hover:shadow-[0_0_40px_rgba(164,248,255,0.5)]"
-                        )}
-                      >
-                        {/* Shimmer effect */}
-                        {!isOutOfStock && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-                        )}
-                        <span className="relative z-10 flex items-center gap-3">
-                          {isAddingToCart ? (
+                      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+                        <ThreeDButton
+                          onClick={handleAddToCart}
+                          disabled={isOutOfStock || isAddingToCart}
+                          isLoading={isAddingToCart}
+                          variant="brand" // Using brand cyan variant matching site theme
+                          className="w-full h-14 text-sm font-black uppercase tracking-[0.15em] rounded-2xl"
+                        >
+                          {!isAddingToCart && (
                             <>
-                              <CheckCircle2 className="w-5 h-5" />
-                              Added!
-                            </>
-                          ) : isOutOfStock ? (
-                            "Out of Stock"
-                          ) : (
-                            <>
-                              Add to Cart
-                              <ShoppingCart className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                              {!isOutOfStock && <ShoppingCart className="w-5 h-5 ml-2" />}
                             </>
                           )}
-                        </span>
-                      </Button>
+                          {isAddingToCart && "Added!"}
+                        </ThreeDButton>
+                      </motion.div>
                     </motion.div>
 
                     <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        onClick={handleBuyNow}
-                        disabled={isOutOfStock || isBuyingNow}
-                        variant="outline"
-                        className={cn(
-                          "w-full h-14 font-black text-sm uppercase tracking-[0.15em] gap-3 rounded-2xl transition-all group/buy relative overflow-hidden",
-                          isOutOfStock
-                            ? "bg-white/5 border-white/5 text-white/20 cursor-not-allowed"
-                            : "bg-transparent border-2 border-brand-primary/30 text-brand-primary hover:bg-brand-primary/10 hover:border-brand-primary/50"
-                        )}
-                      >
-                        {isBuyingNow ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Preparing...
-                          </>
-                        ) : (
-                          <>
-                            {isOutOfStock ? "Unavailable" : "Buy Now"}
-                            <ArrowRight className="w-5 h-5 group-hover/buy:translate-x-1 transition-transform" />
-                          </>
-                        )}
-                      </Button>
+                      <div className="w-full">
+                        <AnimatedGenerateButton
+                          labelIdle={isOutOfStock ? "Unavailable" : "Buy Now"}
+                          labelActive="Preparing..."
+                          generating={isBuyingNow}
+                          onClick={handleBuyNow}
+                          disabled={isOutOfStock || isBuyingNow}
+                          highlightHueDeg={45} // Gold hue
+                          className="w-full h-14"
+                        />
+                      </div>
                     </motion.div>
                   </div>
 

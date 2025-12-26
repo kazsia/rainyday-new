@@ -5,7 +5,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { ProductCard } from "@/components/shop/product-display-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, ShoppingCart, Loader2, ChevronDown, Package2, FolderTree, X } from "lucide-react"
+import { Search, Filter, ShoppingCart, Loader2, ChevronDown, Package2, FolderTree, X, ShoppingBag, Hash } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getProducts, getCategories } from "@/lib/db/products"
 import {
@@ -67,6 +67,10 @@ export default function StorePage() {
                 return matchName || matchDesc || matchCategory
             })
         }
+        // Category Filter
+        if (selectedCategoryId !== "all") {
+            filtered = filtered.filter(p => p.category_id === selectedCategoryId)
+        }
 
         // Sorting
         filtered.sort((a, b) => {
@@ -106,7 +110,7 @@ export default function StorePage() {
             standaloneProducts: standalone,
             aggregatedCategories: categoriesWithData
         }
-    }, [products, categories, searchQuery, sortBy])
+    }, [products, categories, searchQuery, sortBy, selectedCategoryId])
 
 
     return (
@@ -165,33 +169,81 @@ export default function StorePage() {
 
                 {/* Categories Navigation */}
                 {!isLoading && categories.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-                        <Button
-                            onClick={() => setSelectedCategoryId("all")}
-                            className={cn(
-                                "h-10 px-6 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
-                                selectedCategoryId === "all"
-                                    ? "bg-brand-primary text-black shadow-[0_0_20px_rgba(var(--brand-primary-rgb),0.3)]"
-                                    : "bg-[#0f1219] border border-[#1e232d] text-muted-foreground hover:text-white hover:border-white/10"
-                            )}
-                        >
-                            All Products
-                        </Button>
-                        {categories.map((cat) => (
+                    <>
+                        {/* Mobile Category Grid */}
+                        <div className="grid grid-cols-2 gap-3 md:hidden mb-8">
                             <Button
-                                key={cat.id}
-                                onClick={() => setSelectedCategoryId(cat.id)}
+                                onClick={() => setSelectedCategoryId("all")}
                                 className={cn(
-                                    "h-10 px-6 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
-                                    selectedCategoryId === cat.id
+                                    "col-span-2 h-14 rounded-xl text-sm font-black uppercase tracking-widest transition-all relative overflow-hidden group border",
+                                    selectedCategoryId === "all"
+                                        ? "bg-brand-primary text-black border-brand-primary shadow-[0_0_30px_rgba(var(--brand-primary-rgb),0.3)]"
+                                        : "bg-[#0f1219] border-[#1e232d] text-muted-foreground hover:text-white hover:border-white/20"
+                                )}
+                            >
+                                <div className="relative z-10 flex items-center justify-center gap-2">
+                                    <ShoppingBag className="w-4 h-4" />
+                                    All Products
+                                </div>
+                                {selectedCategoryId === "all" && (
+                                    <div className="absolute inset-0 bg-white/20 blur-xl group-hover:bg-white/30 transition-colors" />
+                                )}
+                            </Button>
+
+                            {categories.map((cat) => (
+                                <Button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategoryId(cat.id)}
+                                    className={cn(
+                                        "h-12 rounded-xl text-xs font-bold uppercase tracking-wider transition-all relative overflow-hidden group border",
+                                        selectedCategoryId === cat.id
+                                            ? "bg-brand-primary/10 text-brand-primary border-brand-primary shadow-[0_0_20px_rgba(var(--brand-primary-rgb),0.2)]"
+                                            : "bg-[#0f1219] border-[#1e232d] text-muted-foreground hover:text-white hover:border-white/20"
+                                    )}
+                                >
+                                    <div className="relative z-10 flex items-center justify-center gap-2">
+                                        {/* Since we don't have icons in DB, we'll use a generic icon or nothing for now, 
+                                            but to match the reference 'Tools', 'SMM', etc style, text is key. 
+                                            The reference has icons, so let's try to infer or just use a generic one. */}
+                                        <Hash className="w-3 h-3 opacity-50" />
+                                        {cat.name}
+                                    </div>
+                                    {selectedCategoryId === cat.id && (
+                                        <div className="absolute inset-0 bg-brand-primary/5 blur-md" />
+                                    )}
+                                </Button>
+                            ))}
+                        </div>
+
+                        {/* Desktop Horizontal List */}
+                        <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                            <Button
+                                onClick={() => setSelectedCategoryId("all")}
+                                className={cn(
+                                    "h-10 px-6 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                                    selectedCategoryId === "all"
                                         ? "bg-brand-primary text-black shadow-[0_0_20px_rgba(var(--brand-primary-rgb),0.3)]"
                                         : "bg-[#0f1219] border border-[#1e232d] text-muted-foreground hover:text-white hover:border-white/10"
                                 )}
                             >
-                                {cat.name}
+                                All Products
                             </Button>
-                        ))}
-                    </div>
+                            {categories.map((cat) => (
+                                <Button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategoryId(cat.id)}
+                                    className={cn(
+                                        "h-10 px-6 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                                        selectedCategoryId === cat.id
+                                            ? "bg-brand-primary text-black shadow-[0_0_20px_rgba(var(--brand-primary-rgb),0.3)]"
+                                            : "bg-[#0f1219] border border-[#1e232d] text-muted-foreground hover:text-white hover:border-white/10"
+                                    )}
+                                >
+                                    {cat.name}
+                                </Button>
+                            ))}
+                        </div>
+                    </>
                 )}
 
                 {isLoading ? (

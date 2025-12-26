@@ -13,11 +13,15 @@ export async function createClient() {
     const cookieStore = await cookies()
 
     if (!supabaseUrl || !supabaseAnonKey) {
-        console.error("[SERVER_CLIENT] Missing environment variables (URL/ANON_KEY)")
+        console.error("[SERVER_CLIENT] Missing environment variables!", {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseAnonKey,
+            envKeys: Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_'))
+        });
         return createServerClient(
             supabaseUrl || 'http://localhost:54321',
             supabaseAnonKey || 'anon',
-            { cookies: { getAll: () => cookieStore.getAll(), setAll: () => { } } }
+            { cookies: { getAll: () => cookieStore?.getAll?.() || [], setAll: () => { } } }
         )
     }
 
@@ -27,7 +31,12 @@ export async function createClient() {
         {
             cookies: {
                 getAll() {
-                    return cookieStore.getAll()
+                    try {
+                        return cookieStore.getAll()
+                    } catch (e) {
+                        console.error("[SERVER_CLIENT] Error in cookieStore.getAll():", e);
+                        return []
+                    }
                 },
                 setAll(cookiesToSet) {
                     try {

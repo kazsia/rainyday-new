@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { SplitText } from 'gsap/SplitText';
+import { LiquidButton } from './liquid-button';
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(SplitText, useGSAP);
@@ -372,16 +373,25 @@ export default function NeuralNetworkHero({
 
                 <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     {ctaButtons.map((button, index) => (
-                        <a
-                            key={index}
-                            href={button.href}
-                            className={`rounded-2xl border border-white/10 px-5 py-3 text-sm font-light tracking-tight transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 duration-300 ${button.primary
-                                ? "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                                : "text-white/80 hover:bg-white/5"
-                                }`}
-                        >
-                            {button.text}
-                        </a>
+                        button.primary ? (
+                            <LiquidButton
+                                key={index}
+                                text={button.text}
+                                href={button.href}
+                                className="w-44 h-12" // Adjust size slightly
+                            />
+                        ) : (
+                            <a
+                                key={index}
+                                href={button.href}
+                                className={`rounded-2xl border border-white/10 px-5 py-3 text-sm font-light tracking-tight transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 duration-300 ${button.primary
+                                    ? "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                                    : "text-white/80 hover:bg-white/5"
+                                    }`}
+                            >
+                                {button.text}
+                            </a>
+                        )
                     ))}
                 </div>
 

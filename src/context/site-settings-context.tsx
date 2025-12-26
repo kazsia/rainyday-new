@@ -119,8 +119,15 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     React.useEffect(() => {
         fetchSettings()
 
-        // Set up real-time subscription
+        // Set up real-time subscription - only if configured
         const supabase = createClient()
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+        if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'your_anon_key_here') {
+            return
+        }
+
         const channel = supabase
             .channel('site_settings_changes')
             .on(

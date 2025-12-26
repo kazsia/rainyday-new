@@ -29,6 +29,7 @@ const navigation = [
         icon: Package,
         children: [
             { name: "Products", href: "/admin/products" },
+            { name: "Groups", href: "/admin/groups" },
             { name: "Coupons", href: "/admin/products/coupons" },
         ]
     },

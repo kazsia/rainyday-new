@@ -15,6 +15,7 @@ import {
   Copy,
   QrCode,
   CheckCircle2,
+  Star,
   Wallet2,
   Lock,
   Clock,
@@ -63,6 +64,7 @@ const paymentMethods = [
   { id: "xmr", name: "Monero", icon: Bitcoin, description: "XMR", color: "#FF6600" },
   { id: "shib", name: "Shiba Inu", icon: Bitcoin, description: "SHIB", color: "#FFA409" },
   { id: "dai", name: "DAI", icon: Bitcoin, description: "Stablecoin", color: "#F5AC37" },
+  { id: "paypal", name: "PayPal", icon: CreditCard, description: "Credit Card / PayPal", color: "#0070BA" },
 ]
 
 function CheckoutMainContent() {
@@ -136,7 +138,7 @@ function CheckoutMainContent() {
     }
   }
   const [step, setStep] = React.useState(1)
-  const [selectedMethod, setSelectedMethod] = React.useState("Bitcoin")
+  const [selectedMethod, setSelectedMethod] = React.useState("PayPal")
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [agreeToTerms, setAgreeToTerms] = React.useState(false)
   const [agreeToPromo, setAgreeToPromo] = React.useState(false)
@@ -244,10 +246,11 @@ function CheckoutMainContent() {
     setIsProcessing(true)
 
     try {
-      // All crypto payment methods (everything except Customer Balance)
-      const isCrypto = selectedMethod !== "Customer Balance"
+      // Payment logic
+      const isPayPal = selectedMethod === "PayPal"
+      const isCrypto = !isPayPal && selectedMethod !== "Customer Balance"
 
-      if (isCrypto) {
+      if (isCrypto || isPayPal) {
         const { createOrder } = await import("@/lib/db/orders")
         const { createPayment } = await import("@/lib/db/payments")
 
@@ -337,7 +340,37 @@ function CheckoutMainContent() {
 
         setOrderId(order.id)
 
-        // 2. Create the OxaPay Invoice and fetch payment details for embedded display
+        // 2. Handle PayPal (Paylix) or Crypto (OxaPay)
+        if (isPayPal) {
+          const { createPaylixPayment } = await import("@/lib/payments/paylix")
+          const response = await createPaylixPayment({
+            title: `Order ${order.readable_id} from Rainyday`,
+            value: total,
+            currency: "USD",
+            email: email,
+            gateway: "PAYPAL",
+            return_url: `${window.location.origin}/invoice?id=${order.id}`,
+            webhook: `${window.location.origin}/api/webhooks/paylix`,
+          })
+
+          // 3. Create the Payment record
+          await createPayment({
+            order_id: order.id,
+            provider: "PayPal",
+            amount: total,
+            currency: "USD",
+            track_id: response.uniqid,
+            pay_url: response.url
+          })
+
+          // 4. Redirect to Paylix
+          clearCart()
+          toast.success("Redirecting to PayPal...")
+          window.location.href = response.url
+          return
+        }
+
+        // 2b. Create the OxaPay Invoice (existing flow)
         const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
         const response = await createOxaPayWhiteLabelWithInquiry({
           amount: total,
@@ -790,63 +823,122 @@ function CheckoutMainContent() {
                       </div>
                     )}
 
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-2.5 h-2.5 text-brand-primary" />
-                        <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Payment System</label>
+                    <div className="space-y-8 pl-1">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <h3 className="text-sm font-bold text-white tracking-tight">Payment Methods</h3>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-primary/10 border border-brand-primary/20">
+                          <LockKeyhole className="w-3 h-3 text-brand-primary" />
+                          <span className="text-[10px] font-bold text-brand-primary uppercase tracking-widest">Secure • Instant</span>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                        {[
-                          { id: "btc", name: "Bitcoin", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/btc.svg" },
-                          { id: "eth", name: "Ethereum", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/eth.svg" },
-                          { id: "ltc", name: "Litecoin", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/ltc.svg" },
-                          { id: "usdt-trc20", name: "USDT (TRC20)", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/usdt.svg" },
-                          { id: "usdt-erc20", name: "USDT (ERC20)", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/usdt.svg" },
-                          { id: "trx", name: "Tron", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/trx.svg" },
-                          { id: "doge", name: "Dogecoin", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/doge.svg" },
-                          { id: "bch", name: "Bitcoin Cash", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/bch.svg" },
-                          { id: "bnb", name: "BNB", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/bnb.svg" },
-                          { id: "sol", name: "Solana", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/sol.svg" },
-                          { id: "usdc", name: "USDC", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/usdc.svg" },
-                          { id: "ton", name: "TON", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/11419.png" },
-                          { id: "pol", name: "Polygon", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/matic.svg" },
-                          { id: "xmr", name: "Monero", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/xmr.svg" },
-                          { id: "shib", name: "Shiba Inu", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5994.png" },
-                          { id: "dai", name: "DAI", icon: "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@latest/svg/color/dai.svg" },
-                        ].map((method) => (
-                          <div
-                            key={method.id}
-                            onClick={() => setSelectedMethod(method.name)}
-                            className={cn(
-                              "relative p-4 rounded-2xl border transition-all cursor-pointer group overflow-hidden",
-                              selectedMethod === method.name
-                                ? "bg-brand-primary/5 border-brand-primary shadow-[0_0_30px_rgba(38,188,196,0.1)]"
-                                : "bg-white/[0.02] border-white/5 hover:bg-white/[0.05] hover:border-white/10"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 relative z-10">
-                              <div className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                                selectedMethod === method.name ? "bg-brand-primary/20" : "bg-background/40 border border-white/5"
-                              )}>
-                                <img src={method.icon} alt={method.name} className="w-6 h-6" />
-                              </div>
-                              <div className="space-y-0.5">
-                                <p className={cn(
-                                  "text-[10px] font-black uppercase tracking-widest",
-                                  selectedMethod === method.name ? "text-brand-primary" : "text-white/40"
-                                )}>{method.name}</p>
-                                <p className="text-[8px] text-white/20 font-bold">Fast Confirmation</p>
-                              </div>
+
+                      <div className="space-y-8 max-h-[600px] overflow-y-auto custom-scrollbar pr-4">
+
+                        {/* Primary Method */}
+                        <div
+                          onClick={() => setSelectedMethod("PayPal")}
+                          className={cn(
+                            "relative flex items-center gap-6 py-5 px-4 rounded-xl cursor-pointer group transition-all duration-300 overflow-hidden",
+                            selectedMethod === "PayPal"
+                              ? "bg-white/[0.08] ring-1 ring-white/10"
+                              : "bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10"
+                          )}
+                        >
+                          <div className="relative z-10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" alt="PayPal" className="w-10 h-auto object-contain" />
+                          </div>
+                          <div className="relative z-10 flex flex-col">
+                            <span className="text-xl font-bold text-white tracking-tight">PayPal</span>
+                          </div>
+                          {selectedMethod === "PayPal" && (
+                            <div className="absolute right-4 text-brand-primary animate-in zoom-in duration-300">
+                              <CheckCircle2 className="w-6 h-6" />
                             </div>
-                            {selectedMethod === method.name && (
-                              <motion.div
-                                layoutId="active-indicator"
-                                className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.8)]"
-                              />
-                            )}
+                          )}
+                        </div>
+
+                        {/* Grouped Crypto Sections */}
+                        {[
+                          {
+                            label: "Major Currencies",
+                            items: [
+                              { id: "btc", name: "Bitcoin", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035", network: "BTC", color: "#F7931A" },
+                              { id: "eth", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "ERC20", color: "#627EEA" },
+                              { id: "ltc", name: "Litecoin", icon: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035", network: "LTC", color: "#345D9D" },
+                            ]
+                          },
+                          {
+                            label: "Stablecoins",
+                            items: [
+                              { id: "usdt-trc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
+                              { id: "usdt-erc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
+                              { id: "usdc", name: "USDC", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
+                              { id: "dai", name: "DAI", icon: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035", network: "ERC20", color: "#F5AC37" },
+                            ]
+                          },
+                          {
+                            label: "Alt Networks",
+                            items: [
+                              { id: "sol", name: "Solana", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
+                              { id: "trx", name: "Tron", icon: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035", network: "TRX", color: "#FF0013" },
+                              { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
+                              { id: "bnb", name: "BNB", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
+                              { id: "ton", name: "TON", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
+                              { id: "pol", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
+                              { id: "xmr", name: "Monero", icon: "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035", network: "XMR", color: "#FF6600" },
+                              { id: "bch", name: "Bitcoin Cash", icon: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035", network: "BCH", color: "#8DC351" },
+                            ]
+                          }
+                        ].map((group) => (
+                          <div key={group.label} className="space-y-4">
+                            <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                            <div className="flex flex-wrap gap-x-6 gap-y-4">
+                              {group.items.map((method) => {
+                                const methodName = method.name === "USDT" ? `${method.name} (${method.network})` : method.name
+                                const isSelected = selectedMethod === methodName
+
+                                return (
+                                  <div
+                                    key={method.id + method.network}
+                                    onClick={() => setSelectedMethod(methodName)}
+                                    style={{ "--item-color": method.color } as React.CSSProperties}
+                                    className={cn(
+                                      "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
+                                      isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
+                                    )}
+                                  >
+                                    <div className={cn(
+                                      "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
+                                      isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
+                                    )}>
+                                      <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "text-sm font-bold tracking-tight transition-colors",
+                                          isSelected ? "text-white" : "text-white/80 group-hover:text-white"
+                                        )}>{method.name}</span>
+                                        {method.id === "ltc" && (
+                                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                            <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                            <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span className={cn(
+                                        "text-[9px] font-bold uppercase tracking-wide transition-colors",
+                                        isSelected ? "text-[var(--item-color)]" : "text-white/30"
+                                      )}>{method.network}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
                           </div>
                         ))}
+
                       </div>
                     </div>
 
@@ -1050,7 +1142,7 @@ function CheckoutMainContent() {
           background: rgba(38, 188, 196, 0.2);
         }
       `}</style>
-    </div>
+    </div >
   )
 }
 

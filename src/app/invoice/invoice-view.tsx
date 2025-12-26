@@ -141,6 +141,22 @@ function InvoiceContent() {
 
         // START: Calculate real crypto amount
         const payCurrency = payment?.provider || 'BTC'
+        const isPayPal = payCurrency === 'PayPal'
+
+        if (isPayPal) {
+          setPaymentDetails({
+            address: '',
+            amount: String(order.total),
+            qrCodeUrl: '',
+            expiresAt: Date.now() + 3600000,
+            payCurrency: 'USD',
+            payLink: payment.pay_url || '',
+            trackId: payment.track_id || ''
+          })
+          setIsLoadingPayment(false)
+          return
+        }
+
         const livePrice = await getCryptoPrice(payCurrency)
         if (livePrice) setCurrentPrice(livePrice)
 
@@ -268,7 +284,7 @@ function InvoiceContent() {
 
   // Poll for payment status
   useEffect(() => {
-    if (order?.status !== 'pending' || !paymentDetails?.trackId) return
+    if (order?.status !== 'pending' || !paymentDetails?.trackId || payment?.provider === 'PayPal') return
 
     const pollInterval = setInterval(async () => {
       try {

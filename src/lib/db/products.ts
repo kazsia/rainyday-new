@@ -297,8 +297,25 @@ export async function getCategories() {
 
         if (error) throw error
         return data
+
     } catch (e) {
         console.error("[GET_CATEGORIES_CRITICAL]", e)
+        return []
+    }
+}
+
+export async function getCategoriesWithProducts() {
+    try {
+        const supabase = await createServerClient()
+        const { data, error } = await supabase
+            .from("product_categories")
+            .select("*, products(id, name, is_active)") // Fetch minimal product info
+            .order("sort_order", { ascending: true })
+
+        if (error) throw error
+        return data
+    } catch (e) {
+        console.error("[GET_CATEGORIES_WITH_PRODUCTS_CRITICAL]", e)
         return []
     }
 }
@@ -317,19 +334,42 @@ export async function updateCategoryOrder(orders: { id: string, sort_order: numb
     if (error) throw error.error
 }
 
-export async function createCategory(name: string) {
+
+
+export async function getCategory(id: string) {
+    try {
+        const supabase = await createServerClient()
+        const { data, error } = await supabase
+            .from("product_categories")
+            .select("*")
+            .eq("id", id)
+            .single()
+
+        if (error) throw error
+        return data
+    } catch (e) {
+        console.error("[GET_CATEGORY_CRITICAL]", e)
+        return null
+    }
+}
+
+export async function createCategory(name: string, extraFields?: any) {
     const supabaseAdmin = await getAdminClient()
     const slug = name.toLowerCase().replace(/ /g, '-')
     const { data, error } = await supabaseAdmin
         .from('product_categories')
-        .insert({ name, slug })
+        .insert({
+            name,
+            slug,
+            ...extraFields
+        })
         .select()
 
     if (error) throw error
     return data?.[0]
 }
 
-export async function updateCategory(id: string, updates: { name?: string; slug?: string }) {
+export async function updateCategory(id: string, updates: any) {
     const supabaseAdmin = await getAdminClient()
     const { data, error } = await supabaseAdmin
         .from('product_categories')
@@ -404,4 +444,24 @@ export async function deleteVariant(id: string) {
         .eq('id', id)
 
     if (error) throw error
+}
+
+export async function updateCategoryProducts(categoryId: string, productIds: string[]) {
+    const supabaseAdmin = await getAdminClient()
+
+    // 1. Set all products currently in this category to null
+    await supabaseAdmin
+        .from('products')
+        .update({ category_id: null })
+        .eq('category_id', categoryId)
+
+    // 2. Set the new products to this category
+    if (productIds.length > 0) {
+        const { error: addError } = await supabaseAdmin
+            .from('products')
+            .update({ category_id: categoryId })
+            .in('id', productIds)
+
+        if (addError) throw addError
+    }
 }

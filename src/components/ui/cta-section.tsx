@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { LiquidButton } from "@/components/ui/liquid-button"
 
 interface CTAProps {
     title?: string
@@ -41,21 +42,18 @@ export function CTASection({
                         {description}
                     </p>
 
-                    {/* Button with glow effect */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2, duration: 0.5 }}
-                        className="pt-4"
+                        className="pt-4 flex justify-center"
                     >
                         <Link href={buttonHref}>
-                            <Button
-                                size="lg"
-                                className="px-10 py-6 rounded-lg text-base font-medium bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 transition-all duration-300"
-                            >
-                                {buttonText}
-                            </Button>
+                            <LiquidButton
+                                text={buttonText}
+                                className="w-48 h-14" // Increased size for CTA
+                            />
                         </Link>
                     </motion.div>
                 </motion.div>

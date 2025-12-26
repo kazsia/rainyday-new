@@ -4,13 +4,17 @@ export function createClient() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-        // Return a mock or handle gracefully - client components should check for null if needed
-        // but for now, logging and returning a "broken" client is better than a hard crash during SSR
-        console.error("[SUPABASE_CLIENT] Missing environment variables!")
+    if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'your_anon_key_here') {
+        const isPlaceholder = supabaseAnonKey === 'your_anon_key_here';
+        if (typeof window !== 'undefined') {
+            console.error(
+                `[SUPABASE_CLIENT_ERROR][REF: ANTIGRAVITY_V2] ${isPlaceholder ? 'Placeholder' : 'Missing'} environment variables! ` +
+                "Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+            );
+        }
         return createBrowserClient(
-            supabaseUrl || 'http://localhost:54321', // placeholder
-            supabaseAnonKey || 'anon' // placeholder
+            supabaseUrl || 'http://localhost:54321',
+            supabaseAnonKey || 'anon'
         )
     }
 
