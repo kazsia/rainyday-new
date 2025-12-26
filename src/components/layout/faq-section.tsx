@@ -3,29 +3,13 @@
 import { HelpCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
-import { getSiteSettings, type SiteSettings } from "@/lib/db/settings"
+import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 import { HandWrittenTitle } from "@/components/ui/hand-writing-text"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { Card, CardContent } from "@/components/ui/card"
 
 export function FAQSection() {
-    const [settings, setSettings] = useState<SiteSettings | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const data = await getSiteSettings()
-                setSettings(data)
-            } catch (error) {
-                console.error("Failed to load FAQ settings:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        loadSettings()
-    }, [])
+    const { settings, isLoading } = useSiteSettingsWithDefaults()
 
     const faqs = (settings?.faq?.items || []).slice(0, 4) // Show only first 4 on landing page
     return (
