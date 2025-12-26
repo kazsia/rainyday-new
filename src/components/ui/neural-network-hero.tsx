@@ -267,6 +267,8 @@ export default function NeuralNetworkHero({
     ],
     microDetails = ["Low‑weight font", "Tight tracking", "Subtle motion"]
 }: HeroProps) {
+    const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
+    console.log("Rendering NeuralNetworkHero", { title, description });
     const sectionRef = useRef<HTMLElement | null>(null);
     const headerRef = useRef<HTMLHeadingElement | null>(null);
     const paraRef = useRef<HTMLParagraphElement | null>(null);
