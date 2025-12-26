@@ -124,8 +124,36 @@ function InvoiceContent() {
   }
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success("Copied to clipboard!")
+    const handleSuccess = () => toast.success("Copied to clipboard!")
+    const handleFailure = () => toast.error("Failed to copy")
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(handleSuccess)
+        .catch(() => fallbackCopy(text))
+    } else {
+      fallbackCopy(text)
+    }
+
+    function fallbackCopy(textToCopy: string) {
+      try {
+        const textArea = document.createElement("textarea")
+        textArea.value = textToCopy
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        textArea.style.top = "0"
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        const successful = document.execCommand('copy')
+        document.body.removeChild(textArea)
+        if (successful) handleSuccess()
+        else handleFailure()
+      } catch (err) {
+        console.error('Fallback copy failed:', err)
+        handleFailure()
+      }
+    }
   }
 
   // Fetch payment details for pending orders
@@ -764,10 +792,13 @@ function InvoiceContent() {
                               </div>
                               <div className="flex gap-3">
                                 <div
-                                  onClick={() => copyToClipboard(paymentDetails.address)}
-                                  className="flex-1 h-14 px-5 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl flex items-center justify-between group/addr cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(paymentDetails.address);
+                                  }}
+                                  className="flex-1 h-14 px-5 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl flex items-center justify-between group/addr cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all active:scale-[0.98]"
                                 >
-                                  <code className="text-xs font-mono text-brand-primary font-bold truncate max-w-[200px]">{paymentDetails.address}</code>
+                                  <code className="text-xs font-mono text-brand-primary font-bold truncate max-w-[200px] pointer-events-none">{paymentDetails.address}</code>
                                   <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover/addr:bg-brand-primary group-hover/addr:text-black transition-all">
                                     <Copy className="w-3.5 h-3.5" />
                                   </div>
@@ -795,8 +826,11 @@ function InvoiceContent() {
                               <p className="text-[10px] text-white/30 font-medium">Send exactly this amount to the address above.</p>
                             </div>
                             <div
-                              onClick={() => copyToClipboard(paymentDetails.amount)}
-                              className="inline-flex h-14 px-8 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl items-center gap-4 group/amt cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(paymentDetails.amount);
+                              }}
+                              className="inline-flex h-14 px-8 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl items-center gap-4 group/amt cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all active:scale-[0.98]"
                             >
                               <SparklesText
                                 text={`${paymentDetails.amount} ${paymentDetails.payCurrency}`}

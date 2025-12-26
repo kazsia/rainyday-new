@@ -88,23 +88,27 @@ export default function StorePage() {
             }
         })
 
-        const standalone = filtered.filter(p => !p.category_id)
+        const standalone = selectedCategoryId === "all"
+            ? filtered.filter(p => !p.category_id)
+            : filtered
 
-        const categoriesWithData = categories
-            .map(cat => {
-                const catProducts = filtered.filter(p => p.category_id === cat.id)
-                if (catProducts.length === 0) return null
+        const categoriesWithData = selectedCategoryId === "all"
+            ? categories
+                .map(cat => {
+                    const catProducts = filtered.filter(p => p.category_id === cat.id)
+                    if (catProducts.length === 0) return null
 
-                const prices = catProducts.map(p => p.price)
-                return {
-                    ...cat,
-                    products: catProducts,
-                    minPrice: Math.min(...prices),
-                    maxPrice: Math.max(...prices),
-                    count: catProducts.length
-                }
-            })
-            .filter(Boolean) as any[]
+                    const prices = catProducts.map(p => p.price)
+                    return {
+                        ...cat,
+                        products: catProducts,
+                        minPrice: Math.min(...prices),
+                        maxPrice: Math.max(...prices),
+                        count: catProducts.length
+                    }
+                })
+                .filter(Boolean) as any[]
+            : []
 
         return {
             standaloneProducts: standalone,

@@ -840,7 +840,7 @@ function CheckoutMainContent() {
                           className={cn(
                             "relative flex items-center gap-6 py-5 px-4 rounded-xl cursor-pointer group transition-all duration-300 overflow-hidden",
                             selectedMethod === "PayPal"
-                              ? "bg-white/[0.08] ring-1 ring-white/10"
+                              ? "bg-blue-500/[0.15] border-2 border-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.3)]"
                               : "bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10"
                           )}
                         >

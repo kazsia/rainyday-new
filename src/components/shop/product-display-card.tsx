@@ -4,11 +4,15 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ShoppingCart, Check, TrendingUp, ShieldAlert } from "lucide-react"
+import { ShoppingCart, Check, TrendingUp, ShieldAlert, Zap, Loader2 } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { toast } from "sonner"
 import { useCurrency } from "@/context/currency-context"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { createOrder } from "@/lib/db/orders"
+import AnimatedGenerateButton from "@/components/ui/animated-generate-button"
+import { Button as ThreeDButton } from "@/components/ui/3d-button"
 
 interface ProductCardProps {
     id: string
@@ -35,6 +39,9 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
 
     const isOutOfStock = productCount <= 0
 
+    const [isBuyingNow, setIsBuyingNow] = React.useState(false)
+    const router = useRouter()
+
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
@@ -50,6 +57,31 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
             image
         })
         toast.success(`Added ${title} to cart`)
+    }
+
+    const handleBuyNow = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (isOutOfStock) {
+            toast.error("This product is out of stock")
+            return
+        }
+        setIsBuyingNow(true)
+        try {
+            const order = await createOrder({
+                total: price,
+                items: [{
+                    product_id: id,
+                    quantity: 1,
+                    price: price
+                }]
+            })
+            router.push(`/checkout/${order.readable_id}`)
+        } catch (error) {
+            console.error("Failed to start checkout:", error)
+            toast.error("Failed to start checkout. Please try again.")
+            setIsBuyingNow(false)
+        }
     }
 
     // Extract features from description (bullets)
@@ -141,8 +173,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
                             ))}
                         </div>
 
-                        {/* Price & Action Footer */}
-                        <div className="mt-auto space-y-4">
+                        <div className="mt-auto space-y-3">
                             <div className="flex items-end justify-between">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">
@@ -162,29 +193,48 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleQuickAdd}
-                                className={cn(
-                                    "w-full h-12 rounded-xl flex items-center justify-center gap-2 font-bold uppercase tracking-widest text-[11px] transition-all duration-300 relative overflow-hidden group/btn",
-                                    isOutOfStock
-                                        ? "bg-red-500/10 text-red-400 border border-red-500/20 cursor-not-allowed"
-                                        : "bg-white text-black hover:bg-brand-primary hover:text-white"
+                            <div className="grid grid-cols-2 gap-3 items-center">
+                                {isOutOfStock ? (
+                                    <div className="col-span-2">
+                                        <ThreeDButton
+                                            disabled
+                                            variant="destructive"
+                                            className="w-full h-11 text-[10px] uppercase font-black tracking-widest opacity-50"
+                                        >
+                                            <ShieldAlert className="w-4 h-4 mr-2" />
+                                            Out of Stock
+                                        </ThreeDButton>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-full h-11">
+                                            <AnimatedGenerateButton
+                                                labelIdle="Add to Cart"
+                                                labelActive="Adding..."
+                                                onClick={handleQuickAdd}
+                                                disabled={isBuyingNow}
+                                                highlightHueDeg={210} // Cyan highlight
+                                                Icon={ShoppingCart}
+                                                hFull
+                                                className="text-[9px]"
+                                            />
+                                        </div>
+
+                                        <div className="w-full h-11">
+                                            <AnimatedGenerateButton
+                                                labelIdle="Buy Now"
+                                                labelActive="Processing..."
+                                                generating={isBuyingNow}
+                                                onClick={handleBuyNow}
+                                                disabled={isBuyingNow}
+                                                highlightHueDeg={45} // Gold highlight
+                                                hFull
+                                                className="text-[9px]"
+                                            />
+                                        </div>
+                                    </>
                                 )}
-                            >
-                                <div className="relative z-10 flex items-center gap-2">
-                                    {isOutOfStock ? (
-                                        <>
-                                            <ShieldAlert className="w-4 h-4" />
-                                            Currently Unavailable
-                                        </>
-                                    ) : (
-                                        <>
-                                            <ShoppingCart className="w-4 h-4" />
-                                            Add to Cart
-                                        </>
-                                    )}
-                                </div>
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
