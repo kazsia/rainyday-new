@@ -267,8 +267,6 @@ export default function NeuralNetworkHero({
     ],
     microDetails = ["Low‑weight font", "Tight tracking", "Subtle motion"]
 }: HeroProps) {
-    const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
-    console.log("Rendering NeuralNetworkHero", { title, description });
     const sectionRef = useRef<HTMLElement | null>(null);
     const headerRef = useRef<HTMLHeadingElement | null>(null);
     const paraRef = useRef<HTMLParagraphElement | null>(null);
@@ -381,7 +379,9 @@ export default function NeuralNetworkHero({
                             variant={index === 0 ? "default" : "outline"}
                             size="lg"
                             asChild
-                            className={`rounded-xl font-medium tracking-tight h-12 px-8 min-w-[160px] ${index === 1 ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : ""
+                            className={`rounded-xl font-medium tracking-tight h-12 px-8 min-w-[160px] ${index === 1
+                                    ? "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                                    : "bg-white/90 text-black hover:bg-white"
                                 }`}
                         >
                             <Link href={button.href}>

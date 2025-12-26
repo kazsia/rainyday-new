@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ProximaLayout } from "@/components/layout/proxima-layout"
-import NeuralNetworkHero from "@/components/ui/neural-network-hero"
+import ProximaHero from "@/components/ui/proxima-hero"
 
 import { WhyChoose } from "@/components/layout/why-choose"
 import { HowItWorks } from "@/components/layout/how-it-works"
@@ -37,7 +37,7 @@ export default function HomePage() {
         suppressHydrationWarning
       >
         <div className="-mt-20 min-h-screen relative overflow-x-hidden" suppressHydrationWarning>
-          <NeuralNetworkHero
+          <ProximaHero
             title={settings?.hero?.title}
             description={settings?.hero?.description}
             badgeText={settings?.hero?.badge_text}
