@@ -10,7 +10,7 @@ import gsap from 'gsap';
 import { SplitText } from 'gsap/SplitText';
 import { Button } from './button';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(SplitText, useGSAP);
