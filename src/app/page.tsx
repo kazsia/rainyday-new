@@ -46,6 +46,7 @@ export default function HomePage() {
               { text: settings?.hero?.cta1_text || "Get started", href: settings?.hero?.cta1_href || "/store", primary: true },
               { text: settings?.hero?.cta2_text || "View showcase", href: settings?.hero?.cta2_href || "/store" }
             ]}
+            microDetails={settings?.hero?.micro_details}
           />
         </div>
 

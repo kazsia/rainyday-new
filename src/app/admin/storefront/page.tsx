@@ -154,7 +154,8 @@ export default function AdminStorefrontPage() {
       cta1_text: "",
       cta1_href: "",
       cta2_text: "",
-      cta2_href: ""
+      cta2_href: "",
+      micro_details: []
     },
     landing_cta: {
       title: "",
@@ -1489,6 +1490,54 @@ export default function AdminStorefrontPage() {
                             />
                           </div>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Micro Details */}
+                    <div className="space-y-4 pt-6 border-t border-white/5">
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Micro Details</h3>
+                        <p className="text-xs text-white/40 mt-1">Small text items shown below the CTA buttons (e.g., "Low-weight font", "Tight tracking")</p>
+                      </div>
+                      <div className="space-y-3">
+                        {(settings.hero.micro_details || ["", "", ""]).map((detail, index) => (
+                          <div key={index} className="flex gap-2 items-center">
+                            <span className="text-[10px] font-bold text-white/30 w-6">{index + 1}.</span>
+                            <Input
+                              value={detail}
+                              onChange={e => {
+                                const newDetails = [...(settings.hero.micro_details || ["", "", ""])]
+                                newDetails[index] = e.target.value
+                                setSettings({ ...settings, hero: { ...settings.hero, micro_details: newDetails } })
+                              }}
+                              className="bg-background border-white/5 h-10 flex-1"
+                              placeholder={`Detail ${index + 1}`}
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-white/20 hover:text-red-400 hover:bg-red-500/10"
+                              onClick={() => {
+                                const newDetails = (settings.hero.micro_details || []).filter((_, i) => i !== index)
+                                setSettings({ ...settings, hero: { ...settings.hero, micro_details: newDetails } })
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-brand/20 text-brand hover:bg-brand/10 w-full"
+                          onClick={() => {
+                            const newDetails = [...(settings.hero.micro_details || []), ""]
+                            setSettings({ ...settings, hero: { ...settings.hero, micro_details: newDetails } })
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-2" />
+                          Add Detail
+                        </Button>
                       </div>
                     </div>
                   </div>

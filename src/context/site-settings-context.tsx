@@ -72,7 +72,8 @@ const defaultSettings: SiteSettings = {
         cta1_text: "Get Started",
         cta1_href: "/store",
         cta2_text: "View Products",
-        cta2_href: "/store"
+        cta2_href: "/store",
+        micro_details: ["Low‑weight font", "Tight tracking", "Subtle motion"]
     },
     landing_cta: {
         title: "Ready to dive into digital products?",
