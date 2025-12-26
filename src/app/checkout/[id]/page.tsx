@@ -250,6 +250,24 @@ function CheckoutMainContent() {
       const isPayPal = selectedMethod === "PayPal"
       const isCrypto = !isPayPal && selectedMethod !== "Customer Balance"
 
+      // Minimum amount validation for payment gateways
+      const MINIMUM_AMOUNTS = {
+        paypal: 1.00,   // PayPal/Paylix minimum is $1.00
+        crypto: 0.50,   // OxaPay minimum is approximately $0.50
+      }
+
+      if (isPayPal && finalTotal < MINIMUM_AMOUNTS.paypal) {
+        toast.error(`Minimum order amount for PayPal is $${MINIMUM_AMOUNTS.paypal.toFixed(2)}. Please add more items to your cart.`)
+        setIsProcessing(false)
+        return
+      }
+
+      if (isCrypto && finalTotal < MINIMUM_AMOUNTS.crypto) {
+        toast.error(`Minimum order amount for crypto payments is $${MINIMUM_AMOUNTS.crypto.toFixed(2)}. Please add more items to your cart.`)
+        setIsProcessing(false)
+        return
+      }
+
       if (isCrypto || isPayPal) {
         const { createOrder } = await import("@/lib/db/orders")
         const { createPayment } = await import("@/lib/db/payments")
