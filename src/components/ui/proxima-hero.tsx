@@ -380,8 +380,8 @@ export default function NeuralNetworkHero({
                             size="lg"
                             asChild
                             className={`rounded-xl font-medium tracking-tight h-12 px-8 min-w-[160px] ${index === 1
-                                    ? "bg-white/5 border-white/10 hover:bg-white/10 text-white"
-                                    : "bg-white/90 text-black hover:bg-white"
+                                ? "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                                : "bg-white text-black hover:bg-white/90"
                                 }`}
                         >
                             <Link href={button.href}>
