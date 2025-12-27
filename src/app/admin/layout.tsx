@@ -8,6 +8,8 @@ import { requireAdmin } from "@/lib/security/auth"
  * Note: Individual pages still use <AdminLayout> for the UI chrome.
  * This layout only handles auth verification.
  */
+export const dynamic = "force-dynamic"
+
 export default async function AdminRouteLayout({
     children,
 }: {
