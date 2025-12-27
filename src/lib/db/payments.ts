@@ -10,24 +10,31 @@ export async function createPayment(payment: {
     track_id?: string
     pay_url?: string
 }) {
-    const supabase = await createClient()
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from("payments")
+            .insert({
+                order_id: payment.order_id,
+                provider: payment.provider,
+                amount: payment.amount,
+                currency: payment.currency || "USD",
+                status: "pending",
+                track_id: payment.track_id || null,
+                pay_url: payment.pay_url || null,
+            })
+            .select()
+            .single()
 
-    const { data, error } = await supabase
-        .from("payments")
-        .insert({
-            order_id: payment.order_id,
-            provider: payment.provider,
-            amount: payment.amount,
-            currency: payment.currency || "USD",
-            status: "pending",
-            track_id: payment.track_id || null,
-            pay_url: payment.pay_url || null,
-        })
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
+        if (error) {
+            console.error("[CREATE_PAYMENT_DB_ERROR]", error)
+            throw error
+        }
+        return data
+    } catch (e) {
+        console.error("[CREATE_PAYMENT_FATAL]", e)
+        throw e
+    }
 }
 
 

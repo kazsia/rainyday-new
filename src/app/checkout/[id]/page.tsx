@@ -39,7 +39,8 @@ import { Logo } from "@/components/layout/logo"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
-import { getOrder, updateOrder } from "@/lib/db/orders"
+import { getOrder } from "@/lib/db/orders"
+import { safeCreateOrder, safeUpdateOrder, safeCreatePayment } from "@/lib/actions/safe-checkout"
 import { Suspense } from "react"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
@@ -346,10 +347,7 @@ function CheckoutMainContent() {
       }
 
       if (isCrypto || isPayPal) {
-        const { createOrder } = await import("@/lib/db/orders")
-        const { createPayment } = await import("@/lib/db/payments")
-
-        // Map payment method to OxaPay currency codes (exact symbols from their API)
+        // Map payment method to OxaPay currency codes
         const payCurrencyMap: Record<string, string> = {
           "Bitcoin": "BTC",
           "Ethereum": "ETH",
@@ -374,7 +372,6 @@ function CheckoutMainContent() {
         }
 
         // 1. Create or Update the Order in Supabase
-        // Use finalTotal which includes discount
         const total = finalTotal
         const items = cart.filter(i => i.quantity > 0).map(item => ({
           product_id: item.id,
@@ -386,19 +383,18 @@ function CheckoutMainContent() {
 
         // Handle $0.00 orders (100% discount)
         if (total === 0) {
-          const { createOrder, updateOrder } = await import("@/lib/db/orders")
           const { completeFreeOrder } = await import("@/lib/actions/checkout")
 
-          let order;
+          let result;
           if (existingOrder) {
-            order = await updateOrder(existingOrder.id, {
+            result = await safeUpdateOrder(existingOrder.id, {
               email,
               total,
               items,
               custom_fields: customFields
             })
           } else {
-            order = await createOrder({
+            result = await safeCreateOrder({
               email,
               total,
               items,
@@ -406,28 +402,34 @@ function CheckoutMainContent() {
             })
           }
 
-          const result = await completeFreeOrder(order.id, appliedCoupon?.code)
-          if (result.success) {
+          if (!result.success) {
+            console.error("[CHECKOUT] Free order creation failed:", result.error, result.details)
+            throw new Error(result.error)
+          }
+
+          const order = result.data
+          const resolution = await completeFreeOrder(order.id, appliedCoupon?.code)
+          if (resolution.success) {
             clearCart()
             toast.success("Order completed! Your items are being delivered.")
             router.push(`/invoice?id=${order.id}`)
             return
           } else {
-            throw new Error(result.error)
+            throw new Error(resolution.error)
           }
         }
 
         // Pass total directly.
-        let order;
+        let result;
         if (existingOrder) {
-          order = await updateOrder(existingOrder.id, {
+          result = await safeUpdateOrder(existingOrder.id, {
             email,
             total,
             items,
             custom_fields: customFields
           })
         } else {
-          order = await createOrder({
+          result = await safeCreateOrder({
             email,
             total,
             items,
@@ -435,6 +437,14 @@ function CheckoutMainContent() {
           })
         }
 
+        if (!result.success) {
+          console.error("[CHECKOUT] Order creation failed:", result.error, result.details)
+          toast.error(`Order Failed: ${result.error}`)
+          setIsProcessing(false)
+          return
+        }
+
+        const order = result.data
         setOrderId(order.id)
 
         // 2. Handle PayPal (Paylix) or Crypto (OxaPay)
@@ -451,7 +461,7 @@ function CheckoutMainContent() {
           })
 
           // 3. Create the Payment record
-          await createPayment({
+          const payResult = await safeCreatePayment({
             order_id: order.id,
             provider: "PayPal",
             amount: total,
@@ -459,6 +469,12 @@ function CheckoutMainContent() {
             track_id: response.uniqid,
             pay_url: response.url
           })
+
+          if (!payResult.success) {
+            console.error("[CHECKOUT] Payment creation failed:", payResult.error)
+            // Proceed anyway since we have the URL? No, safer to fail.
+            throw new Error(payResult.error)
+          }
 
           // 4. Redirect to Paylix
           clearCart()
@@ -470,7 +486,7 @@ function CheckoutMainContent() {
         // 2b. Create the OxaPay Invoice (existing flow)
         const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
 
-        // Parse network from selectedMethod if present (e.g., "Ethereum (BASE)" -> "BASE")
+        // Parse network from selectedMethod if present
         let payNetwork: string | undefined = undefined
         let baseMethodName = selectedMethod
 
@@ -497,7 +513,7 @@ function CheckoutMainContent() {
         console.log("[Checkout] OxaPay Response:", response)
 
         // 3. Create the Payment record with OxaPay track ID and pay_url
-        await createPayment({
+        const payResult = await safeCreatePayment({
           order_id: order.id,
           provider: payCurrencyMap[selectedMethod] || "Crypto",
           amount: total,
@@ -505,6 +521,11 @@ function CheckoutMainContent() {
           track_id: response.trackId,
           pay_url: response.payLink
         })
+
+        if (!payResult.success) {
+          console.error("[CHECKOUT] Payment creation failed:", payResult.error)
+          throw new Error(payResult.error)
+        }
 
         // 4. Check if we need to redirect (white-label not available)
         if (response.isRedirect && response.payLink) {
@@ -520,15 +541,11 @@ function CheckoutMainContent() {
         let exchangeRate = 0
         const selectedCrypto = payCurrencyMap[selectedMethod] || "BTC"
 
-        // If OxaPay didn't return a proper crypto amount, OR if it just mirrored the USD amount, OR if we just want to be sure
-        // Always try to calculate strict crypto amount to avoid "1 BTC" issues
+        // If OxaPay didn't return a proper crypto amount...
         if (true) {
           const { convertUsdToCrypto } = await import("@/lib/payments/crypto-prices")
           const conversion = await convertUsdToCrypto(total, selectedCrypto)
           if (conversion) {
-            // Only override if the API returned amount is suspicious (like equal to total USD or "1")
-            // OR if we want to force our specific calculation
-            // For now, let's trust our local calc if API returns same string as total (which means it didn't convert)
             if (!finalCryptoAmount || finalCryptoAmount === String(total) || finalCryptoAmount === "1" || finalCryptoAmount === "1.00") {
               finalCryptoAmount = conversion.cryptoAmount
             }
@@ -536,20 +553,30 @@ function CheckoutMainContent() {
           }
         }
 
+        // 5. Update local state for step 2
+        setCryptoDetails({
+          address: response.address || "Error generating address",
+          amount: finalCryptoAmount || "0.00000000",
+          invoiceId: response.trackId,
+          qrCodeUrl: (response as any).qrcode || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${response.address}`,
+          expiresAt: Date.now() + 30 * 60 * 1000, // 30 mins
+          payCurrency: selectedCrypto,
+          payLink: response.payLink,
+          exchangeRate
+        })
 
-        // 5. Clear cart and redirect to invoice page for payment
+        setStep(2)
         clearCart()
-        toast.success("Order created! Redirecting to payment...")
-        router.push(`/invoice?id=${order.id}`)
+        toast.success("Order created! Processing payment...")
         return
       }
 
       // Normal flow for other methods if any
       clearCart()
       router.push(`/invoice?id=${orderId}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment Error:", error)
-      toast.error("Failed to initialize payment. Please try again.")
+      toast.error(error.message || "Failed to initialize payment. Please try again.")
     } finally {
       setIsProcessing(false)
     }

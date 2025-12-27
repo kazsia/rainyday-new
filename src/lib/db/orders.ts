@@ -10,54 +10,69 @@ export async function createOrder(order: {
     items: Array<{ product_id: string; variant_id?: string | null; quantity: number; price: number }>
     custom_fields?: Record<string, string> | null
 }) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const alphanumericPart = Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 6)
-    const numericPart = Math.floor(Math.random() * 10000000000000).toString().padStart(13, '0')
-    const readableId = `${alphanumericPart.substring(0, 13)}-${numericPart}`
-
-    // Create order
-    const { data: newOrder, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-            user_id: user?.id,
-            email: order.email || null,
-            total: order.total,
-            currency: order.currency || "USD",
-            readable_id: readableId,
-            custom_fields: {
-                ...(order.custom_fields || {}),
-                ip_address: (await headers()).get("x-forwarded-for") || "Unknown",
-                user_agent: (await headers()).get("user-agent") || "Unknown"
-            },
-        })
-        .select()
-        .single()
-
-    if (orderError) throw orderError
-
-    // Create order items
-    const orderItems = order.items.map((item) => ({
-        order_id: newOrder.id,
-        product_id: item.product_id,
-        variant_id: item.variant_id || null,
-        quantity: item.quantity,
-        price: item.price,
-    }))
-
-    const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems)
-
-    if (itemsError) throw itemsError
-
-    // Send invoice created email
     try {
-        // Refetch order with product names for email
-        const { data: orderWithItems } = await supabase
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        const alphanumericPart = Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 6)
+        const numericPart = Math.floor(Math.random() * 10000000000000).toString().padStart(13, '0')
+        const readableId = `${alphanumericPart.substring(0, 13)}-${numericPart}`
+
+        // Safe header access
+        let ipAddress = "Unknown"
+        let userAgent = "Unknown"
+        try {
+            const headerStore = await headers()
+            ipAddress = headerStore.get("x-forwarded-for") || "Unknown"
+            userAgent = headerStore.get("user-agent") || "Unknown"
+        } catch (hError) {
+            console.warn("[CREATE_ORDER] Failed to get headers:", hError)
+        }
+
+        // Create order
+        const { data: newOrder, error: orderError } = await supabase
             .from("orders")
-            .select(`
+            .insert({
+                user_id: user?.id,
+                email: order.email || null,
+                total: order.total,
+                currency: order.currency || "USD",
+                readable_id: readableId,
+                custom_fields: {
+                    ...(order.custom_fields || {}),
+                    ip_address: ipAddress,
+                    user_agent: userAgent
+                },
+            })
+            .select()
+            .single()
+
+        if (orderError) {
+            console.error("[CREATE_ORDER_DB_ERROR]", orderError)
+            throw orderError
+        }
+
+        // Create order items
+        const orderItems = order.items.map((item) => ({
+            order_id: newOrder.id,
+            product_id: item.product_id,
+            variant_id: item.variant_id || null,
+            quantity: item.quantity,
+            price: item.price,
+        }))
+
+        const { error: itemsError } = await supabase
+            .from("order_items")
+            .insert(orderItems)
+
+        if (itemsError) throw itemsError
+
+        // Send invoice created email
+        try {
+            // Refetch order with product names for email
+            const { data: orderWithItems } = await supabase
+                .from("orders")
+                .select(`
                 *,
                 order_items (
                     *,
@@ -65,19 +80,23 @@ export async function createOrder(order: {
                     variant:product_variants (name)
                 )
             `)
-            .eq("id", newOrder.id)
-            .single()
+                .eq("id", newOrder.id)
+                .single()
 
-        if (orderWithItems?.email) {
-            const { sendInvoiceCreatedEmail } = await import("@/lib/email/email")
-            await sendInvoiceCreatedEmail(orderWithItems)
+            if (orderWithItems?.email) {
+                const { sendInvoiceCreatedEmail } = await import("@/lib/email/email")
+                await sendInvoiceCreatedEmail(orderWithItems)
+            }
+        } catch (emailError) {
+            console.error("[EMAIL] Invoice created email failed:", emailError)
+            // Don't fail order creation on email error
         }
-    } catch (emailError) {
-        console.error("[EMAIL] Invoice created email failed:", emailError)
-        // Don't fail order creation on email error
-    }
 
-    return newOrder
+        return newOrder
+    } catch (e) {
+        console.error("[CREATE_ORDER_FATAL]", e)
+        throw e
+    }
 }
 
 export async function updateOrder(id: string, updates: {
