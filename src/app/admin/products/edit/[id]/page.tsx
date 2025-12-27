@@ -540,7 +540,10 @@ export default function EditProductPage() {
                                     <h2 className="text-sm font-bold text-white uppercase tracking-wider">Stock Management</h2>
                                 </div>
                                 <div className="p-4">
-                                    <StockManager productId={id as string} />
+                                    <StockManager
+                                        productId={id as string}
+                                        onStockChange={(count) => setFormData(prev => ({ ...prev, stock_count: count }))}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -658,13 +661,25 @@ export default function EditProductPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2 pt-4 border-t border-white/5">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Total Stock</label>
-                                    <StockInput
-                                        value={formData.stock_count}
-                                        onChange={(val) => setFormData({ ...formData, stock_count: val })}
-                                    />
-                                </div>
+                                {formData.delivery_type !== 'serials' && (
+                                    <div className="space-y-2 pt-4 border-t border-white/5">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Total Stock</label>
+                                        <StockInput
+                                            value={formData.stock_count}
+                                            onChange={(val) => setFormData({ ...formData, stock_count: val })}
+                                        />
+                                        <p className="text-[9px] text-white/20">Enter -1 for unlimited stock</p>
+                                    </div>
+                                )}
+                                {formData.delivery_type === 'serials' && (
+                                    <div className="space-y-2 pt-4 border-t border-white/5">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Total Stock</label>
+                                        <div className="h-12 px-4 bg-background/40 border border-white/10 rounded-lg flex items-center justify-between">
+                                            <span className="text-lg font-bold text-brand-primary">{formData.stock_count}</span>
+                                            <span className="text-[10px] text-white/30 uppercase tracking-widest">From Stock Manager</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

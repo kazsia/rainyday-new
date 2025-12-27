@@ -10,9 +10,10 @@ import { addStock, getStock, deleteStock, StockItem } from "@/lib/db/stock"
 interface StockManagerProps {
     productId: string
     variantId?: string
+    onStockChange?: (newCount: number) => void
 }
 
-export function StockManager({ productId, variantId }: StockManagerProps) {
+export function StockManager({ productId, variantId, onStockChange }: StockManagerProps) {
     const [stockItems, setStockItems] = useState<StockItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isAdding, setIsAdding] = useState(false)
@@ -29,6 +30,8 @@ export function StockManager({ productId, variantId }: StockManagerProps) {
             const { data, count } = await getStock(productId, 1, 50, variantId)
             setStockItems(data || [])
             setTotalCount(count || 0)
+            // Notify parent of the current stock count
+            onStockChange?.(count || 0)
         } catch (error) {
             toast.error("Failed to load stock")
         } finally {

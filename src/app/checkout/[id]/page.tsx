@@ -548,14 +548,15 @@ function CheckoutMainContent() {
 
         console.log("[Checkout] OxaPay Response:", response)
 
-        // 3. Create the Payment record with OxaPay track ID and pay_url
+        // 3. Create the Payment record with OxaPay track ID, pay_url, and crypto address
         const payResult = await safeCreatePayment({
           order_id: order.id,
           provider: payCurrencyMap[selectedMethod] || "Crypto",
           amount: total,
           currency: "USD",
           track_id: response.trackId,
-          pay_url: response.payLink
+          pay_url: response.payLink,
+          crypto_address: response.address || null
         })
 
         if (!payResult.success) {
@@ -623,18 +624,57 @@ function CheckoutMainContent() {
 
   // Poll for payment status
   const [paymentStatus, setPaymentStatus] = React.useState<'pending' | 'processing' | 'completed' | 'expired'>('pending')
+  const [blockchainStatus, setBlockchainStatus] = React.useState<{
+    detected: boolean
+    confirmations: number
+    txId?: string
+    status: 'waiting' | 'detected' | 'confirmed' | 'failed'
+  } | null>(null)
 
-  // Effect to poll for payment status when on step 2
+  // Effect to poll for payment status when on step 2 - FASTER polling with blockchain tracking
   React.useEffect(() => {
     if (step !== 2 || !orderId) return
 
-    // Poll every 5 seconds
+    let hasShownDetectedToast = false
+
+    // Poll every 3 seconds for faster detection
     const pollInterval = setInterval(async () => {
       try {
+        // 1. Check OxaPay status
         const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
         const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
+
+        // 2. PARALLEL: Check blockchain directly for instant detection
+        if (cryptoDetails?.address && cryptoDetails.payCurrency) {
+          const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
+          const bcStatus = await trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency)
+          setBlockchainStatus(bcStatus)
+
+          // If blockchain detected payment before OxaPay, show it!
+          if (bcStatus.detected && !hasShownDetectedToast) {
+            hasShownDetectedToast = true
+            setPaymentStatus('processing')
+            toast.success("Payment detected on blockchain! Waiting for confirmations...")
+          }
+
+          if (bcStatus.status === 'confirmed' && bcStatus.txId) {
+            setPaymentStatus('completed')
+            toast.success("Payment Confirmed! Redirecting...")
+            clearInterval(pollInterval)
+            setTimeout(() => {
+              router.push(`/invoice?id=${orderId}`)
+            }, 2000)
+            return
+          }
+        }
+
+        // 3. Check OxaPay response
         if (info) {
           if (info.status === 'Paid' || info.status === 'Confirming') {
+            if (!hasShownDetectedToast) {
+              hasShownDetectedToast = true
+              toast.success("Payment detected! Confirming on blockchain...")
+            }
             setPaymentStatus('processing')
           }
           if (info.status === 'Paid' && info.txID) {
@@ -654,10 +694,10 @@ function CheckoutMainContent() {
       } catch (error) {
         console.error("Error polling payment status:", error)
       }
-    }, 5000)
+    }, 3000) // Faster 3-second polling
 
     return () => clearInterval(pollInterval)
-  }, [step, orderId, cryptoDetails?.invoiceId, router])
+  }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
 
   const handleCheckPaymentStatus = async () => {
     setIsProcessing(true)

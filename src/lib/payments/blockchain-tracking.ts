@@ -11,6 +11,7 @@ export interface TransactionStatus {
     txId?: string
     status: 'waiting' | 'detected' | 'confirmed' | 'failed'
     lastCheck: Date
+    amountReceived?: number  // Amount received in crypto (e.g., 0.001 BTC)
 }
 
 /**
@@ -24,13 +25,23 @@ async function trackBTC(address: string): Promise<TransactionStatus> {
             const txs = await response.json()
             if (txs && txs.length > 0) {
                 const latestTx = txs[0]
-                const confirmations = latestTx.status.confirmed ? 3 : 0 // Mempool doesn't give exact count in list
+                const confirmations = latestTx.status.confirmed ? 3 : 0
+
+                // Calculate received amount (sum of outputs to this address)
+                let amountSatoshis = 0
+                for (const vout of latestTx.vout || []) {
+                    if (vout.scriptpubkey_address === address) {
+                        amountSatoshis += vout.value || 0
+                    }
+                }
+
                 return {
                     detected: true,
                     confirmations: confirmations,
                     txId: latestTx.txid,
                     status: confirmations >= 1 ? 'confirmed' : 'detected',
-                    lastCheck: new Date()
+                    lastCheck: new Date(),
+                    amountReceived: amountSatoshis / 100000000  // Convert satoshis to BTC
                 }
             }
         }
@@ -44,7 +55,8 @@ async function trackBTC(address: string): Promise<TransactionStatus> {
                     detected: true,
                     confirmations: data.n_tx > 0 ? 1 : 0,
                     status: data.n_tx > 0 ? 'confirmed' : 'detected',
-                    lastCheck: new Date()
+                    lastCheck: new Date(),
+                    amountReceived: (data.total_received || 0) / 100000000  // satoshis to BTC
                 }
             }
         }

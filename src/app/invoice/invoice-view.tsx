@@ -308,9 +308,11 @@ function InvoiceContent() {
     return () => clearInterval(interval)
   }, [paymentDetails?.expiresAt, order?.status])
 
-  // Poll for payment status
+  // Poll for payment status - FASTER 3s polling with blockchain tracking
   useEffect(() => {
     if (order?.status !== 'pending' || !paymentDetails?.trackId || payment?.provider === 'PayPal') return
+
+    let hasShownDetectedToast = false
 
     const pollInterval = setInterval(async () => {
       try {
@@ -324,10 +326,25 @@ function InvoiceContent() {
         const price = await getCryptoPrice(paymentDetails.payCurrency)
         if (price) setCurrentPrice(price)
 
-        // 3. Check Blockchain directly (Real-time tracking)
+        // 3. Check Blockchain directly (Real-time tracking) for instant detection
         if (paymentDetails.address) {
           const bcStatus = await trackAddressStatus(paymentDetails.address, paymentDetails.payCurrency)
           setBlockchainStatus(bcStatus)
+
+          // If blockchain detected payment before OxaPay, show immediate feedback!
+          if (bcStatus.detected && !hasShownDetectedToast) {
+            hasShownDetectedToast = true
+            setPaymentStatus('processing')
+            toast.success("Payment detected on blockchain! Waiting for confirmations...")
+          }
+
+          if (bcStatus.status === 'confirmed' && bcStatus.txId) {
+            setPaymentStatus('completed')
+            toast.success("Payment Confirmed!")
+            clearInterval(pollInterval)
+            loadOrder(false)
+            return
+          }
         }
 
         if (info) {
@@ -342,6 +359,10 @@ function InvoiceContent() {
           }
 
           if (info.status === 'Paid' || info.status === 'Confirming') {
+            if (!hasShownDetectedToast) {
+              hasShownDetectedToast = true
+              toast.success("Payment detected! Confirming on blockchain...")
+            }
             setPaymentStatus('processing')
           }
           if (info.status === 'Paid' && info.txID) {
@@ -359,7 +380,7 @@ function InvoiceContent() {
       } catch (error) {
         console.error("Error polling payment status:", error)
       }
-    }, 5000)
+    }, 3000) // Faster 3-second polling
 
     return () => clearInterval(pollInterval)
   }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency])
