@@ -11,7 +11,7 @@ export async function createOrder(order: {
     custom_fields?: Record<string, string> | null
 }) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { data: { user } } = await supabase.auth.getUser()
 
         const alphanumericPart = Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 6)
@@ -105,7 +105,7 @@ export async function updateOrder(id: string, updates: {
     items?: Array<{ product_id: string; variant_id?: string | null; quantity: number; price: number }>
     custom_fields?: Record<string, string> | null
 }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     // 1. Update order base fields
     const orderUpdate: any = { updated_at: new Date().toISOString() }

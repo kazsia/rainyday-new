@@ -11,7 +11,7 @@ export async function createPayment(payment: {
     pay_url?: string
 }) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { data, error } = await supabase
             .from("payments")
             .insert({
