@@ -12,7 +12,6 @@ interface CreateInvoiceParams {
     callbackUrl?: string
     returnUrl?: string
     payCurrency?: string // BTC, ETH, LTC, etc.
-    network?: string     // ERC20, TRC20, BSC, etc.
 }
 
 interface WhiteLabelPaymentDetails {
@@ -313,7 +312,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     }
 
     const payCurrency = params.payCurrency || "BTC"
-    const network = params.network || networkMap[payCurrency] || payCurrency
+    const network = networkMap[payCurrency] || payCurrency
 
     try {
         const v1Response = await fetch(`${OXAPAY_API_URL}/v1/payment/white-label`, {

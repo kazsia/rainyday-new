@@ -16,7 +16,6 @@ import {
   QrCode,
   CheckCircle2,
   Star,
-  Wallet2,
   Lock,
   Clock,
   Search,
