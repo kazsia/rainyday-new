@@ -1170,6 +1170,61 @@ function CheckoutMainContent() {
                     </p>
                   </div>
 
+                  {/* Order Info Summary */}
+                  <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+                    {/* Crypto Header */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#a4f8ff]/10 flex items-center justify-center">
+                        {cryptoDetails?.payCurrency && (
+                          <img
+                            src={`https://cryptologos.cc/logos/${cryptoDetails.payCurrency === 'BTC' ? 'bitcoin-btc' :
+                              cryptoDetails.payCurrency === 'ETH' ? 'ethereum-eth' :
+                                cryptoDetails.payCurrency === 'LTC' ? 'litecoin-ltc' :
+                                  cryptoDetails.payCurrency === 'USDT' ? 'tether-usdt' :
+                                    cryptoDetails.payCurrency === 'SOL' ? 'solana-sol' :
+                                      cryptoDetails.payCurrency === 'TRX' ? 'tron-trx' :
+                                        cryptoDetails.payCurrency === 'DOGE' ? 'dogecoin-doge' :
+                                          cryptoDetails.payCurrency === 'XMR' ? 'monero-xmr' :
+                                            cryptoDetails.payCurrency === 'TON' ? 'toncoin-ton' :
+                                              cryptoDetails.payCurrency.toLowerCase()
+                              }-logo.svg?v=035`}
+                            alt={cryptoDetails.payCurrency}
+                            className="w-6 h-6"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{cryptoDetails?.payCurrency || 'Crypto'}</p>
+                        <p className="text-[10px] font-medium text-white/40 truncate max-w-[200px]">{cryptoDetails?.invoiceId}</p>
+                      </div>
+                    </div>
+
+                    {/* Info Rows */}
+                    <div className="space-y-2 pt-2 border-t border-white/5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white/40">Invoice ID</span>
+                        <span className="text-xs font-medium text-white/60 flex items-center gap-2">
+                          <span className="truncate max-w-[150px]">{cryptoDetails?.invoiceId}</span>
+                          <button onClick={() => copyToClipboard(cryptoDetails?.invoiceId || '')} className="hover:text-[#a4f8ff] transition-colors">
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white/40">E-mail Address</span>
+                        <span className="text-xs font-medium text-white/60">{email}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white/40">Total Price</span>
+                        <span className="text-xs font-bold text-white">{formatPrice(savedTotal || cartTotal)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white/40">Total Amount ({cryptoDetails?.payCurrency})</span>
+                        <span className="text-xs font-bold text-[#a4f8ff]">{cryptoDetails?.amount} {cryptoDetails?.payCurrency}</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="relative pl-12 space-y-12">
                     {/* Step 1: Destination Address */}
                     <div className="relative space-y-6">
@@ -1231,6 +1286,41 @@ function CheckoutMainContent() {
                         <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
                         <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Transaction History Tracking */}
+                  <div className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
+                        <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {paymentStatus === 'pending' && (
+                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                          <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                        </div>
+                      )}
+
+                      {(paymentStatus === 'processing' || paymentStatus === 'completed') && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
+                            <p className="text-[10px] font-black uppercase tracking-tighter text-green-500">
+                              DETECTED
+                            </p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
+                            <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
+                              {paymentStatus === 'completed' ? 'Confirmed' : 'Confirming...'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
