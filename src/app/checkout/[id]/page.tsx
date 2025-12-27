@@ -45,6 +45,50 @@ import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 import { getOrder, updateOrder } from "@/lib/db/orders"
 import { Suspense } from "react"
 
+// All OxaPay supported cryptocurrencies (exact symbols from their API)
+// Re-organized crypto groups for the UI
+const cryptoGroups = [
+  {
+    label: "Major Currencies",
+    items: [
+      { id: "btc", name: "Bitcoin", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035", network: "BTC", color: "#F7931A" },
+      { id: "eth", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "ERC20", color: "#627EEA" },
+      { id: "ltc", name: "Litecoin", icon: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035", network: "LTC", color: "#345D9D" },
+    ]
+  },
+  {
+    label: "Stablecoins",
+    items: [
+      { id: "usdt-trc20", name: "Tether", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
+      { id: "usdt-erc20", name: "Tether", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
+      { id: "usdc", name: "USD coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
+      { id: "dai", name: "DAI", icon: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035", network: "ERC20", color: "#F5AC37" },
+    ]
+  },
+  {
+    label: "Alt Networks",
+    items: [
+      { id: "sol", name: "Solana", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
+      { id: "trx", name: "Tron", icon: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035", network: "TRX", color: "#FF0013" },
+      { id: "bnb", name: "BNB", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
+      { id: "ton", name: "Toncoin", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
+      { id: "xrp", name: "Ripple", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "XRP", color: "#23292F" },
+      { id: "pol", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
+      { id: "xmr", name: "Monero", icon: "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035", network: "XMR", color: "#FF6600" },
+      { id: "bch", name: "Bitcoin cash", icon: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035", network: "BCH", color: "#8DC351" },
+    ]
+  },
+  {
+    label: "Community & Trending",
+    items: [
+      { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
+      { id: "shib", name: "Shiba Inu", icon: "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035", network: "ERC20", color: "#FFA409" },
+      { id: "not", name: "Notcoin", icon: "https://cryptologos.cc/logos/notcoin-not-logo.svg?v=035", network: "TON", color: "#F5F5F5" },
+      { id: "dogs", name: "DOGS", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
+    ]
+  }
+]
+
 
 function CheckoutMainContent() {
   const router = useRouter()
@@ -252,26 +296,27 @@ function CheckoutMainContent() {
         const { createPayment } = await import("@/lib/db/payments")
 
         // Map payment method to OxaPay currency codes (exact symbols from their API)
-        const payCurrencyMap: Record<string, { currency: string, network?: string }> = {
-          "Bitcoin (BTC)": { currency: "BTC", network: "Bitcoin" },
-          "Ethereum (ETH)": { currency: "ETH", network: "Ethereum" },
-          "Ethereum (ETH-Base)": { currency: "ETH", network: "Base" },
-          "Ethereum (ETH-BEP20)": { currency: "ETH", network: "BSC" },
-          "Tether (USDT-ERC20)": { currency: "USDT", network: "Ethereum" },
-          "Tether (USDT-TRC20)": { currency: "USDT", network: "Tron" },
-          "Tether (USDT-BEP20)": { currency: "USDT", network: "BSC" },
-          "Tether (USDT-Polygon)": { currency: "USDT", network: "Polygon" },
-          "Tether (USDT-TON)": { currency: "USDT", network: "TON" },
-          "Tether (USDT-Solana)": { currency: "USDT", network: "Solana" },
-          "USD Coin (USDC-ERC20)": { currency: "USDC", network: "Ethereum" },
-          "USD Coin (USDC-SPL)": { currency: "USDC", network: "Solana" },
-          "USD Coin (USDC-BEP20)": { currency: "USDC", network: "BSC" },
-          "USD Coin (USDC-Base)": { currency: "USDC", network: "Base" },
-          "BNB (BNB)": { currency: "BNB", network: "BSC" },
-          "Polygon (POL)": { currency: "POL", network: "Polygon" },
-          "Litecoin (LTC)": { currency: "LTC", network: "Litecoin" },
-          "Solana (SOL)": { currency: "SOL", network: "Solana" },
-          "Ripple (XRP)": { currency: "XRP", network: "Ripple" },
+        const payCurrencyMap: Record<string, string> = {
+          "Bitcoin": "BTC",
+          "Ethereum": "ETH",
+          "Litecoin": "LTC",
+          "Tether": "USDT",
+          "Tron": "TRX",
+          "Dogecoin": "DOGE",
+          "Bitcoin cash": "BCH",
+          "BNB": "BNB",
+          "Solana": "SOL",
+          "USDC": "USDC",
+          "TON": "TON",
+          "Polygon": "POL", // OxaPay uses POL, not MATIC
+          "Monero": "XMR",
+          "Shiba Inu": "SHIB",
+          "DAI": "DAI",
+          "Notcoin": "NOT",
+          "DOGS": "DOGS",
+          "Ripple": "XRP",
+          "Toncoin": "TON",
+          "USD coin": "USDC",
         }
 
         // 1. Create or Update the Order in Supabase
@@ -370,12 +415,10 @@ function CheckoutMainContent() {
 
         // 2b. Create the OxaPay Invoice (existing flow)
         const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
-        const methodConfig = payCurrencyMap[selectedMethod] || { currency: "BTC" }
         const response = await createOxaPayWhiteLabelWithInquiry({
           amount: total,
           currency: "USD",
-          payCurrency: methodConfig.currency,
-          network: methodConfig.network,
+          payCurrency: payCurrencyMap[selectedMethod] || "BTC",
           orderId: order.id,
           description: `Order ${order.readable_id} from Rainyday`,
           email: email,
@@ -388,7 +431,7 @@ function CheckoutMainContent() {
         // 3. Create the Payment record with OxaPay track ID and pay_url
         await createPayment({
           order_id: order.id,
-          provider: methodConfig.currency || "Crypto",
+          provider: payCurrencyMap[selectedMethod] || "Crypto",
           amount: total,
           currency: "USD",
           track_id: response.trackId,
@@ -407,8 +450,7 @@ function CheckoutMainContent() {
         // Calculate real crypto amount using live exchange rates
         let finalCryptoAmount = response.amount
         let exchangeRate = 0
-        const methodConfigLater = payCurrencyMap[selectedMethod] || { currency: "BTC" }
-        const selectedCrypto = methodConfigLater.currency
+        const selectedCrypto = payCurrencyMap[selectedMethod] || "BTC"
 
         // If OxaPay didn't return a proper crypto amount, OR if it just mirrored the USD amount, OR if we just want to be sure
         // Always try to calculate strict crypto amount to avoid "1 BTC" issues
@@ -859,96 +901,55 @@ function CheckoutMainContent() {
                         </div>
 
                         {/* Grouped Crypto Sections */}
-                        {[
-                          {
-                            label: "Major Currencies",
-                            items: [
-                              { id: "btc", name: "Bitcoin (BTC)", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035", network: "Bitcoin", color: "#F7931A" },
-                              { id: "eth", name: "Ethereum (ETH)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "Mainnet", color: "#627EEA" },
-                              { id: "eth-base", name: "Ethereum (ETH-Base)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "Base", color: "#0052FF" },
-                              { id: "eth-bep20", name: "Ethereum (ETH-BEP20)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
-                              { id: "ltc", name: "Litecoin (LTC)", icon: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035", network: "Litecoin", color: "#345D9D" },
-                            ]
-                          },
-                          {
-                            label: "Tether (USDT)",
-                            items: [
-                              { id: "usdt-erc20", name: "Tether (USDT-ERC20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
-                              { id: "usdt-trc20", name: "Tether (USDT-TRC20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
-                              { id: "usdt-bep20", name: "Tether (USDT-BEP20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "BSC", color: "#26A17B" },
-                              { id: "usdt-polygon", name: "Tether (USDT-Polygon)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "Polygon", color: "#26A17B" },
-                              { id: "usdt-ton", name: "Tether (USDT-TON)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TON", color: "#26A17B" },
-                              { id: "usdt-solana", name: "Tether (USDT-Solana)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "Solana", color: "#26A17B" },
-                            ]
-                          },
-                          {
-                            label: "USD Coin (USDC)",
-                            items: [
-                              { id: "usdc-erc20", name: "USD Coin (USDC-ERC20)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
-                              { id: "usdc-spl", name: "USD Coin (USDC-SPL)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "Solana", color: "#2775CA" },
-                              { id: "usdc-bep20", name: "USD Coin (USDC-BEP20)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "BSC", color: "#2775CA" },
-                              { id: "usdc-base", name: "USD Coin (USDC-Base)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "Base", color: "#2775CA" },
-                            ]
-                          },
-                          {
-                            label: "Alt Networks",
-                            items: [
-                              { id: "bnb", name: "BNB (BNB)", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
-                              { id: "pol", name: "Polygon (POL)", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
-                              { id: "sol", name: "Solana (SOL)", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
-                              { id: "xrp", name: "Ripple (XRP)", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "Ripple", color: "#23292F" },
-                            ]
-                          }
-                        ]
-                          .map((group) => (
-                            <div key={group.label} className="space-y-4">
-                              <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
-                              <div className="flex flex-wrap gap-x-6 gap-y-4">
-                                {group.items.map((method) => {
-                                  const methodName = (method.name === "USDT" || method.name === "USD coin") ? `${method.name} (${method.network})` : method.name
-                                  const isSelected = selectedMethod === methodName
+                        {cryptoGroups.map((group) => (
+                          <div key={group.label} className="space-y-4">
+                            <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                            <div className="flex flex-wrap gap-x-6 gap-y-4">
+                              {group.items.map((method) => {
+                                const methodName = (method.name === "Tether" || method.name === "USD coin") ? `${method.name} (${method.network})` : method.name
+                                const isSelected = selectedMethod === methodName
 
-                                  return (
-                                    <div
-                                      key={method.id + method.network}
-                                      onClick={() => setSelectedMethod(methodName)}
-                                      style={{ "--item-color": method.color } as React.CSSProperties}
-                                      className={cn(
-                                        "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
-                                        isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
-                                      )}
-                                    >
-                                      <div className={cn(
-                                        "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
-                                        isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
-                                      )}>
-                                        <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
-                                      </div>
-
-                                      <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                          <span className={cn(
-                                            "text-sm font-bold tracking-tight transition-colors",
-                                            isSelected ? "text-white" : "text-white/80 group-hover:text-white"
-                                          )}>{method.name}</span>
-                                          {method.id === "ltc" && (
-                                            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                              <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                              <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                        <span className={cn(
-                                          "text-[9px] font-bold uppercase tracking-wide transition-colors",
-                                          isSelected ? "text-[var(--item-color)]" : "text-white/30"
-                                        )}>{method.network}</span>
-                                      </div>
+                                return (
+                                  <div
+                                    key={method.id + method.network}
+                                    onClick={() => setSelectedMethod(methodName)}
+                                    style={{ "--item-color": method.color } as React.CSSProperties}
+                                    className={cn(
+                                      "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
+                                      isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
+                                    )}
+                                  >
+                                    <div className={cn(
+                                      "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
+                                      isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
+                                    )}>
+                                      <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
                                     </div>
-                                  )
-                                })}
-                              </div>
+
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "text-sm font-bold tracking-tight transition-colors",
+                                          isSelected ? "text-white" : "text-white/80 group-hover:text-white"
+                                        )}>{method.name}</span>
+                                        {method.id === "ltc" && (
+                                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                            <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                            <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span className={cn(
+                                        "text-[9px] font-bold uppercase tracking-wide transition-colors",
+                                        isSelected ? "text-[var(--item-color)]" : "text-white/30"
+                                      )}>{method.network}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
                             </div>
-                          ))}
+                          </div>
+                        ))}
 
                       </div>
                     </div>
