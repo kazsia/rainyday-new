@@ -42,6 +42,22 @@ export async function deliverProduct(orderId: string) {
 
         if (!product) continue
 
+        // Fetch variant details if variant_id exists
+        let variant = null
+        if (item.variant_id) {
+            const { data: fetchedVariant, error: variantError } = await supabase
+                .from("product_variants")
+                .select("*")
+                .eq("id", item.variant_id)
+                .single()
+            if (variantError) {
+                console.error(`Failed to fetch variant ${item.variant_id}:`, variantError)
+                // Continue without variant details if there's an error
+            } else {
+                variant = fetchedVariant
+            }
+        }
+
         if (product.delivery_type === 'serials') {
             try {
                 const { data: assets, error: rpcError } = await supabase.rpc('claim_stock', {
@@ -203,7 +219,7 @@ async function deliverDynamic(product: any, item: any, order: any, secret: strin
         .digest("hex")
 
     try {
-        const response = await fetch(product.webhook_url, {
+        const response = await fetch(item.variant?.webhook_url || product.webhook_url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

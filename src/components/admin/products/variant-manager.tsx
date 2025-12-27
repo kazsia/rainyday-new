@@ -16,6 +16,7 @@ interface Variant {
     slashed_price: number | null
     stock_count: number
     is_active: boolean
+    webhook_url: string | null
 }
 
 interface VariantManagerProps {
@@ -34,7 +35,8 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
         name: "",
         price: 0,
         slashed_price: "",
-        stock_count: 0
+        stock_count: 0,
+        webhook_url: ""
     })
 
     const [editData, setEditData] = useState<Partial<Variant>>({})
@@ -62,11 +64,12 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                 ...newVariant,
                 price: Number(newVariant.price),
                 slashed_price: newVariant.slashed_price ? Number(newVariant.slashed_price) : null,
-                stock_count: Number(newVariant.stock_count)
+                stock_count: Number(newVariant.stock_count),
+                webhook_url: newVariant.webhook_url || null
             })
             toast.success("Variant added")
             setIsAdding(false)
-            setNewVariant({ name: "", price: 0, slashed_price: "", stock_count: 0 })
+            setNewVariant({ name: "", price: 0, slashed_price: "", stock_count: 0, webhook_url: "" })
             loadVariants()
         } catch (error) {
             toast.error("Failed to add variant")
@@ -152,6 +155,20 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                                 </div>
                             </div>
                         </div>
+
+                        {deliveryType === 'dynamic' && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/40 uppercase">Webhook URL (Optional Override)</label>
+                                <Input
+                                    value={newVariant.webhook_url}
+                                    onChange={e => setNewVariant({ ...newVariant, webhook_url: e.target.value })}
+                                    className="bg-black/20 border-white/10 h-9 text-sm"
+                                    placeholder="https://your-api.com/callback"
+                                />
+                                <p className="text-[10px] text-white/20">Overrides the product-level webhook URL if provided.</p>
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-2">
                             <Button type="button" variant="ghost" size="sm" onClick={() => setIsAdding(false)} className="h-8 text-xs font-bold text-white/40 hover:text-white">CANCEL</Button>
                             <Button type="button" size="sm" onClick={handleAdd} className="h-8 text-xs font-bold bg-brand-primary text-white">SAVE VARIANT</Button>
@@ -191,10 +208,20 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                                                 value={editData.stock_count !== undefined ? editData.stock_count : variant.stock_count}
                                                 onChange={e => setEditData({ ...editData, stock_count: parseInt(e.target.value) })}
                                                 className="bg-black/20 border-white/10 h-8 text-xs text-white/60"
-                                                placeholder="Stock"
                                             />
                                         </div>
                                     </div>
+                                    {deliveryType === 'dynamic' && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase">Webhook URL Override</label>
+                                            <Input
+                                                value={editData.webhook_url !== undefined ? editData.webhook_url : (variant.webhook_url || "")}
+                                                onChange={e => setEditData({ ...editData, webhook_url: e.target.value })}
+                                                className="bg-black/20 border-white/10 h-8 text-xs text-white"
+                                                placeholder="https://..."
+                                            />
+                                        </div>
+                                    )}
                                     <div className="flex justify-end gap-2">
                                         <Button type="button" variant="ghost" size="icon" onClick={() => setEditingId(null)} className="h-7 w-7 text-white/40 hover:text-white"><X className="w-3.5 h-3.5" /></Button>
                                         <Button type="button" variant="ghost" size="icon" onClick={() => handleUpdate(variant.id)} className="h-7 w-7 text-brand-primary hover:bg-brand-primary/10"><Save className="w-3.5 h-3.5" /></Button>
@@ -211,8 +238,8 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                                             ${variant.price}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {deliveryType === 'serials' && (
+                                    <div className="flex items-center gap-1 transition-opacity">
+                                        {(deliveryType === 'serials' || deliveryType === 'dynamic') && (
                                             <Button
                                                 type="button"
                                                 variant="ghost"
@@ -264,6 +291,32 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                                     </Button>
                                 </div>
                                 <StockManager productId={productId} variantId={variant.id} />
+                            </div>
+                        )}
+
+                        {expandedStockId === variant.id && deliveryType === 'dynamic' && (
+                            <div className="border-t border-white/5 p-4 bg-black/20">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                                        <Layers className="w-3 h-3" />
+                                        Dynamic Delivery Details for {variant.name}
+                                    </h4>
+                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStockId(null)} className="h-5 w-5 text-white/20 hover:text-white">
+                                        <X className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                                    <p className="text-xs text-white/60 mb-2">This variant uses dynamic delivery via webhook.</p>
+                                    <div className="p-3 bg-black/40 rounded border border-white/5 flex items-center justify-between">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] uppercase font-bold text-white/20">Webhook URL</span>
+                                            <span className="text-xs font-mono text-brand-primary break-all">{variant.webhook_url || "Using product default"}</span>
+                                        </div>
+                                    </div>
+                                    {!variant.webhook_url && (
+                                        <p className="text-[10px] text-white/20 mt-2 italic">Note: If no webhook is set here, the global product webhook will be used.</p>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>

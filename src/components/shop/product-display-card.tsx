@@ -10,7 +10,6 @@ import { toast } from "sonner"
 import { useCurrency } from "@/context/currency-context"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { createOrder } from "@/lib/db/orders"
 import AnimatedGenerateButton from "@/components/ui/animated-generate-button"
 import { Button as ThreeDButton } from "@/components/ui/3d-button"
 
@@ -59,29 +58,14 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
         toast.success(`Added ${title} to cart`)
     }
 
-    const handleBuyNow = async (e: React.MouseEvent) => {
+    const handleBuyNow = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (isOutOfStock) {
             toast.error("This product is out of stock")
             return
         }
-        setIsBuyingNow(true)
-        try {
-            const order = await createOrder({
-                total: price,
-                items: [{
-                    product_id: id,
-                    quantity: 1,
-                    price: price
-                }]
-            })
-            router.push(`/checkout/${order.readable_id}`)
-        } catch (error) {
-            console.error("Failed to start checkout:", error)
-            toast.error("Failed to start checkout. Please try again.")
-            setIsBuyingNow(false)
-        }
+        router.push(`/product/${id}`)
     }
 
     // Extract features from description (bullets)

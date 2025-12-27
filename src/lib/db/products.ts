@@ -169,6 +169,7 @@ export async function updateProduct(id: string, updates: any) {
 
     // Defensive cleanup of common fields
     const cleanUpdates = { ...updates }
+    if (updates.webhook_url !== undefined) cleanUpdates.webhook_url = updates.webhook_url || null
     delete cleanUpdates.badges // Relation, not a column
     if (cleanUpdates.category_id === "") cleanUpdates.category_id = null
     if (cleanUpdates.image_url === "") cleanUpdates.image_url = null
