@@ -63,7 +63,7 @@ async function sendEmail(options: EmailOptions) {
 // ============================================================
 
 function wrapTemplate(content: string, storeName: string = "Rainyday", invoiceUrl?: string) {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rainyday.cc"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://rainyday-new.vercel.app")
     const logoUrl = `${baseUrl}/email-logo.png`
 
     return `
@@ -163,7 +163,7 @@ export async function sendInvoiceCreatedEmail(order: Order) {
     const settings = await getSiteSettings()
     const storeName = settings.general?.name || "Rainyday"
     const orderId = order.readable_id || order.id.slice(0, 8).toUpperCase()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rainyday.cc"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://rainyday-new.vercel.app")
     const invoiceUrl = `${baseUrl}/invoice?id=${order.id}`
 
     const itemsHtml = order.order_items?.map(item => `
@@ -233,7 +233,7 @@ export async function sendPaymentConfirmedEmail(order: Order, paymentAmount?: nu
     const settings = await getSiteSettings()
     const storeName = settings.general?.name || "Rainyday"
     const orderId = order.readable_id || order.id.slice(0, 8).toUpperCase()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rainyday.cc"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://rainyday-new.vercel.app")
     const invoiceUrl = `${baseUrl}/invoice?id=${order.id}`
 
     // Get customizable template content
@@ -302,7 +302,7 @@ export async function sendDeliveryCompletedEmail(order: Order, deliveredAssets: 
     const settings = await getSiteSettings()
     const storeName = settings.general?.name || "Rainyday"
     const orderId = order.readable_id || order.id.slice(0, 8).toUpperCase()
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rainyday.cc"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://rainyday-new.vercel.app")
     const invoiceUrl = order.delivery_url || `${baseUrl}/invoice?id=${order.id}`
 
     // Get customizable template content
