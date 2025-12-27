@@ -33,59 +33,130 @@ export async function getCustomers(page: number = 1, search: string = "", status
     try {
         await ensureAdmin()
         const supabase = await createAdminClient()
-        const pageSize = 20
-        const from = (page - 1) * pageSize
-        const to = from + pageSize - 1
 
-        let query = supabase
-            .from("customers")
-            .select(`
-                *,
-                profiles!customers_user_id_fkey(full_name, avatar_url, role),
-                orders!orders_customer_email_fkey(id, total, created_at)
-            `, { count: 'exact' })
+        // 1. Fetch all profiles (Registered Users)
+        const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("*, orders:orders(id, total, created_at, status)")
 
-        if (search) {
-            // Note: profiles.full_name works because of the join
-            query = query.or(`email.ilike.%${search}%,id.ilike.%${search}%,profiles.full_name.ilike.%${search}%`)
-        }
+        if (profilesError) throw profilesError
 
-        if (status !== "all") {
-            query = query.eq("status", status)
-        }
+        // 2. Fetch all orders with emails (to capture Guests)
+        const { data: allOrders, error: ordersError } = await supabase
+            .from("orders")
+            .select("id, email, total, created_at, status, user_id")
+            .not("email", "is", null)
 
-        const { data, count, error } = await query
-            .order("last_seen_at", { ascending: false })
-            .range(from, to)
+        if (ordersError) throw ordersError
 
-        if (error) throw error
+        // 3. Merge Strategy
+        const customerMap = new Map<string, any>()
 
-        const users = data.map(customer => {
-            const orders = customer.orders || []
-            const totalSpent = orders.reduce((sum: number, o: any) => sum + Number(o.total), 0)
-            const lastOrderDate = orders.length > 0 ? new Date(Math.max(...orders.map((o: any) => new Date(o.created_at).getTime()))).toISOString() : null
+        // Initialize with Profiles
+        profiles.forEach((profile: any) => {
+            if (!profile.email) return
 
-            return {
-                id: customer.id,
-                email: customer.email,
-                user_id: customer.user_id,
-                full_name: customer.profiles?.full_name || null,
-                avatar_url: customer.profiles?.avatar_url || null,
-                role: customer.user_id ? (customer.profiles?.role || 'user') : 'guest',
-                status: customer.status,
-                is_registered: customer.is_registered,
-                newsletter_subscribed: customer.newsletter_subscribed,
-                balance: Number(customer.balance),
-                order_count: orders.length,
+            // Calculate stats from linked orders ( Supabase join )
+            const pOrders = profile.orders || []
+            const paidOrders = pOrders.filter((o: any) => ['paid', 'delivered', 'completed'].includes(o.status))
+            const totalSpent = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total), 0)
+            const lastOrderDate = pOrders.length > 0 ? new Date(Math.max(...pOrders.map((o: any) => new Date(o.created_at).getTime()))).toISOString() : null
+
+            customerMap.set(profile.email.toLowerCase(), {
+                id: profile.id,
+                email: profile.email,
+                user_id: profile.id,
+                full_name: profile.full_name,
+                avatar_url: profile.avatar_url,
+                role: profile.role || 'user',
+                status: profile.status || 'active',
+                is_registered: true,
+                newsletter_subscribed: profile.newsletter_subscribed || false,
+                balance: Number(profile.balance || 0),
+                order_count: pOrders.length,
                 total_spent: totalSpent,
                 last_order_at: lastOrderDate,
-                created_at: customer.first_seen_at,
-                last_seen_at: customer.last_seen_at,
-                referrer: customer.referrer
+                created_at: profile.created_at,
+                last_seen_at: profile.last_seen_at || profile.updated_at,
+                referrer: profile.referrer || 'Direct'
+            })
+        })
+
+        // Process Orders to find Guests and update stats
+        allOrders.forEach((order: any) => {
+            if (!order.email) return
+            const emailKey = order.email.toLowerCase()
+            const isGuest = !order.user_id
+
+            if (customerMap.has(emailKey)) {
+                // Already exists (Profile or previously processed Guest)
+                // Note: Profile fetch already included orders linked by user_id. 
+                // But some orders might be linked by email only if logic allowed.
+                // For safety/completeness, if we assume profile.orders captures everything via FK, we skip updating stats for profiles here.
+                // BUT, if an order has email matching profile but user_id is null (guest checkout by registered user without logging in),
+                // we might want to capture it.
+
+                const existing = customerMap.get(emailKey)
+                if (isGuest) {
+                    // This order was not linked to the user via user_id, add it to stats
+                    if (['paid', 'delivered', 'completed'].includes(order.status)) {
+                        existing.total_spent += Number(order.total)
+                    }
+                    existing.order_count += 1
+                    if (!existing.last_order_at || new Date(order.created_at) > new Date(existing.last_order_at)) {
+                        existing.last_order_at = order.created_at
+                    }
+                }
+            } else {
+                // New Guest
+                const isPaid = ['paid', 'delivered', 'completed'].includes(order.status)
+                customerMap.set(emailKey, {
+                    id: `guest_${emailKey}`, // Synthetic ID
+                    email: order.email,
+                    user_id: null,
+                    full_name: null,
+                    avatar_url: null,
+                    role: 'guest',
+                    status: 'active', // Guests are implicitly active
+                    is_registered: false,
+                    newsletter_subscribed: false,
+                    balance: 0,
+                    order_count: 1,
+                    total_spent: isPaid ? Number(order.total) : 0,
+                    last_order_at: order.created_at,
+                    created_at: order.created_at, // First time we saw this email
+                    last_seen_at: order.created_at,
+                    referrer: 'Direct'
+                })
             }
         })
 
-        return { success: true, users, count }
+        // 4. Convert to Array and Apply Filters
+        let result = Array.from(customerMap.values())
+
+        // Search
+        if (search) {
+            const lowerSearch = search.toLowerCase()
+            result = result.filter(u =>
+                u.email?.toLowerCase().includes(lowerSearch) ||
+                u.full_name?.toLowerCase().includes(lowerSearch) ||
+                u.id.toLowerCase().includes(lowerSearch)
+            )
+        }
+
+        // Status Filter
+        if (status !== "all") {
+            result = result.filter(u => u.status === status)
+        }
+
+        // Sort (default created_at desc)
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+        // Pagination
+        const totalCount = result.length
+        const paginatedUsers = result.slice((page - 1) * 20, page * 20)
+
+        return { success: true, users: paginatedUsers, count: totalCount }
     } catch (error: any) {
         console.error("Error in getCustomers:", error)
         return { error: error.message }

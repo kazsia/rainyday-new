@@ -565,10 +565,9 @@ function CheckoutMainContent() {
 
         // 4. Check if we need to redirect (white-label not available)
         if (response.isRedirect && response.payLink) {
-          // Don't clear cart here - it will be cleared on payment-waiting page
-          // Redirect to payment-waiting page which will handle OxaPay redirect and polling
-          const paymentWaitingUrl = `/payment-waiting?orderId=${order.id}&payUrl=${encodeURIComponent(response.payLink)}`
-          router.push(paymentWaitingUrl)
+          // Don't clear cart here - it will be cleared on return
+          // Redirect directly to the payment provider
+          window.location.href = response.payLink
           return
         }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import {
     Search,
@@ -31,9 +32,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export default function AdminInvoicesPage() {
+    const searchParams = useSearchParams()
     const [orders, setOrders] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [searchQuery, setSearchQuery] = useState("")
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
     const [statusFilter, setStatusFilter] = useState("all")
 
     useEffect(() => {

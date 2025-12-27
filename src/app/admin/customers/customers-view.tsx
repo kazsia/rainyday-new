@@ -22,6 +22,7 @@ import {
     UserX,
     Shield,
     Download,
+    ChevronDown,
     Plus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -42,6 +43,21 @@ import { createClient } from "@/lib/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { AddCustomerModal } from "@/components/admin/customers/add-customer-modal"
+
+function timeAgo(date: string) {
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+}
 
 export default function AdminCustomersPage() {
     const [users, setUsers] = useState<any[]>([])
@@ -147,6 +163,8 @@ export default function AdminCustomersPage() {
                     </div>
                 </div>
 
+
+
                 <AddCustomerModal
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
@@ -235,11 +253,14 @@ export default function AdminCustomersPage() {
                         <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="border-b border-[var(--sa-border)] bg-black/20">
-                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Customer Identity</th>
-                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-center">Type</th>
-                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Financials</th>
-                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Engagement</th>
-                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-right">Control</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest cursor-pointer hover:text-white transition-colors">ID <ChevronDown className="w-3 h-3 inline ml-1 opacity-50" /></th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">E-mail Address</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Discord</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Balance</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Newsletter</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Total Spent</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Last Order</th>
+                                    <th className="px-5 py-3 text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest text-right">Referrer</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--sa-border)]">
@@ -250,85 +271,58 @@ export default function AdminCustomersPage() {
                                             className="hover:bg-[var(--sa-card-hover)] transition-colors cursor-pointer group"
                                             onClick={() => openDetails(user.id)}
                                         >
-                                            <td className="px-5 py-2.5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative">
-                                                        <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-[var(--sa-border)] flex items-center justify-center text-[10px] font-black text-[var(--sa-fg-bright)] overflow-hidden uppercase">
-                                                            {user.avatar_url ? (
-                                                                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                (user.full_name || user.email || "?").charAt(0)
-                                                            )}
-                                                        </div>
-                                                        {user.status !== 'active' && (
-                                                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded bg-[var(--sa-error)] border border-[var(--sa-card)] flex items-center justify-center">
-                                                                <Ban className="w-2 h-2 text-white" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-white flex items-center gap-1.5 group-hover:text-[var(--sa-accent)] transition-colors">
-                                                            {user.full_name || user.email?.split('@')[0] || "Anonymous"}
-                                                            {user.role === 'admin' && <Shield className="w-3 h-3 text-[var(--sa-warning)]" />}
-                                                        </p>
-                                                        <p className="text-[10px] text-[var(--sa-fg-dim)] font-medium">{user.email}</p>
-                                                    </div>
+                                            <td className="px-5 py-3 align-middle text-xs font-medium text-[var(--sa-fg-dim)]">
+                                                {user.id.substring(0, 8)}
+                                            </td>
+                                            <td className="px-5 py-3 align-middle">
+                                                <div className="text-xs font-bold text-white group-hover:text-[var(--sa-accent)] transition-colors">
+                                                    {user.email}
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-2.5 text-center">
-                                                <span className={cn(
-                                                    "text-[9px] font-black uppercase tracking-wider py-0.5 px-1.5 rounded border",
-                                                    user.is_registered
-                                                        ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
-                                                        : "text-[var(--sa-fg-dim)] bg-white/5 border-white/5"
-                                                )}>
-                                                    {user.is_registered ? "Member" : "Guest"}
-                                                </span>
+                                            <td className="px-5 py-3 align-middle text-xs font-medium text-[var(--sa-fg-dim)]">
+                                                -
                                             </td>
-                                            <td className="px-5 py-2.5">
-                                                <p className="text-xs font-black text-white">
-                                                    ${Number(user.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </p>
+                                            <td className="px-5 py-3 align-middle text-xs font-medium text-white">
+                                                ${Number(user.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </td>
-                                            <td className="px-5 py-2.5">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn(
-                                                        "w-1.5 h-1.5 rounded-full",
-                                                        user.newsletter_subscribed ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-[var(--sa-fg-dim)]"
-                                                    )} />
-                                                    <span className="text-[10px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-tighter">
-                                                        {user.newsletter_subscribed ? "Subscribed" : "None"}
-                                                    </span>
+                                            <td className="px-5 py-3 align-middle">
+                                                {user.newsletter_subscribed ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-white">Subscribed</span>
+                                                        <span className="text-[10px] text-[var(--sa-fg-dim)]">Since {new Date(user.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs font-medium text-[var(--sa-fg-dim)]">Not Subscribed</span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-3 align-middle">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-white">${Number(user.total_spent || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                    <span className="text-[10px] text-[var(--sa-fg-dim)]">{user.order_count} orders</span>
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--sa-fg-dim)] hover:text-white transition-colors">
-                                                            <MoreVertical className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white p-1">
-                                                        <DropdownMenuItem onClick={() => openDetails(user.id)} className="text-[11px] font-bold cursor-pointer focus:bg-[var(--sa-accent-muted)] focus:text-[var(--sa-accent)]">
-                                                            <ExternalLink className="w-3.5 h-3.5 mr-2" />
-                                                            View Profile
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator className="bg-white/5" />
-                                                        <DropdownMenuItem onClick={async () => {
-                                                            const res = await forceUserLogout(user.id);
-                                                            if (res.success) toast.success("Client Logged Out");
-                                                        }} className="text-[11px] font-bold cursor-pointer focus:bg-rose-400/10 focus:text-rose-400">
-                                                            <LogOut className="w-3.5 h-3.5 mr-2" />
-                                                            Revoke Sessions
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                            <td className="px-5 py-3 align-middle text-xs font-medium text-[var(--sa-fg-dim)]">
+                                                {user.last_order_at ? timeAgo(user.last_order_at) : 'N/A'}
+                                            </td>
+                                            <td className="px-5 py-3 align-middle text-right">
+                                                <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={() => {
+                                                            // Redirect to orders
+                                                            window.location.href = `/admin/invoices?search=${user.email}`
+                                                        }}
+                                                        className="text-[10px] uppercase font-bold text-[var(--sa-fg-dim)] hover:text-white flex items-center gap-1.5 transition-colors"
+                                                    >
+                                                        <History className="w-3 h-3" />
+                                                        View Invoices
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="p-12 text-center text-[var(--sa-fg-dim)] text-xs font-medium">
+                                        <td colSpan={8} className="p-12 text-center text-[var(--sa-fg-dim)] text-xs font-medium">
                                             No customers found.
                                         </td>
                                     </tr>
@@ -336,100 +330,8 @@ export default function AdminCustomersPage() {
                             </tbody>
                         </table>
 
-                        <div className="lg:hidden divide-y divide-[var(--sa-border)]">
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        className="p-4 space-y-4 hover:bg-[var(--sa-card-hover)] transition-colors cursor-pointer"
-                                        onClick={() => openDetails(user.id)}
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="relative">
-                                                    <div className="w-10 h-10 rounded-lg bg-white/[0.03] border border-[var(--sa-border)] flex items-center justify-center text-[10px] font-black text-[var(--sa-fg-bright)] overflow-hidden uppercase">
-                                                        {user.avatar_url ? (
-                                                            <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            (user.full_name || user.email || "?").charAt(0)
-                                                        )}
-                                                    </div>
-                                                    {user.status !== 'active' && (
-                                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded bg-[var(--sa-error)] border border-[var(--sa-card)] flex items-center justify-center">
-                                                            <Ban className="w-2 h-2 text-white" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-white flex items-center gap-1.5 group-hover:text-[var(--sa-accent)] transition-colors">
-                                                        {user.full_name || user.email?.split('@')[0] || "Anonymous"}
-                                                        {user.role === 'admin' && <Shield className="w-3 h-3 text-[var(--sa-warning)]" />}
-                                                    </p>
-                                                    <p className="text-[10px] text-[var(--sa-fg-dim)] font-medium">{user.email}</p>
-                                                </div>
-                                            </div>
-                                            <span className={cn(
-                                                "text-[9px] font-black uppercase tracking-wider py-0.5 px-1.5 rounded border",
-                                                user.is_registered
-                                                    ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
-                                                    : "text-[var(--sa-fg-dim)] bg-white/5 border-white/5"
-                                            )}>
-                                                {user.is_registered ? "Member" : "Guest"}
-                                            </span>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Financials</p>
-                                                <p className="text-sm font-black text-[var(--sa-accent)]">
-                                                    ${Number(user.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[9px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Engagement</p>
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn(
-                                                        "w-1.5 h-1.5 rounded-full",
-                                                        user.newsletter_subscribed ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-[var(--sa-fg-dim)]"
-                                                    )} />
-                                                    <span className="text-[10px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-tighter">
-                                                        {user.newsletter_subscribed ? "Subscribed" : "None"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-end pt-1 border-t border-white/5" onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="h-7 px-3 text-[var(--sa-fg-dim)] hover:text-white bg-white/[0.02] border border-white/5 text-[10px] font-bold uppercase tracking-widest gap-1.5 transition-all">
-                                                        <MoreVertical className="w-3 h-3" />
-                                                        Manage
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white p-1">
-                                                    <DropdownMenuItem onClick={() => openDetails(user.id)} className="text-[11px] font-bold cursor-pointer focus:bg-[var(--sa-accent-muted)] focus:text-[var(--sa-accent)]">
-                                                        <ExternalLink className="w-3.5 h-3.5 mr-2" />
-                                                        View Profile
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-white/5" />
-                                                    <DropdownMenuItem onClick={async () => {
-                                                        const res = await forceUserLogout(user.id);
-                                                        if (res.success) toast.success("Client Logged Out");
-                                                    }} className="text-[11px] font-bold cursor-pointer focus:bg-rose-400/10 focus:text-rose-400">
-                                                        <LogOut className="w-3.5 h-3.5 mr-2" />
-                                                        Revoke Sessions
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="p-12 text-center text-[var(--sa-fg-dim)] text-xs font-medium">
-                                    No customers found.
-                                </div>
-                            )}
+                        <div className="lg:hidden p-4 text-center text-[var(--sa-fg-dim)] text-xs">
+                            Please use a larger screen to view the customers table.
                         </div>
                     </div>
 
@@ -463,13 +365,16 @@ export default function AdminCustomersPage() {
                 </div>
             </div>
 
-            {selectedUserId && (
-                <CustomerDetailDrawer
-                    userId={selectedUserId}
-                    isOpen={isDrawerOpen}
-                    onClose={() => setIsDrawerOpen(false)}
-                />
-            )}
-        </AdminLayout>
+
+            {
+                selectedUserId && (
+                    <CustomerDetailDrawer
+                        userId={selectedUserId}
+                        isOpen={isDrawerOpen}
+                        onClose={() => setIsDrawerOpen(false)}
+                    />
+                )
+            }
+        </AdminLayout >
     )
 }
