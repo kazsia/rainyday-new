@@ -1195,7 +1195,7 @@ function CheckoutMainContent() {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white">{cryptoDetails?.payCurrency || 'Crypto'}</p>
-                        <p className="text-[10px] font-medium text-white/40 truncate max-w-[200px]">{cryptoDetails?.invoiceId}</p>
+                        <p className="text-[10px] font-medium text-white/40 truncate max-w-[200px]">{orderId || urlOrderId}</p>
                       </div>
                     </div>
 
@@ -1204,8 +1204,8 @@ function CheckoutMainContent() {
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-white/40">Invoice ID</span>
                         <span className="text-xs font-medium text-white/60 flex items-center gap-2">
-                          <span className="truncate max-w-[150px]">{cryptoDetails?.invoiceId}</span>
-                          <button onClick={() => copyToClipboard(cryptoDetails?.invoiceId || '')} className="hover:text-[#a4f8ff] transition-colors">
+                          <span className="truncate max-w-[150px]">{orderId || urlOrderId}</span>
+                          <button onClick={() => copyToClipboard(orderId || urlOrderId || '')} className="hover:text-[#a4f8ff] transition-colors">
                             <Copy className="w-3 h-3" />
                           </button>
                         </span>

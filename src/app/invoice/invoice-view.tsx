@@ -511,12 +511,12 @@ function InvoiceContent() {
                 <div key={item.s} className="space-y-3 flex-1">
                   <div className={cn(
                     "h-1 w-full rounded-full transition-all duration-1000",
-                    isActiveOrCompleted ? "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]" : "bg-white/5"
+                    isActiveOrCompleted ? "bg-[#a4f8ff] shadow-[0_0_15px_rgba(164,248,255,0.5)]" : "bg-white/5"
                   )} />
                   <div className="space-y-1">
                     <p className={cn(
                       "text-[10px] font-black uppercase tracking-widest transition-colors",
-                      isActiveOrCompleted ? "text-indigo-400" : "text-white/20"
+                      isActiveOrCompleted ? "text-[#a4f8ff]" : "text-white/20"
                     )}>Step {item.s}</p>
                     <p className={cn(
                       "text-xs font-bold tracking-tight transition-colors",
@@ -569,7 +569,7 @@ function InvoiceContent() {
                         {item.copy && (
                           <button
                             onClick={() => copyToClipboard(item.value)}
-                            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                            className="text-[#a4f8ff] hover:text-[#8ae6ed] transition-colors"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
@@ -588,9 +588,9 @@ function InvoiceContent() {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-6 rounded-xl border border-[#6366f1]/30 bg-[#6366f1]/5 flex items-center justify-center text-center"
+                      className="p-6 rounded-xl border border-[#a4f8ff]/30 bg-[#a4f8ff]/5 flex items-center justify-center text-center"
                     >
-                      <p className="text-sm font-bold text-[#6366f1]">Your order has been completed successfully!</p>
+                      <p className="text-sm font-bold text-[#a4f8ff]">Your order has been completed successfully!</p>
                     </motion.div>
 
                     {/* Delivered Items - shown right after success */}
@@ -598,7 +598,7 @@ function InvoiceContent() {
                       {(deliverables.length > 0 || hasDeliveryRecord) ? (
                         <>
                           <div className="flex items-center gap-3 mb-2">
-                            <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Delivered Items</h2>
+                            <h2 className="text-xl font-black text-[#a4f8ff] tracking-tight">Delivered Items</h2>
                           </div>
 
                           {order.order_items?.map((item: any, idx: number) => {
@@ -651,14 +651,14 @@ function InvoiceContent() {
                                     >
                                       <div className="p-6 space-y-6">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Deliverables</span>
+                                          <span className="text-xs font-black text-[#a4f8ff] uppercase tracking-widest">Deliverables</span>
                                         </div>
                                         <div className="space-y-3">
                                           {itemAssets.length > 0 ? (
                                             itemAssets.map((d: any, i: number) => (
                                               <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 group/code">
                                                 <code className="text-sm font-medium text-white/60 tracking-tight break-all overflow-hidden text-ellipsis whitespace-nowrap">{d}</code>
-                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#6366f1] cursor-pointer transition-colors ml-4 shrink-0" onClick={() => copyToClipboard(d)} />
+                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#a4f8ff] cursor-pointer transition-colors ml-4 shrink-0" onClick={() => copyToClipboard(d)} />
                                               </div>
                                             ))
                                           ) : (
@@ -685,7 +685,7 @@ function InvoiceContent() {
                                               URL.revokeObjectURL(url)
                                               toast.success("Deliverables downloaded as .txt")
                                             }}
-                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#6366f1]/30 text-white/90 hover:bg-[#6366f1]/10 gap-2 rounded-xl"
+                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#a4f8ff]/30 text-white/90 hover:bg-[#a4f8ff]/10 gap-2 rounded-xl"
                                           >
                                             Download Deliverables
                                             <Download className="w-3 h-3" />
@@ -697,7 +697,7 @@ function InvoiceContent() {
                                               copyToClipboard(itemAssets.join('\n'))
                                               toast.success("All deliverables copied to clipboard")
                                             }}
-                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#6366f1]/30 text-white/90 hover:bg-[#6366f1]/10 gap-2 rounded-xl"
+                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#a4f8ff]/30 text-white/90 hover:bg-[#a4f8ff]/10 gap-2 rounded-xl"
                                           >
                                             Copy Deliverables
                                             <Copy className="w-3 h-3" />
@@ -749,7 +749,7 @@ function InvoiceContent() {
                     >
                       {order.feedbacks && order.feedbacks.length > 0 ? (
                         <div className="space-y-6">
-                          <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Your Feedback</h2>
+                          <h2 className="text-xl font-black text-[#a4f8ff] tracking-tight">Your Feedback</h2>
                           <div className="p-8 rounded-[2rem] bg-[#0b0f1a]/40 border border-white/5 space-y-8 relative overflow-hidden group">
                             <div className="absolute -top-6 -right-6 p-8 text-white/[0.02]">
                               <MessageSquareQuote size={120} />
@@ -757,7 +757,7 @@ function InvoiceContent() {
 
                             <div className="relative z-10 space-y-8">
                               <div className="space-y-3">
-                                <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Rating</span>
+                                <span className="text-xs font-black text-[#a4f8ff] uppercase tracking-widest">Rating</span>
                                 <div className="flex gap-1.5">
                                   {[1, 2, 3, 4, 5].map((s) => (
                                     <Star
@@ -774,7 +774,7 @@ function InvoiceContent() {
                               </div>
 
                               <div className="space-y-3">
-                                <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Message</span>
+                                <span className="text-xs font-black text-[#a4f8ff] uppercase tracking-widest">Message</span>
                                 <p className="text-sm font-medium text-white/90 leading-relaxed uppercase">
                                   {order.feedbacks[0].message}
                                 </p>
@@ -782,7 +782,7 @@ function InvoiceContent() {
 
                               {order.feedbacks[0].admin_reply && (
                                 <div className="space-y-3 pt-4 border-t border-white/5">
-                                  <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Reply from {settings.general?.name || "Rainyday"}</span>
+                                  <span className="text-xs font-black text-[#a4f8ff] uppercase tracking-widest">Reply from {settings.general?.name || "Rainyday"}</span>
                                   <p className="text-sm font-medium text-white/60 leading-relaxed">
                                     {order.feedbacks[0].admin_reply}
                                   </p>
@@ -796,7 +796,7 @@ function InvoiceContent() {
                           <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Leave Feedback</h2>
+                                <h2 className="text-xl font-black text-[#a4f8ff] tracking-tight">Leave Feedback</h2>
                               </div>
                               <span className="text-[9px] font-bold text-white/20 uppercase tracking-wider">Takes 30 seconds</span>
                             </div>
@@ -858,8 +858,8 @@ function InvoiceContent() {
                     ) : paymentDetails?.address ? (
                       <div className="space-y-8">
                         {/* Top Auto-Process Banner */}
-                        <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-center">
-                          <p className="text-[11px] font-bold text-indigo-400">
+                        <div className="p-4 rounded-xl bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-center">
+                          <p className="text-[11px] font-bold text-[#a4f8ff]">
                             Your order will be automatically processed once the payment is received.
                           </p>
                         </div>
@@ -867,11 +867,11 @@ function InvoiceContent() {
                         <div className="relative pl-12 space-y-12">
                           {/* Step 1: Destination Address */}
                           <div className="relative space-y-6">
-                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-sm font-black shadow-[0_0_20px_rgba(99,102,241,0.4)] z-10">
+                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#a4f8ff] flex items-center justify-center text-black text-sm font-black shadow-[0_0_20px_rgba(164,248,255,0.4)] z-10">
                               1
                             </div>
                             {/* Connector Line to Step 2 */}
-                            <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#6366f1]/40" />
+                            <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#a4f8ff]/40" />
                             <div className="space-y-1">
                               <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
                               <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
@@ -893,10 +893,10 @@ function InvoiceContent() {
                               <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
                               <div
                                 onClick={() => copyToClipboard(paymentDetails.address)}
-                                className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/addr"
+                                className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
                               >
-                                <code className="text-sm font-bold text-white truncate max-w-[240px]">{paymentDetails.address || 'Initializing...'}</code>
-                                <Copy className="w-4 h-4 text-white/60 group-hover/addr:text-white transition-colors" />
+                                <code className="text-sm font-bold text-black truncate max-w-[240px]">{paymentDetails.address || 'Initializing...'}</code>
+                                <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
                               </div>
                               <Button
                                 variant="outline"
@@ -911,7 +911,7 @@ function InvoiceContent() {
 
                           {/* Step 2: Exact Amount */}
                           <div className="relative space-y-6">
-                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#6366f1] flex items-center justify-center text-[#6366f1] text-sm font-black ring-1 ring-[#6366f1]/20">
+                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#a4f8ff] flex items-center justify-center text-[#a4f8ff] text-sm font-black ring-1 ring-[#a4f8ff]/20">
                               2
                             </div>
                             <div className="space-y-1">
@@ -920,10 +920,10 @@ function InvoiceContent() {
                             </div>
                             <div
                               onClick={() => copyToClipboard(paymentDetails.amount)}
-                              className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/amt w-fit min-w-[200px]"
+                              className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/amt w-fit min-w-[200px]"
                             >
-                              <span className="text-sm font-black text-white">{paymentDetails.amount || '...'}</span>
-                              <Copy className="w-4 h-4 text-white/60 group-hover/amt:text-white transition-colors ml-6" />
+                              <span className="text-sm font-black text-black">{paymentDetails.amount || '...'}</span>
+                              <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
                             </div>
                           </div>
                         </div>
@@ -976,8 +976,8 @@ function InvoiceContent() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6366f1]">Transaction History</h4>
-                          <span className="text-[8px] font-black text-[#6366f1]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
+                          <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
                         </div>
                       </div>
 
@@ -1001,7 +1001,7 @@ function InvoiceContent() {
                             </div>
                             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
                               <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Confirmations</p>
-                              <p className="text-[10px] font-black text-[#6366f1] tracking-tighter uppercase">
+                              <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
                                 {blockchainStatus?.confirmations || 0} Block{blockchainStatus?.confirmations === 1 ? '' : 's'}
                               </p>
                             </div>
