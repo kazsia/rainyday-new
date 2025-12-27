@@ -291,9 +291,11 @@ function CheckoutMainContent() {
           "Monero": "XMR",
           "Shiba Inu": "SHIB",
           "DAI": "DAI",
-          "NotCoin": "NOT",
-          "Dogs": "DOGS",
+          "Notcoin": "NOT",
+          "DOGS": "DOGS",
           "Ripple": "XRP",
+          "Toncoin": "TON",
+          "USD coin": "USDC",
         }
 
         // 1. Create or Update the Order in Supabase
@@ -892,7 +894,7 @@ function CheckoutMainContent() {
                             items: [
                               { id: "usdt-trc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
                               { id: "usdt-erc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
-                              { id: "usdc", name: "USDC", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
+                              { id: "usdc", name: "USD coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
                               { id: "dai", name: "DAI", icon: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035", network: "ERC20", color: "#F5AC37" },
                             ]
                           },
@@ -902,8 +904,8 @@ function CheckoutMainContent() {
                               { id: "sol", name: "Solana", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
                               { id: "trx", name: "Tron", icon: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035", network: "TRX", color: "#FF0013" },
                               { id: "bnb", name: "BNB", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
-                              { id: "ton", name: "TON", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
-                              { id: "xrp", name: "Ripple", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "Ripple", color: "#23292F" },
+                              { id: "ton", name: "Toncoin", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
+                              { id: "xrp", name: "Ripple", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "XRP", color: "#23292F" },
                               { id: "pol", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
                               { id: "xmr", name: "Monero", icon: "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035", network: "XMR", color: "#FF6600" },
                               { id: "bch", name: "Bitcoin Cash", icon: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035", network: "BCH", color: "#8DC351" },
@@ -914,8 +916,8 @@ function CheckoutMainContent() {
                             items: [
                               { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
                               { id: "shib", name: "Shiba Inu", icon: "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035", network: "ERC20", color: "#FFA409" },
-                              { id: "not", name: "NotCoin", icon: "https://cryptologos.cc/logos/notcoin-not-logo.svg?v=035", network: "TON", color: "#F5F5F5" },
-                              { id: "dogs", name: "Dogs", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
+                              { id: "not", name: "Notcoin", icon: "https://cryptologos.cc/logos/notcoin-not-logo.svg?v=035", network: "TON", color: "#F5F5F5" },
+                              { id: "dogs", name: "DOGS", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
                             ]
                           }
                         ]
@@ -924,7 +926,7 @@ function CheckoutMainContent() {
                               <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
                               <div className="flex flex-wrap gap-x-6 gap-y-4">
                                 {group.items.map((method) => {
-                                  const methodName = method.name === "USDT" ? `${method.name} (${method.network})` : method.name
+                                  const methodName = (method.name === "USDT" || method.name === "USD coin") ? `${method.name} (${method.network})` : method.name
                                   const isSelected = selectedMethod === methodName
 
                                   return (

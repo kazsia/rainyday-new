@@ -299,7 +299,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
         "BCH": "Bitcoin Cash",
         "BNB": "BSC",  // Binance Smart Chain / BEP20
         "SOL": "Solana",
-        "XMR": "Monero",
+        "XMR": "XMR",
         "USDT": "TRC20", // Default USDT to TRC20
         "USDC": "Polygon",
         "TON": "TON",
@@ -308,7 +308,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
         "DAI": "Ethereum",
         "NOT": "TON",
         "DOGS": "TON",
-        "XRP": "Ripple",
+        "XRP": "XRP",
     }
 
     const payCurrency = params.payCurrency || "BTC"
@@ -354,7 +354,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
                 isRedirect: false,
             }
         }
-        console.log("[OxaPay WhiteLabel] Step 0 - v1 API failed or no address, error:", v1Data.message || v1Data.error)
+        console.error("[OxaPay WhiteLabel] Step 0 FAILURE:", v1Data.message || v1Data.error || "Unknown error")
     } catch (v1Error) {
         console.error("[OxaPay WhiteLabel] Step 0 - v1 API Error:", v1Error)
     }
