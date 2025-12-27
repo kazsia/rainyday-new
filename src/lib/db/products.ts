@@ -416,6 +416,7 @@ export async function createVariant(productId: string, variant: any) {
             price: Number(variant.price),
             slashed_price: variant.slashed_price ? Number(variant.slashed_price) : null,
             stock_count: Number(variant.stock_count) || 0,
+            webhook_url: variant.webhook_url || null,
             is_active: variant.is_active !== undefined ? variant.is_active : true,
             sort_order: variant.sort_order || 0
         })
@@ -427,9 +428,14 @@ export async function createVariant(productId: string, variant: any) {
 
 export async function updateVariant(id: string, updates: any) {
     const supabaseAdmin = await getAdminClient()
+
+    // Cleanup updates
+    const cleanUpdates = { ...updates }
+    if (cleanUpdates.webhook_url === "") cleanUpdates.webhook_url = null
+
     const { data, error } = await supabaseAdmin
         .from('product_variants')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', id)
         .select()
 

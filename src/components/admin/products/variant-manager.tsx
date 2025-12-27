@@ -82,7 +82,8 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                 ...editData,
                 price: editData.price !== undefined ? Number(editData.price) : undefined,
                 slashed_price: editData.slashed_price !== undefined ? (editData.slashed_price ? Number(editData.slashed_price) : null) : undefined,
-                stock_count: editData.stock_count !== undefined ? Number(editData.stock_count) : undefined
+                stock_count: editData.stock_count !== undefined ? Number(editData.stock_count) : undefined,
+                webhook_url: editData.webhook_url !== undefined ? editData.webhook_url : undefined
             })
             toast.success("Variant updated")
             setEditingId(null)
@@ -215,7 +216,7 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-white/40 uppercase">Webhook URL Override</label>
                                             <Input
-                                                value={editData.webhook_url !== undefined ? editData.webhook_url : (variant.webhook_url || "")}
+                                                value={editData.webhook_url !== undefined ? (editData.webhook_url ?? "") : (variant.webhook_url ?? "")}
                                                 onChange={e => setEditData({ ...editData, webhook_url: e.target.value })}
                                                 className="bg-black/20 border-white/10 h-8 text-xs text-white"
                                                 placeholder="https://..."
