@@ -10,6 +10,7 @@ import { Package } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { Settings } from "lucide-react"
 import { User } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { ChevronDown } from "lucide-react"
 import { ExternalLink } from "lucide-react"
 import { Layout } from "lucide-react"
@@ -44,6 +45,7 @@ const navigation = [
         ]
     },
     { name: "Configure", href: "/admin/storefront?tab=identity", icon: Settings },
+    { name: "Payments", href: "/admin/payment-methods", icon: CreditCard },
     { name: "Editor", href: "/admin/storefront?tab=hero", icon: Layout },
     {
         name: "Settings",
@@ -51,7 +53,6 @@ const navigation = [
         children: [
             { name: "Team", href: "/admin/team" },
             { name: "Blacklist", href: "/admin/blacklist" },
-            { name: "Domains", href: "/admin/domains" },
             { name: "Export", href: "/admin/export" },
         ]
     },
@@ -251,7 +252,26 @@ function SidebarContent({ className, isDrawer, onClose }: { className?: string, 
                 <div>
                     <h3 className="px-3 mb-2 text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">Configuration</h3>
                     <div className="space-y-0.5">
-                        {navigation.slice(3, 5).map((item) => (
+                        {navigation.slice(3, 6).map((item) => (
+                            <NavItem
+                                key={item.name}
+                                item={item}
+                                currentHref={currentHref}
+                                expandedItems={expandedItems}
+                                toggleExpand={toggleExpand}
+                                router={router}
+                                isDrawer={isDrawer}
+                                onClose={onClose}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* System Settings Group */}
+                <div>
+                    <h3 className="px-3 mb-2 text-[10px] font-black text-[var(--sa-fg-dim)] uppercase tracking-widest">System</h3>
+                    <div className="space-y-0.5">
+                        {navigation.slice(6, 7).map((item) => (
                             <NavItem
                                 key={item.name}
                                 item={item}

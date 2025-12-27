@@ -1,6 +1,6 @@
 /**
  * Invoice Page - Real-time Blockchain Tracking
- * [Cache Break: v1.0.1 - Project-wide CircleAlert Migration]
+ * [Cache Break: v1.0.2 - HMR Factory Fix]
  */
 "use client"
 
@@ -11,28 +11,7 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 
-import {
-  CheckCircle2,
-  Copy,
-  Download,
-  ChevronDown,
-  ExternalLink,
-  Clock,
-  User,
-  Mail,
-  CreditCard,
-  Search,
-  ShieldCheck,
-  ArrowRight,
-  Lock,
-  QrCode,
-  Wallet,
-  Loader2,
-  LockKeyhole,
-  Activity
-} from "lucide-react"
-
-
+import { Star, MessageSquareQuote, CheckCircle2, Copy, Download, ChevronDown, ExternalLink, Clock, User, Mail, CreditCard, Search, ShieldCheck, ArrowRight, Lock, QrCode, Wallet, Loader2, LockKeyhole } from "lucide-react"
 import { getOrder } from "@/lib/db/orders"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -42,8 +21,27 @@ import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { trackAddressStatus, TransactionStatus } from "@/lib/payments/blockchain-tracking"
 import { FeedbackForm } from "@/components/feedback/feedback-form"
+import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
+
+const getPaymentIcon = (provider: string) => {
+  const p = provider.toLowerCase()
+  if (p.includes('btc') || p.includes('bitcoin')) return "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035"
+  if (p.includes('eth') || p.includes('ethereum')) return "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035"
+  if (p.includes('ltc') || p.includes('litecoin')) return "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035"
+  if (p.includes('usdt') || p.includes('tether')) return "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035"
+  if (p.includes('usdc')) return "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035"
+  if (p.includes('sol') || p.includes('solana')) return "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035"
+  if (p.includes('trx') || p.includes('tron')) return "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035"
+  if (p.includes('bnb')) return "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035"
+  if (p.includes('doge')) return "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035"
+  if (p.includes('shib')) return "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035"
+  if (p.includes('ton')) return "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035"
+  if (p.includes('paypal') || p === 'pp') return "https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg"
+  return null
+}
 
 function InvoiceContent() {
+  const { settings } = useSiteSettingsWithDefaults()
   const searchParams = useSearchParams()
   const orderId = searchParams.get("id")
   const [order, setOrder] = useState<any>(null)
@@ -497,31 +495,37 @@ function InvoiceContent() {
         <div className="flex-1 p-8 lg:p-12 lg:px-20 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
           <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(38,188,196,0.05),transparent_60%)] pointer-events-none" />
 
-          <div className="grid grid-cols-3 gap-6 relative z-10 mb-12">
+          {/* Steps Navigation - Synced with Checkout */}
+          <div className="grid grid-cols-3 gap-6 relative z-10 mb-12 max-w-2xl mx-auto w-full">
             {[
-              { step: 1, label: "Order Info", icon: User, complete: true },
-              { step: 2, label: "Confirm & Pay", icon: CreditCard, complete: isPaid },
-              { step: 3, label: "Receive Goods", icon: CheckCircle2, complete: order.status === 'delivered' || order.status === 'completed' }
-            ].map((s) => (
-              <div key={s.step} className="space-y-3">
-                <div className={cn(
-                  "h-1 rounded-full transition-all duration-700 relative z-10",
-                  s.complete ? "bg-brand-primary shadow-[0_0_20px_rgba(38,188,196,0.4)]" : "bg-white/10"
-                )} />
-                <div className="flex items-center gap-2.5">
+              { s: 1, label: "Order Information" },
+              { s: 2, label: "Confirm & Pay" },
+              { s: 3, label: "Receive Your Items" }
+            ].map((item) => {
+              // For invoice page, Step 1 and 2 are always completed/active.
+              // Step 3 is completed if status is delivered or completed.
+              const isStep3Completed = order.status === 'delivered' || order.status === 'completed'
+              const isActiveOrCompleted = item.s <= 2 || (item.s === 3 && isStep3Completed)
+
+              return (
+                <div key={item.s} className="space-y-3 flex-1">
                   <div className={cn(
-                    "w-6 h-6 rounded-lg flex items-center justify-center transition-colors",
-                    s.complete ? "bg-brand-primary/10 text-brand-primary" : "bg-white/5 text-white/10"
-                  )}>
-                    <s.icon className="w-3 h-3" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className={cn("text-[8px] font-black uppercase tracking-[0.2em]", s.complete ? "text-brand-primary" : "text-white/20")}>Step 0{s.step}</p>
-                    <p className={cn("text-[10px] font-bold tracking-tight", s.complete ? "text-white" : "text-white/20")}>{s.label}</p>
+                    "h-1 w-full rounded-full transition-all duration-1000",
+                    isActiveOrCompleted ? "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]" : "bg-white/5"
+                  )} />
+                  <div className="space-y-1">
+                    <p className={cn(
+                      "text-[10px] font-black uppercase tracking-widest transition-colors",
+                      isActiveOrCompleted ? "text-indigo-400" : "text-white/20"
+                    )}>Step {item.s}</p>
+                    <p className={cn(
+                      "text-xs font-bold tracking-tight transition-colors",
+                      isActiveOrCompleted ? "text-white/90" : "text-white/20"
+                    )}>{item.label}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <div className="flex-1 max-w-xl w-full mx-auto flex flex-col relative z-10">
@@ -530,55 +534,47 @@ function InvoiceContent() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-8 pb-12"
             >
-              {/* Stepper - shows progress */}
-              {isPaid && (
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { step: 1, label: "Order Information", completed: true },
-                    { step: 2, label: "Confirm & Pay", completed: true },
-                    { step: 3, label: "Receive Your Items", completed: true },
-                  ].map((s) => (
-                    <div key={s.step} className="flex flex-col items-center gap-2">
-                      <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-green-500/40 to-transparent" />
-                      <span className="text-[10px] font-bold text-green-400">Step {s.step}</span>
-                      <span className="text-[9px] font-medium text-white/60 text-center">{s.label}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               <div className="space-y-6">
                 {/* Crypto currency badge for paid orders */}
                 {isPaid && payment?.provider && (
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-brand-primary" />
+                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center p-2 overflow-hidden">
+                      {getPaymentIcon(payment.provider) ? (
+                        <img src={getPaymentIcon(payment.provider)!} alt={payment.provider} className="w-full h-full object-contain" />
+                      ) : (
+                        <CreditCard className="w-5 h-5 text-white/20" />
+                      )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{payment.provider}</p>
+                      <p className="text-sm font-bold text-white uppercase tracking-tight">{payment.provider}</p>
                       <p className="text-[10px] text-white/40 font-mono">{payment.track_id || order.id}</p>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-1.5 p-6 rounded-3xl bg-white/[0.01] border border-white/5">
+                {/* Metadata List - Precise Image Match Consistency */}
+                <div className="space-y-4 px-2">
                   {[
                     { label: "Invoice ID", value: payment?.track_id || order.id, copy: true },
-                    { label: "Email Address", value: order.email },
+                    { label: "E-mail Address", value: order.email },
                     { label: "Total Price", value: `$${Number(order.total).toFixed(2)}` },
                     ...(isPaid && paymentDetails?.amount ? [{ label: `Total Amount (${paymentDetails.payCurrency})`, value: `${paymentDetails.amount} ${paymentDetails.payCurrency}` }] : []),
                     { label: "Created At", value: new Date(order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) },
                     ...(isPaid ? [{ label: "Completed At", value: new Date(order.updated_at || order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) }] : []),
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors group/item">
-                      <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] ">{item.label}</span>
+                    <div key={i} className="flex items-start justify-between py-1.5 group/item">
+                      <span className="text-sm font-medium text-white/40">{item.label}</span>
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black tracking-tight text-white/80">{item.value}</span>
                         {item.copy && (
-                          <button onClick={() => copyToClipboard(item.value)} className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center hover:bg-brand-primary/20 hover:text-brand-primary transition-all opacity-0 group-hover/item:opacity-100">
-                            <Copy className="w-3 h-3" />
+                          <button
+                            onClick={() => copyToClipboard(item.value)}
+                            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                          >
+                            <Copy className="w-4 h-4" />
                           </button>
                         )}
+                        <span className="text-sm font-medium text-white/90 text-right">{item.value}</span>
                       </div>
                     </div>
                   ))}
@@ -586,175 +582,271 @@ function InvoiceContent() {
 
 
                 {isPaid ? (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
+                    {/* SUCCESS MESSAGE - Dominant Visual Anchor */}
+                    {/* SUCCESS MESSAGE - Simplified */}
                     <motion.div
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="p-6 rounded-3xl bg-brand-primary/5 border border-brand-primary/10 flex flex-col items-center justify-center gap-3 relative overflow-hidden group shadow-[0_0_50px_rgba(38,188,196,0.05)]"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 rounded-xl border border-[#6366f1]/30 bg-[#6366f1]/5 flex items-center justify-center text-center"
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(38,188,196,0.1),transparent_70%)] animate-pulse" />
-                      <CheckCircle2 className="w-8 h-8 text-brand-primary drop-shadow-[0_0_15px_rgba(38,188,196,0.4)] relative z-10" />
-                      <div className="text-center relative z-10 space-y-0.5">
-                        <p className="text-lg font-black tracking-tighter text-white uppercase">Your order has been completed successfully!</p>
-                        <p className="text-[8px] font-black text-brand-primary uppercase tracking-[0.4em]">Transaction Verified by Rainyday Secure</p>
-                      </div>
+                      <p className="text-sm font-bold text-[#6366f1]">Your order has been completed successfully!</p>
                     </motion.div>
 
                     {/* Delivered Items - shown right after success */}
-                    {(deliverables.length > 0 || hasDeliveryRecord) ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-                          <h2 className="text-xl font-black text-green-400 tracking-tight">Delivered Items</h2>
-                        </div>
+                    <div className="space-y-4">
+                      {(deliverables.length > 0 || hasDeliveryRecord) ? (
+                        <>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Delivered Items</h2>
+                          </div>
 
-                        {order.order_items?.map((item: any, idx: number) => {
-                          // Filter assets specifically for this product/variant
-                          const itemAssets = order.deliveries?.flatMap((d: any) =>
-                            (d.delivery_assets || d.data || []).filter((asset: any) => {
-                              // Handle legacy string assets (assign to all or none? let's assign to first item if unknown)
-                              if (typeof asset === 'string') return idx === 0;
+                          {order.order_items?.map((item: any, idx: number) => {
+                            // Filter assets specifically for this product/variant
+                            const itemAssets = order.deliveries?.flatMap((d: any) =>
+                              (d.delivery_assets || d.data || []).filter((asset: any) => {
+                                // Handle legacy string assets (assign to all or none? let's assign to first item if unknown)
+                                if (typeof asset === 'string') return idx === 0;
 
-                              // Match product ID
-                              if (asset.product_id && asset.product_id !== item.product_id) return false;
+                                // Match product ID
+                                if (asset.product_id && asset.product_id !== item.product_id) return false;
 
-                              // Match variant ID if present
-                              if (asset.variant_id && asset.variant_id !== item.variant_id) return false;
+                                // Match variant ID if present
+                                if (asset.variant_id && asset.variant_id !== item.variant_id) return false;
 
-                              // If asset has no product_id (old data), maybe show it for first item?
-                              if (!asset.product_id) return idx === 0;
+                                // If asset has no product_id (old data), maybe show it for first item?
+                                if (!asset.product_id) return idx === 0;
 
-                              return true;
-                            }).map((asset: any) => typeof asset === 'string' ? asset : (asset.content || asset))
-                          ) || [];
+                                return true;
+                              }).map((asset: any) => typeof asset === 'string' ? asset : (asset.content || asset))
+                            ) || [];
 
-                          return (
-                            <Card key={idx} className="bg-white/[0.02] border-white/5 overflow-hidden rounded-2xl">
-                              <button
-                                onClick={() => setIsDeliveredItemsOpen(!isDeliveredItemsOpen)}
-                                className="w-full p-5 flex items-center justify-between text-left group"
-                              >
-                                <div className="space-y-0.5">
-                                  <h3 className="text-sm font-bold text-brand-primary group-hover:text-white transition-colors">
-                                    {item.product?.name || item.product_name || 'Product'}
-                                  </h3>
-                                  <p className="text-[10px] text-white/30">{item.variant?.name || 'Default'}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-400 text-[9px] font-bold uppercase tracking-wide border border-green-500/20">
-                                    Delivered
-                                  </span>
-                                  <ChevronDown className={cn("w-4 h-4 text-white/30 transition-transform duration-300", isDeliveredItemsOpen && "rotate-180")} />
-                                </div>
-                              </button>
+                            return (
+                              <Card key={idx} className="bg-[#0b0f1a]/40 border border-white/5 overflow-hidden rounded-2xl group/card transition-all duration-500">
+                                <button
+                                  onClick={() => setIsDeliveredItemsOpen(!isDeliveredItemsOpen)}
+                                  className="w-full p-6 flex items-center justify-between text-left bg-[#030607]/20"
+                                >
+                                  <div className="space-y-1">
+                                    <h3 className="text-base font-black text-white/90">
+                                      {item.product?.name || item.product_name || 'Product'}
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{item.variant?.name || 'Default'}</p>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
+                                      <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Delivered</span>
+                                    </div>
+                                    <ChevronDown className={cn("w-5 h-5 text-white/20 transition-transform duration-500", isDeliveredItemsOpen && "rotate-180")} />
+                                  </div>
+                                </button>
 
-                              <AnimatePresence>
-                                {isDeliveredItemsOpen && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                  >
-                                    <div className="px-5 pb-5 pt-2 border-t border-white/5 space-y-4">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-bold text-brand-primary">Deliverables</span>
-                                      </div>
-                                      <div className="space-y-2">
-                                        {itemAssets.length > 0 ? (
-                                          itemAssets.map((d: any, i: number) => (
-                                            <div key={i} className="p-3 rounded-xl bg-background border border-white/5 flex items-center justify-between group/code hover:border-brand-primary/20 transition-all">
-                                              <code className="text-sm font-mono text-white/80 tracking-tight group-hover:text-white transition-colors break-all">{d}</code>
-                                              <button
-                                                onClick={() => copyToClipboard(d)}
-                                                className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center hover:bg-brand-primary/20 hover:text-brand-primary transition-all ml-3 shrink-0"
-                                              >
-                                                <Copy className="w-3 h-3" />
-                                              </button>
+                                <AnimatePresence>
+                                  {isDeliveredItemsOpen && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="p-6 space-y-6">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Deliverables</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                          {itemAssets.length > 0 ? (
+                                            itemAssets.map((d: any, i: number) => (
+                                              <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 group/code">
+                                                <code className="text-sm font-medium text-white/60 tracking-tight break-all overflow-hidden text-ellipsis whitespace-nowrap">{d}</code>
+                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#6366f1] cursor-pointer transition-colors ml-4 shrink-0" onClick={() => copyToClipboard(d)} />
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div className="p-4 rounded-xl bg-background border border-white/5 flex items-center gap-3 text-white/60">
+                                              <CheckCircle2 className="w-4 h-4 text-green-400" />
+                                              <span className="text-xs">Access confirmed. {item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
                                             </div>
-                                          ))
-                                        ) : (
-                                          <div className="p-3 rounded-xl bg-background border border-white/5 flex items-center gap-3 text-white/60">
-                                            <CheckCircle2 className="w-4 h-4 text-green-400" />
-                                            <span className="text-xs">Access confirmed. {item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      {itemAssets.length > 0 && (
-                                        <div className="flex gap-3 pt-2">
-                                          <Button variant="outline" size="sm" onClick={() => itemAssets.forEach((d: any) => copyToClipboard(d))} className="text-[10px] border-white/10 text-white/60 hover:text-white gap-2">
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              const content = itemAssets.join('\n')
+                                              const blob = new Blob([content], { type: 'text/plain' })
+                                              const url = URL.createObjectURL(blob)
+                                              const a = document.createElement('a')
+                                              a.href = url
+                                              a.download = `deliverables-${order.id.slice(0, 8)}.txt`
+                                              document.body.appendChild(a)
+                                              a.click()
+                                              document.body.removeChild(a)
+                                              URL.revokeObjectURL(url)
+                                              toast.success("Deliverables downloaded as .txt")
+                                            }}
+                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#6366f1]/30 text-white/90 hover:bg-[#6366f1]/10 gap-2 rounded-xl"
+                                          >
+                                            Download Deliverables
+                                            <Download className="w-3 h-3" />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              copyToClipboard(itemAssets.join('\n'))
+                                              toast.success("All deliverables copied to clipboard")
+                                            }}
+                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#6366f1]/30 text-white/90 hover:bg-[#6366f1]/10 gap-2 rounded-xl"
+                                          >
+                                            Copy Deliverables
                                             <Copy className="w-3 h-3" />
-                                            Copy All
                                           </Button>
                                         </div>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </Card>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      /* Fallback when NO delivery record exists yet (Processing) */
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center gap-4 text-center"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center">
-                          <Download className="w-6 h-6 text-brand-primary" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-bold text-white">Delivery Processing</p>
-                          <p className="text-[10px] text-white/40 max-w-[280px]">
-                            Your order has been confirmed. If your purchase includes digital items, they will appear here shortly.
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => loadOrder(false)}
-                          className="text-[10px] border-white/10 text-white/60 hover:text-white gap-2"
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </Card>
+                            )
+                          })}
+                        </>
+                      ) : (
+                        /* Fallback when NO delivery record exists yet (Processing) */
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center gap-4 text-center"
                         >
-                          <Loader2 className="w-3 h-3" />
-                          Refresh Status
-                        </Button>
-                      </motion.div>
-                    )}
+                          <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center">
+                            <Download className="w-6 h-6 text-brand-primary" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-white">Delivery Processing</p>
+                            <p className="text-[10px] text-white/40 max-w-[280px]">
+                              Your order has been confirmed. If your purchase includes digital items, they will appear here shortly.
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => loadOrder(false)}
+                            className="text-[10px] border-white/10 text-white/60 hover:text-white gap-2"
+                          >
+                            <Loader2 className="w-3 h-3" />
+                            Refresh Status
+                          </Button>
+                        </motion.div>
+                      )}
+                    </div>
 
-                    {/* Feedback Section */}
+                    {/* Feedback Section - Natural Next Step */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="pt-12 space-y-6"
+                      transition={{ delay: 0.6 }}
+                      className="pt-8 space-y-5"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.5)]" />
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight">Share Your Experience</h2>
-                      </div>
-                      <FeedbackForm
-                        invoiceId={order.invoices?.[0]?.id || order.id}
-                        orderId={order.id}
-                      />
+                      {order.feedbacks && order.feedbacks.length > 0 ? (
+                        <div className="space-y-6">
+                          <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Your Feedback</h2>
+                          <div className="p-8 rounded-[2rem] bg-[#0b0f1a]/40 border border-white/5 space-y-8 relative overflow-hidden group">
+                            <div className="absolute -top-6 -right-6 p-8 text-white/[0.02]">
+                              <MessageSquareQuote size={120} />
+                            </div>
+
+                            <div className="relative z-10 space-y-8">
+                              <div className="space-y-3">
+                                <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Rating</span>
+                                <div className="flex gap-1.5">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={cn(
+                                        "w-5 h-5",
+                                        s <= order.feedbacks[0].rating
+                                          ? "fill-[#FFD700] text-[#FFD700]"
+                                          : "text-white/10"
+                                      )}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="space-y-3">
+                                <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Message</span>
+                                <p className="text-sm font-medium text-white/90 leading-relaxed uppercase">
+                                  {order.feedbacks[0].message}
+                                </p>
+                              </div>
+
+                              {order.feedbacks[0].admin_reply && (
+                                <div className="space-y-3 pt-4 border-t border-white/5">
+                                  <span className="text-xs font-black text-[#6366f1] uppercase tracking-widest">Reply from {settings.general?.name || "Rainyday"}</span>
+                                  <p className="text-sm font-medium text-white/60 leading-relaxed">
+                                    {order.feedbacks[0].admin_reply}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-black text-[#6366f1] tracking-tight">Leave Feedback</h2>
+                              </div>
+                              <span className="text-[9px] font-bold text-white/20 uppercase tracking-wider">Takes 30 seconds</span>
+                            </div>
+                            <p className="text-xs text-white/40 leading-relaxed">Your feedback helps other buyers make confident decisions. Share your experience — ratings are the most helpful!</p>
+                          </div>
+                          <FeedbackForm
+                            invoiceId={order.invoices?.[0]?.id || order.id}
+                            orderId={order.id}
+                            onSuccess={() => loadOrder(false)}
+                          />
+                        </>
+                      )}
                     </motion.div>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Payment Timer */}
-                    <div className="p-4 rounded-xl bg-brand-primary/5 border border-brand-primary/10 flex items-center justify-center gap-3 relative overflow-hidden group">
-                      <motion.div
-                        animate={{ x: [-20, 20, -20] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 bg-brand-primary/5 pointer-events-none"
-                      />
-                      <Clock className="w-4 h-4 text-brand-primary animate-pulse relative z-10" />
-                      <p className={cn(
-                        "text-[9px] font-black tracking-widest relative z-10 uppercase transition-all group-hover:tracking-[0.2em]",
-                        timeLeft === "EXPIRED" ? "text-red-500" : "text-brand-primary"
-                      )}>Expires in {timeLeft}</p>
+                    {/* Payment Timer - Calm urgency, only warning near end */}
+                    <div className={cn(
+                      "p-4 rounded-xl flex items-center justify-between relative overflow-hidden transition-all",
+                      timeLeft === "EXPIRED"
+                        ? "bg-red-500/10 border border-red-500/20"
+                        : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                          ? "bg-orange-500/10 border border-orange-500/20"
+                          : "bg-white/[0.02] border border-white/5"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center",
+                          timeLeft === "EXPIRED"
+                            ? "bg-red-500/20"
+                            : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                              ? "bg-orange-500/20"
+                              : "bg-brand-primary/10"
+                        )}>
+                          <Clock className={cn(
+                            "w-4 h-4",
+                            timeLeft === "EXPIRED" ? "text-red-500" :
+                              parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400 animate-pulse" : "text-brand-primary"
+                          )} />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Time Remaining</p>
+                          <p className={cn(
+                            "text-sm font-black tracking-tight",
+                            timeLeft === "EXPIRED" ? "text-red-500" :
+                              parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400" : "text-white"
+                          )}>{timeLeft}</p>
+                        </div>
+                      </div>
+                      <p className="text-[8px] font-bold text-white/20 uppercase tracking-wider">Invoice auto-expires</p>
                     </div>
 
                     {/* Payment Instructions */}
@@ -765,104 +857,74 @@ function InvoiceContent() {
                       </div>
                     ) : paymentDetails?.address ? (
                       <div className="space-y-8">
-                        {/* Step 1: QR & Address */}
-                        <div className="flex gap-6">
-                          <div className="w-10 h-10 rounded-xl bg-brand-primary text-black flex items-center justify-center text-sm font-black shrink-0 shadow-[0_0_20px_rgba(38,188,196,0.3)]">01</div>
-                          <div className="space-y-6 flex-1">
-                            <div className="space-y-1">
-                              <h3 className="text-lg font-black text-white uppercase tracking-tighter">Send to Address</h3>
-                              <p className="text-[10px] text-white/30 font-medium">Scan QR or manually copy the destination.</p>
-                            </div>
-
-                            {paymentDetails.qrCodeUrl && (
-                              <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                className="w-40 h-40 bg-white p-4 rounded-[2rem] shrink-0 shadow-[0_0_50px_rgba(255,255,255,0.05)] mx-auto lg:mx-0 group cursor-pointer relative"
-                              >
-                                <div className="absolute inset-0 border-[2px] border-brand-primary/30 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
-                                <div className="w-full h-full relative">
-                                  <img src={paymentDetails.qrCodeUrl} alt="Payment QR Code" className="w-full h-full rounded-xl" />
-                                </div>
-                              </motion.div>
-                            )}
-
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Payment Wallet</label>
-                              </div>
-                              <div className="flex gap-3">
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    copyToClipboard(paymentDetails.address);
-                                  }}
-                                  className="flex-1 h-14 px-5 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl flex items-center justify-between group/addr cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all active:scale-[0.98]"
-                                >
-                                  <code className="text-xs font-mono text-brand-primary font-bold truncate max-w-[200px] pointer-events-none">{paymentDetails.address}</code>
-                                  <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover/addr:bg-brand-primary group-hover/addr:text-black transition-all">
-                                    <Copy className="w-3.5 h-3.5" />
-                                  </div>
-                                </div>
-                                {paymentDetails.payLink && (
-                                  <button
-                                    onClick={() => window.open(paymentDetails.payLink, '_blank')}
-                                    className="h-14 px-6 bg-white/[0.03] border border-white/10 rounded-2xl text-[8px] font-black text-white/40 hover:text-white hover:bg-white/[0.06] hover:border-white/20 transition-all uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-1 group"
-                                  >
-                                    <Wallet className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                                    Open
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                        {/* Top Auto-Process Banner */}
+                        <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-center">
+                          <p className="text-[11px] font-bold text-indigo-400">
+                            Your order will be automatically processed once the payment is received.
+                          </p>
                         </div>
 
-                        {/* Step 2: Amount */}
-                        <div className="flex gap-6">
-                          <div className="w-10 h-10 rounded-xl bg-brand-primary text-black flex items-center justify-center text-sm font-black shrink-0 shadow-[0_0_20px_rgba(38,188,196,0.3)]">02</div>
-                          <div className="space-y-4 flex-1">
+                        <div className="relative pl-12 space-y-12">
+                          {/* Step 1: Destination Address */}
+                          <div className="relative space-y-6">
+                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-sm font-black shadow-[0_0_20px_rgba(99,102,241,0.4)] z-10">
+                              1
+                            </div>
+                            {/* Connector Line to Step 2 */}
+                            <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#6366f1]/40" />
                             <div className="space-y-1">
-                              <h3 className="text-lg font-black text-white uppercase tracking-tighter">Exact Amount</h3>
-                              <p className="text-[10px] text-white/30 font-medium">Send exactly this amount to the address above.</p>
+                              <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
+                              <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
+                            </div>
+
+                            {/* QR Code Container */}
+                            <div className="w-48 h-48 bg-white p-4 rounded-3xl relative group/qr overflow-hidden hover:scale-[1.02] transition-transform duration-500">
+                              <Image
+                                src={paymentDetails.qrCodeUrl || "/logo.png"}
+                                alt="QR Code"
+                                fill
+                                className="object-contain p-2"
+                              />
+                              {/* Scan Line Animation */}
+                              <div className="absolute left-0 right-0 h-1 bg-brand-primary/40 shadow-[0_0_20px_rgba(38,188,196,0.6)] top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
+                            </div>
+
+                            <div className="space-y-3">
+                              <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
+                              <div
+                                onClick={() => copyToClipboard(paymentDetails.address)}
+                                className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/addr"
+                              >
+                                <code className="text-sm font-bold text-white truncate max-w-[240px]">{paymentDetails.address || 'Initializing...'}</code>
+                                <Copy className="w-4 h-4 text-white/60 group-hover/addr:text-white transition-colors" />
+                              </div>
+                              <Button
+                                variant="outline"
+                                onClick={() => window.open(paymentDetails.payLink, '_blank')}
+                                className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
+                              >
+                                Open Wallet
+                                <ExternalLink className="w-4 h-4 group-hover/wallet:scale-110 transition-transform" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Step 2: Exact Amount */}
+                          <div className="relative space-y-6">
+                            <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#6366f1] flex items-center justify-center text-[#6366f1] text-sm font-black ring-1 ring-[#6366f1]/20">
+                              2
+                            </div>
+                            <div className="space-y-1">
+                              <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
+                              <p className="text-sm font-medium text-white/40">You can copy it below.</p>
                             </div>
                             <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyToClipboard(paymentDetails.amount);
-                              }}
-                              className="inline-flex h-14 px-8 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl items-center gap-4 group/amt cursor-pointer hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all active:scale-[0.98]"
+                              onClick={() => copyToClipboard(paymentDetails.amount)}
+                              className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/amt w-fit min-w-[200px]"
                             >
-                              <SparklesText
-                                text={`${paymentDetails.amount} ${paymentDetails.payCurrency}`}
-                                className="text-xl font-black text-brand-primary tracking-tighter "
-                                sparklesCount={10}
-                              />
-                              <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover/amt:bg-brand-primary group-hover/amt:text-black transition-all">
-                                <Copy className="w-3.5 h-3.5" />
-                              </div>
+                              <span className="text-sm font-black text-white">{paymentDetails.amount || '...'}</span>
+                              <Copy className="w-4 h-4 text-white/60 group-hover/amt:text-white transition-colors ml-6" />
                             </div>
-
-                            {/* Real-time Price Pulse */}
-                            {currentPrice && (
-                              <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/5 w-fit">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                  Live {paymentDetails.payCurrency} Rate: <span className="text-white">${currentPrice.toLocaleString()}</span>
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Alternative: Pay using OxaPay */}
-                            {paymentDetails.payLink && (
-                              <Button
-                                onClick={() => window.open(paymentDetails.payLink, '_blank')}
-                                variant="outline"
-                                className="w-full h-11 font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 text-xs border-white/10 text-white/60 hover:text-white hover:border-white/20 hover:bg-white/5 mt-2"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                Pay using OxaPay
-                              </Button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -901,127 +963,91 @@ function InvoiceContent() {
                         )}
                       </div>
                     )}
-
-                    {/* Real-time Blockchain Pulse */}
-                    <AnimatePresence>
-                      {paymentDetails?.address && !isPaid && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="relative">
-                                <Activity className="w-4 h-4 text-brand-primary" />
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-primary rounded-full animate-ping" />
-                              </div>
-                              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Live Explorer Tracking</h4>
-                            </div>
-                            <span className="text-[8px] font-black text-brand-primary/40 uppercase tracking-widest ">Syncing with Nodes...</span>
-                          </div>
-
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
-                                <p className={cn(
-                                  "text-[10px] font-black uppercase tracking-tighter",
-                                  blockchainStatus?.detected ? "text-green-500" : "text-white/40"
-                                )}>
-                                  {blockchainStatus?.detected ? "DETECTED" : "WAITING..."}
-                                </p>
-                              </div>
-                              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Confirmations</p>
-                                <p className="text-[10px] font-black text-brand-primary tracking-tighter uppercase">
-                                  {blockchainStatus?.confirmations || 0} Block{blockchainStatus?.confirmations === 1 ? '' : 's'}
-                                </p>
-                              </div>
-                            </div>
-                            {blockchainStatus?.txId && (
-                              <a
-                                href={
-                                  paymentDetails.payCurrency.includes('BTC') ? `https://mempool.space/tx/${blockchainStatus.txId}` :
-                                    paymentDetails.payCurrency.includes('ETH') ? `https://etherscan.io/tx/${blockchainStatus.txId}` :
-                                      paymentDetails.payCurrency.includes('LTC') ? `https://live.blockcypher.com/ltc/tx/${blockchainStatus.txId}` :
-                                        paymentDetails.payCurrency.includes('DOGE') ? `https://live.blockcypher.com/doge/tx/${blockchainStatus.txId}` :
-                                          paymentDetails.payCurrency.includes('DASH') ? `https://live.blockcypher.com/dash/tx/${blockchainStatus.txId}` :
-                                            (paymentDetails.payCurrency.includes('TRX') || paymentDetails.payCurrency.includes('TRC20')) ? `https://tronscan.org/#/transaction/${blockchainStatus.txId}` :
-                                              (paymentDetails.payCurrency.includes('BNB') || paymentDetails.payCurrency.includes('BEP20')) ? `https://bscscan.com/tx/${blockchainStatus.txId}` :
-                                                paymentDetails.payCurrency.includes('SOL') ? `https://solscan.io/tx/${blockchainStatus.txId}` :
-                                                  '#'
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-white/40 hover:bg-white/10 hover:text-white transition-all group"
-                              >
-                                VIEW ON BLOCKCHAIN
-                                <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                              </a>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Payment Status Button */}
-
-                    <Button
-                      disabled={paymentStatus === 'completed'}
-                      className={cn(
-                        "w-full h-16 font-black uppercase tracking-[0.3em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden ",
-                        paymentStatus === 'completed'
-                          ? "bg-green-500 text-black shadow-[0_20px_40px_-10px_rgba(34,197,94,0.4)]"
-                          : paymentStatus === 'processing'
-                            ? "bg-yellow-500 text-black shadow-[0_20px_40px_-10px_rgba(234,179,8,0.4)]"
-                            : "bg-brand-primary text-black shadow-[0_20px_40px_-10px_rgba(38,188,196,0.4)]"
-                      )}
-                    >
-                      {paymentStatus === 'completed' ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <CheckCircle2 className="w-6 h-6" />
-                          <span className="text-[8px] tracking-[0.4em]">Payment Confirmed!</span>
-                        </div>
-                      ) : paymentStatus === 'processing' ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                          <span className="text-[8px] tracking-[0.4em]">Confirming on Blockchain...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
-                          <span className="text-base relative z-10 flex items-center gap-3">
-                            Waiting for Payment
-                            <ShieldCheck className="w-5 h-5" />
-                          </span>
-                          <span className="text-[8px] font-black opacity-60">Auto-checking every 5 seconds</span>
-                        </>
-                      )}
-                    </Button>
                   </div>
                 )}
 
+                {/* Transaction History Tracking */}
+                <AnimatePresence>
+                  {paymentDetails?.address && !isPaid && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6366f1]">Transaction History</h4>
+                          <span className="text-[8px] font-black text-[#6366f1]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                        </div>
+                      </div>
 
+                      <div className="space-y-3">
+                        {!blockchainStatus?.detected && (
+                          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                            <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                          </div>
+                        )}
 
+                        {blockchainStatus?.detected && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
+                              <p className={cn(
+                                "text-[10px] font-black uppercase tracking-tighter",
+                                "text-green-500"
+                              )}>
+                                DETECTED
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Confirmations</p>
+                              <p className="text-[10px] font-black text-[#6366f1] tracking-tighter uppercase">
+                                {blockchainStatus?.confirmations || 0} Block{blockchainStatus?.confirmations === 1 ? '' : 's'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
+                        {blockchainStatus?.txId && (
+                          <a
+                            href={
+                              paymentDetails.payCurrency.includes('BTC') ? `https://mempool.space/tx/${blockchainStatus.txId}` :
+                                paymentDetails.payCurrency.includes('ETH') ? `https://etherscan.io/tx/${blockchainStatus.txId}` :
+                                  paymentDetails.payCurrency.includes('LTC') ? `https://live.blockcypher.com/ltc/tx/${blockchainStatus.txId}` :
+                                    paymentDetails.payCurrency.includes('DOGE') ? `https://live.blockcypher.com/doge/tx/${blockchainStatus.txId}` :
+                                      paymentDetails.payCurrency.includes('DASH') ? `https://live.blockcypher.com/dash/tx/${blockchainStatus.txId}` :
+                                        (paymentDetails.payCurrency.includes('TRX') || paymentDetails.payCurrency.includes('TRC20')) ? `https://tronscan.org/#/transaction/${blockchainStatus.txId}` :
+                                          (paymentDetails.payCurrency.includes('BNB') || paymentDetails.payCurrency.includes('BEP20')) ? `https://bscscan.com/tx/${blockchainStatus.txId}` :
+                                            paymentDetails.payCurrency.includes('SOL') ? `https://solscan.io/tx/${blockchainStatus.txId}` :
+                                              '#'
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-white/40 hover:bg-white/10 hover:text-white transition-all group"
+                          >
+                            VIEW ON BLOCKCHAIN
+                            <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                          </a>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Return to Store - Secondary Action */}
+                <div className="pt-8 mt-4 border-t border-white/5">
+                  <Link href="/store" className="block">
+                    <Button variant="outline" className="w-full h-11 border-white/10 text-white/60 hover:text-white hover:border-white/20 font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 group">
+                      <span className="text-sm">Continue Shopping</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
-
-              <div className="space-y-4">
-
-                <Link href="/store" className="block">
-                  <Button className="w-full h-18 bg-brand-primary text-black font-black uppercase tracking-[0.3em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_15px_30px_-10px_rgba(38,188,196,0.3)] flex items-center justify-center gap-4 group relative overflow-hidden ">
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
-                    <span className="text-lg relative z-10">Return to Store</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
-                  </Button>
-                </Link>
-              </div>
-
             </motion.div>
           </div>
-        </div >
-      </div >
+        </div>
+      </div>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -1037,8 +1063,17 @@ function InvoiceContent() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(38, 188, 196, 0.2);
         }
+        @keyframes heartbeat {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 0.3; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-\\[heartbeat_2s_ease-in-out_infinite\\] {
+            animation: none !important;
+          }
+        }
       `}</style>
-    </div >
+    </div>
   )
 }
 

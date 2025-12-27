@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Star, MessageSquareQuote, Send, CheckCircle2 } from "lucide-react"
+import { Star, MessageSquareQuote, Send, CheckCircle2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { submitFeedback } from "@/lib/db/feedbacks"
@@ -87,7 +87,7 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
                   className={cn(
                     "w-8 h-8 transition-colors",
                     star <= (hoverRating || rating)
-                      ? "fill-brand-primary text-brand-primary"
+                      ? "fill-[#FFD700] text-[#FFD700]"
                       : "text-white/10 hover:text-white/30"
                   )}
                 />
@@ -123,9 +123,14 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
         <Button
           type="submit"
           disabled={isSubmitting || rating === 0}
-          className="w-full h-14 bg-brand-primary text-black font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3"
+          className="w-full h-14 bg-[#6366f1] hover:bg-[#6366f1] text-white font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:scale-100"
         >
-          {isSubmitting ? "Submitting..." : (
+          {isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Submitting...</span>
+            </div>
+          ) : (
             <>
               Submit Review
               <Send size={18} />

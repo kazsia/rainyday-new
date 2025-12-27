@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient, createAdminClient } from "@/lib/supabase/server"
+import { headers } from "next/headers"
 
 export async function createOrder(order: {
     email?: string | null
@@ -25,7 +26,11 @@ export async function createOrder(order: {
             total: order.total,
             currency: order.currency || "USD",
             readable_id: readableId,
-            custom_fields: order.custom_fields || null,
+            custom_fields: {
+                ...(order.custom_fields || {}),
+                ip_address: (await headers()).get("x-forwarded-for") || "Unknown",
+                user_agent: (await headers()).get("user-agent") || "Unknown"
+            },
         })
         .select()
         .single()
@@ -138,7 +143,8 @@ export async function getOrder(id: string) {
       ),
       payments (*),
       deliveries (*),
-      invoices (*)
+      invoices (*),
+      feedbacks (*)
     `)
 
     if (isUuid) {

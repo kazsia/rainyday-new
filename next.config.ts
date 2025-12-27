@@ -24,6 +24,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'imagedelivery.net',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cryptologos.cc',
+      },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+      },
     ],
     // Increase image optimization cache TTL (in seconds)
     // Default is 60 seconds, we set it to 1 week

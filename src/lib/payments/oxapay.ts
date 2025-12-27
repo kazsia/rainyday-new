@@ -12,6 +12,7 @@ interface CreateInvoiceParams {
     callbackUrl?: string
     returnUrl?: string
     payCurrency?: string // BTC, ETH, LTC, etc.
+    network?: string     // TRC20, ERC20, etc.
 }
 
 interface WhiteLabelPaymentDetails {
@@ -236,7 +237,13 @@ export async function createOxaPayInvoice(params: CreateInvoiceParams) {
  */
 export async function getOxaPayPaymentInfo(trackId: string) {
     if (!MERCHANT_API_KEY) {
-        throw new Error("OXAPAY_API_KEY is not configured")
+        console.error("[OxaPay] OXAPAY_API_KEY is not configured")
+        return null
+    }
+
+    if (!trackId) {
+        console.error("[OxaPay] No trackId provided")
+        return null
     }
 
     try {
@@ -250,6 +257,11 @@ export async function getOxaPayPaymentInfo(trackId: string) {
                 trackId: trackId,
             }),
         })
+
+        if (!response.ok) {
+            console.error("[OxaPay Inquiry] HTTP Error:", response.status, response.statusText)
+            return null
+        }
 
         const data = await response.json()
 
@@ -312,7 +324,18 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     }
 
     const payCurrency = params.payCurrency || "BTC"
-    const network = networkMap[payCurrency] || payCurrency
+
+    // Normalize network names
+    const networkAliasMap: Record<string, string> = {
+        "BEP20": "BSC",
+        "ERC20": "Ethereum",
+        "TRC20": "Tron",
+        "SPL": "Solana",
+        "ETH": "Ethereum",
+        "Base": "Base"
+    }
+
+    const network = networkAliasMap[params.network || ""] || params.network || networkMap[payCurrency] || payCurrency
 
     try {
         const v1Response = await fetch(`${OXAPAY_API_URL}/v1/payment/white-label`, {

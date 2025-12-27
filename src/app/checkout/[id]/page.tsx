@@ -1,3 +1,7 @@
+/**
+ * Checkout Page - Payment Processing
+ * [Cache Break: v1.0.1 - Direct Icon Registration]
+ */
 "use client"
 
 import * as React from "react"
@@ -6,8 +10,6 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Bitcoin,
-  CreditCard,
-  Wallet,
   ArrowRight,
   ShieldCheck,
   Loader2,
@@ -16,19 +18,15 @@ import {
   QrCode,
   CheckCircle2,
   Star,
-  Lock,
   Clock,
   Search,
   ChevronRight,
-  CircleSlash,
-  LockKeyhole,
-  User,
-  Mail,
-  CircleAlert,
   Minus,
   Plus,
   Trash2,
-  FileText
+  FileText,
+  ExternalLink,
+  Lock
 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
@@ -86,6 +84,14 @@ const cryptoGroups = [
       { id: "dogs", name: "DOGS", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
     ]
   }
+]
+
+
+const ETH_NETWORKS = [
+  { id: "eth-erc20", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "ERC20", color: "#627EEA" },
+  { id: "eth-base", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "BASE", color: "#0052FF" },
+  { id: "eth-arb", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "ARBITRUM", color: "#28A0F0" },
+  { id: "eth-opt", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "OPTIMISM", color: "#FF0420" },
 ]
 
 
@@ -161,6 +167,36 @@ function CheckoutMainContent() {
   }
   const [step, setStep] = React.useState(1)
   const [selectedMethod, setSelectedMethod] = React.useState("PayPal")
+  const [isEthNetworkModalOpen, setIsEthNetworkModalOpen] = React.useState(false)
+
+  // Determine which crypto methods to show in the main list
+  const displayCryptoItems = React.useMemo(() => {
+    const primaryItems = [...cryptoGroups[0].items]
+    const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
+
+    // Check if the selected method is already in the primary group
+    const isPrimary = primaryItems.some(m => getMethodName(m) === selectedMethod)
+
+    if (selectedMethod !== "PayPal" && !isPrimary) {
+      // Special case for ETH networks
+      if (selectedMethod.startsWith("Ethereum")) {
+        const found = ETH_NETWORKS.find(m => getMethodName(m) === selectedMethod)
+        if (found) return [found, ...primaryItems]
+      }
+
+      // Find the selected method in ALL groups to be safe
+      for (const group of cryptoGroups) {
+        const found = group.items.find(m => getMethodName(m) === selectedMethod)
+        if (found) {
+          // Add the selected method to the top of our display items
+          return [found, ...primaryItems]
+        }
+      }
+    }
+
+    return primaryItems
+  }, [selectedMethod])
+
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [agreeToTerms, setAgreeToTerms] = React.useState(false)
   const [agreeToPromo, setAgreeToPromo] = React.useState(false)
@@ -168,6 +204,25 @@ function CheckoutMainContent() {
   const [orderId, setOrderId] = React.useState("")
   const [savedTotal, setSavedTotal] = React.useState(0) // Store total before clearing cart
   const [customFieldValues, setCustomFieldValues] = React.useState<Record<string, string>>({})
+
+  // Progressive disclosure for payment methods
+  const [showAllNetworks, setShowAllNetworks] = React.useState(false)
+  const [isMethodModalOpen, setIsMethodModalOpen] = React.useState(false)
+
+  // Delete confirmation state
+  const [pendingDelete, setPendingDelete] = React.useState<string | null>(null)
+
+  // Remember last selected payment method
+  React.useEffect(() => {
+    const saved = localStorage.getItem('lastPaymentMethod')
+    if (saved) setSelectedMethod(saved)
+  }, [])
+
+  React.useEffect(() => {
+    if (selectedMethod) {
+      localStorage.setItem('lastPaymentMethod', selectedMethod)
+    }
+  }, [selectedMethod])
 
   // Promo Code State
   const [couponCode, setCouponCode] = React.useState("")
@@ -414,10 +469,24 @@ function CheckoutMainContent() {
 
         // 2b. Create the OxaPay Invoice (existing flow)
         const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
+
+        // Parse network from selectedMethod if present (e.g., "Ethereum (BASE)" -> "BASE")
+        let payNetwork: string | undefined = undefined
+        let baseMethodName = selectedMethod
+
+        if (selectedMethod.includes("(") && selectedMethod.includes(")")) {
+          const match = selectedMethod.match(/\(([^)]+)\)/)
+          if (match) {
+            payNetwork = match[1]
+            baseMethodName = selectedMethod.split(" (")[0]
+          }
+        }
+
         const response = await createOxaPayWhiteLabelWithInquiry({
           amount: total,
           currency: "USD",
-          payCurrency: payCurrencyMap[selectedMethod] || "BTC",
+          payCurrency: payCurrencyMap[baseMethodName] || "BTC",
+          network: payNetwork,
           orderId: order.id,
           description: `Order ${order.readable_id} from Rainyday`,
           email: email,
@@ -583,21 +652,21 @@ function CheckoutMainContent() {
 
       <div className="relative flex flex-col lg:flex-row min-h-screen">
         {/* Left Panel - Order Summary */}
-        <div className="w-full lg:w-[35%] p-6 md:p-8 lg:p-12 space-y-8 md:space-y-12 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-background/20 backdrop-blur-3xl">
-          <div className="space-y-12">
+        <div className="w-full lg:w-[35%] p-4 md:p-6 lg:p-8 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-background/20 backdrop-blur-3xl">
+          <div className="space-y-6 md:space-y-8">
             <div className="flex items-center justify-between">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                 <Logo />
               </motion.div>
             </div>
 
-            <div className="space-y-10">
+            <div className="space-y-6">
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.4em] translate-x-1">Pay Rainyday</p>
                 <div className="flex items-baseline gap-2">
                   <SparklesText
                     text={formatPrice(finalTotal)}
-                    className="text-4xl font-black tracking-tighter"
+                    className="text-3xl font-black tracking-tighter"
                     colors={{ first: "#a4f8ff", second: "#ffffff" }}
                   />
                   {savedTotal > 0 && appliedCoupon && (
@@ -608,7 +677,7 @@ function CheckoutMainContent() {
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-2 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
                 <AnimatePresence mode="popLayout">
                   {cart.map((item, idx) => (
                     <motion.div
@@ -616,9 +685,9 @@ function CheckoutMainContent() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1 }}
-                      className="p-4 rounded-3xl bg-white/[0.02] border border-white/5 flex items-center gap-4 group hover:bg-white/[0.04] transition-all hover:border-white/10"
+                      className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 group hover:bg-white/[0.04] transition-all hover:border-white/10"
                     >
-                      <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl border border-white/10">
+                      <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-xl border border-white/10">
                         <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -649,16 +718,43 @@ function CheckoutMainContent() {
                               <Plus className="w-3 h-3" />
                             </button>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateQuantity(item, -item.quantity);
-                              toast.info(`Set ${item.title}${item.variantName ? ` (${item.variantName})` : ''} to 0`);
-                            }}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/10"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {/* Increased spacing for cart safety */}
+                          <div className="ml-2">
+                            {pendingDelete === item.id ? (
+                              <div className="flex items-center gap-1 animate-in fade-in duration-200">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateQuantity(item, -item.quantity);
+                                    setPendingDelete(null);
+                                    toast.info(`Removed ${item.title}`);
+                                  }}
+                                  className="px-2 py-1 bg-red-500 text-white text-[8px] font-black rounded-md hover:bg-red-600 transition-colors uppercase tracking-wider"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPendingDelete(null);
+                                  }}
+                                  className="px-2 py-1 bg-white/10 text-white/60 text-[8px] font-black rounded-md hover:bg-white/20 transition-colors uppercase tracking-wider"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPendingDelete(item.id);
+                                }}
+                                className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/10"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -671,33 +767,36 @@ function CheckoutMainContent() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-white/5 space-y-4 bg-gradient-to-t from-black/20 to-transparent">
+          <div className="pt-4 border-t border-white/5 space-y-2 bg-gradient-to-t from-black/20 to-transparent">
             <div className="space-y-3">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/20">
-                <span className="flex items-center gap-2 ">Subtotal</span>
-                <span className="text-white/60 tracking-normal">{formatPrice(subtotal)}</span>
+              {/* Subtotal - quieter */}
+              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/15">
+                <span className="flex items-center gap-2">Subtotal</span>
+                <span className="text-white/30 tracking-normal">{formatPrice(subtotal)}</span>
               </div>
 
               {appliedCoupon && (
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary">
-                  <span className="flex items-center gap-2 ">Discount <span className="text-white/40">({appliedCoupon.code})</span></span>
+                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary/80">
+                  <span className="flex items-center gap-2">Discount <span className="text-white/30">({appliedCoupon.code})</span></span>
                   <span className="tracking-normal">-{formatPrice(discountAmount)}</span>
                 </div>
               )}
 
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                <span className="flex items-center gap-2 ">Processing Fee</span>
+              {/* Processing fee - very quiet */}
+              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/10">
+                <span className="flex items-center gap-2">Processing Fee</span>
                 <span className="tracking-normal">$0.00</span>
               </div>
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-[10px] sm:text-xs font-black tracking-widest text-white uppercase opacity-40">Total Amount</span>
+
+              {/* TOTAL - Most dominant */}
+              <div className="flex justify-between items-center pt-2 mt-1 border-t border-white/5">
+                <span className="text-sm font-black tracking-widest text-white uppercase">Total</span>
                 <div className="text-right">
                   <SparklesText
                     text={formatPrice(finalTotal)}
-                    className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_15px_rgba(164,248,255,0.2)]"
-                    sparklesCount={8}
+                    className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_25px_rgba(164,248,255,0.3)]"
+                    sparklesCount={10}
                   />
-                  <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.2em]">Secure</span>
                 </div>
               </div>
             </div>
@@ -705,50 +804,33 @@ function CheckoutMainContent() {
         </div>
 
         {/* Right Panel - Steps & Payment */}
-        <div className="flex-1 p-8 lg:p-12 lg:px-20 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
+        <div className="flex-1 p-4 md:p-6 lg:p-8 lg:px-12 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
           <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(38,188,196,0.05),transparent_60%)] pointer-events-none" />
 
           {/* Steps Navigation */}
-          <div className="grid grid-cols-3 gap-3 md:gap-6 relative z-10 mb-8 md:mb-12">
+          <div className="grid grid-cols-3 gap-6 relative z-10 mb-8 max-w-2xl mx-auto w-full">
             {[
-              { s: 1, label: "Order Info", icon: User },
-              { s: 2, label: "Confirm & Pay", icon: CreditCard },
-              { s: 3, label: "Receive Goods", icon: Search }
+              { s: 1, label: "Order Information" },
+              { s: 2, label: "Confirm & Pay" },
+              { s: 3, label: "Receive Your Items" }
             ].map((item) => {
-              const Icon = item.icon
-              const isCompleted = step > item.s
-              const isActive = step === item.s
+              const isActiveOrCompleted = step >= item.s
+              const isCurrent = step === item.s
               return (
-                <div key={item.s} className="space-y-3 group cursor-pointer" onClick={() => step > item.s && setStep(item.s)}>
-                  <div className="relative">
-                    <div className={cn(
-                      "h-1 rounded-full transition-all duration-700 relative z-10",
-                      isActive || isCompleted ? "bg-brand-primary shadow-[0_0_20px_rgba(38,188,196,0.4)]" : "bg-white/10"
-                    )} />
-                    {isActive && (
-                      <motion.div
-                        layoutId="step-glow"
-                        className="absolute -inset-1 bg-brand-primary/20 blur-lg rounded-full"
-                      />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className={cn(
-                      "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-500",
-                      isActive || isCompleted ? "bg-brand-primary/10 text-brand-primary" : "text-white/10"
-                    )}>
-                      <Icon className="w-3 h-3" />
-                    </div>
-                    <div className="space-y-0.5 overflow-hidden">
-                      <p className={cn(
-                        "text-[8px] font-black uppercase tracking-[0.2em] transition-colors",
-                        isActive || isCompleted ? "text-brand-primary" : "text-white/20"
-                      )}>Step 0{item.s}</p>
-                      <p className={cn(
-                        "text-[9px] md:text-[10px] font-bold tracking-tight transition-colors truncate",
-                        isActive || isCompleted ? "text-white" : "text-white/20"
-                      )}>{item.label}</p>
-                    </div>
+                <div key={item.s} className="space-y-3 flex-1">
+                  <div className={cn(
+                    "h-1 w-full rounded-full transition-all duration-1000",
+                    isActiveOrCompleted ? "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]" : "bg-white/5"
+                  )} />
+                  <div className="space-y-1">
+                    <p className={cn(
+                      "text-[10px] font-black uppercase tracking-widest transition-colors",
+                      isActiveOrCompleted ? "text-indigo-400" : "text-white/20"
+                    )}>Step {item.s}</p>
+                    <p className={cn(
+                      "text-xs font-bold tracking-tight transition-colors",
+                      isActiveOrCompleted ? "text-white/90" : "text-white/20"
+                    )}>{item.label}</p>
                   </div>
                 </div>
               )
@@ -764,50 +846,49 @@ function CheckoutMainContent() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-8 pb-12"
+                  className="space-y-4 pb-6"
                 >
-                  <div className="space-y-6">
-                    <div className="space-y-2">
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <Mail className="w-2.5 h-2.5 text-brand-primary" />
-                        <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Customer E-mail</label>
+                        <label className="text-sm font-medium text-white/90">E-mail Address *</label>
                       </div>
                       <div className="relative group">
                         <Input
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="The order confirmation will be sent here."
-                          className="h-14 px-6 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-base"
+                          placeholder="The order confirmation will be sent to this e-mail address."
+                          className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
                         />
-                        <div className="absolute inset-0 rounded-2xl border border-white/0 group-focus-within:border-brand-primary/20 pointer-events-none transition-all" />
+                        <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
                       </div>
                     </div>
 
                     {settings.checkout.show_coupon && (
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <CircleSlash className="w-2.5 h-2.5 text-brand-primary" />
-                          <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Promo Code</label>
+                          <label className="text-sm font-medium text-white/90">Coupon Code</label>
                         </div>
                         <div className="relative group">
                           <Input
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                            placeholder="Enter coupon code..."
+                            placeholder="Have a coupon code? Enter it here."
                             disabled={!!appliedCoupon || isCheckingCoupon}
                             className={cn(
-                              "h-14 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm",
-                              appliedCoupon && "border-brand-primary/40 text-brand-primary"
+                              "h-11 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5",
+                              appliedCoupon && "border-indigo-500/40 text-indigo-400"
                             )}
                           />
+                          <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
                           {appliedCoupon ? (
                             <button
                               onClick={() => {
                                 setAppliedCoupon(null)
                                 setCouponCode("")
                               }}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest"
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-red-500/40 hover:border-red-500 hover:bg-red-500/10 transition-all rounded-lg text-[9px] font-bold text-red-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest"
                             >
                               Remove
                               <Trash2 className="w-3 h-3" />
@@ -816,7 +897,7 @@ function CheckoutMainContent() {
                             <button
                               onClick={handleApplyCoupon}
                               disabled={isCheckingCoupon || !couponCode}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-brand-primary/10 border border-brand-primary/20 rounded-xl text-[9px] font-black text-brand-primary hover:bg-brand-primary hover:text-black transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-indigo-500/40 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all rounded-lg text-[9px] font-bold text-indigo-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
                             >
                               {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
                                 Apply
@@ -853,9 +934,9 @@ function CheckoutMainContent() {
                                         [`${item.id}_${field.name}`]: e.target.value
                                       })}
                                       placeholder={field.hint || `Enter ${field.name}...`}
-                                      className="h-14 px-6 bg-white/[0.03] border-white/5 rounded-2xl focus:border-brand-primary/40 focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm"
+                                      className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
                                     />
-                                    <div className="absolute inset-0 rounded-2xl border border-white/0 group-focus-within:border-brand-primary/20 pointer-events-none transition-all" />
+                                    <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
                                   </div>
                                 </div>
                               ))}
@@ -865,140 +946,141 @@ function CheckoutMainContent() {
                       </div>
                     )}
 
-                    <div className="space-y-8 pl-1">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                        <h3 className="text-sm font-bold text-white tracking-tight">Payment Methods</h3>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-primary/10 border border-brand-primary/20">
-                          <LockKeyhole className="w-3 h-3 text-brand-primary" />
-                          <span className="text-[10px] font-bold text-brand-primary uppercase tracking-widest">Secure • Instant</span>
+                    <div className="space-y-4 pt-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between pb-2">
+                          <h3 className="text-sm font-medium text-white/90">Payment Method *</h3>
                         </div>
-                      </div>
 
-                      <div className="space-y-8 max-h-[600px] overflow-y-auto custom-scrollbar pr-4">
-
-                        {/* Primary Method */}
-                        <div
-                          onClick={() => setSelectedMethod("PayPal")}
-                          className={cn(
-                            "relative flex items-center gap-6 py-5 px-4 rounded-xl cursor-pointer group transition-all duration-300 overflow-hidden",
-                            selectedMethod === "PayPal"
-                              ? "bg-blue-500/[0.15] border-2 border-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.3)]"
-                              : "bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10"
-                          )}
-                        >
-                          <div className="relative z-10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" alt="PayPal" className="w-10 h-auto object-contain" />
-                          </div>
-                          <div className="relative z-10 flex flex-col">
-                            <span className="text-xl font-bold text-white tracking-tight">PayPal</span>
-                          </div>
-                          {selectedMethod === "PayPal" && (
-                            <div className="absolute right-4 text-brand-primary animate-in zoom-in duration-300">
-                              <CheckCircle2 className="w-6 h-6" />
+                        <div className="space-y-3">
+                          {/* Primary Method - PayPal */}
+                          <div
+                            onClick={() => setSelectedMethod("PayPal")}
+                            className={cn(
+                              "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                              selectedMethod === "PayPal"
+                                ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10"
+                                : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-[15px] font-bold text-white">PayPal</span>
+                              <span className="text-[10px] text-white/40 font-medium tracking-tight">Secure checkout</span>
                             </div>
-                          )}
-                        </div>
+                            <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" alt="PayPal" className="w-full h-auto object-contain" />
+                            </div>
+                          </div>
 
-                        {/* Grouped Crypto Sections */}
-                        {cryptoGroups.map((group) => (
-                          <div key={group.label} className="space-y-4">
-                            <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
-                            <div className="flex flex-wrap gap-x-6 gap-y-4">
-                              {group.items.map((method) => {
-                                const methodName = (method.name === "Tether" || method.name === "USD coin") ? `${method.name} (${method.network})` : method.name
-                                const isSelected = selectedMethod === methodName
+                          {/* Dynamic Crypto Section */}
+                          <div className="space-y-3">
+                            {displayCryptoItems.map((method) => {
+                              const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
+                              const isSelected = selectedMethod === methodName
 
-                                return (
-                                  <div
-                                    key={method.id + method.network}
-                                    onClick={() => setSelectedMethod(methodName)}
-                                    style={{ "--item-color": method.color } as React.CSSProperties}
-                                    className={cn(
-                                      "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
-                                      isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
-                                    )}
-                                  >
-                                    <div className={cn(
-                                      "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
-                                      isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
-                                    )}>
-                                      <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                              return (
+                                <div
+                                  key={method.id + method.network}
+                                  onClick={() => {
+                                    if (method.name === "Ethereum") {
+                                      setIsEthNetworkModalOpen(true)
+                                    } else {
+                                      setSelectedMethod(methodName)
+                                    }
+                                  }}
+                                  className={cn(
+                                    "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                                    isSelected
+                                      ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10"
+                                      : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                                  )}
+                                >
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[15px] font-bold text-white">{method.name}</span>
+                                      {method.id === "ltc" && (
+                                        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                          <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                          <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
+                                        </div>
+                                      )}
                                     </div>
-
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-2">
-                                        <span className={cn(
-                                          "text-sm font-bold tracking-tight transition-colors",
-                                          isSelected ? "text-white" : "text-white/80 group-hover:text-white"
-                                        )}>{method.name}</span>
-                                        {method.id === "ltc" && (
-                                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                            <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                            <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <span className={cn(
-                                        "text-[9px] font-bold uppercase tracking-wide transition-colors",
-                                        isSelected ? "text-[var(--item-color)]" : "text-white/30"
-                                      )}>{method.network}</span>
-                                    </div>
+                                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
                                   </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        ))}
 
+                                  <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                                    <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                                  </div>
+
+                                  {/* Checkmark for selected */}
+                                  {isSelected && (
+                                    <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Show More Button - Opens Modal */}
+                          <button
+                            onClick={() => setIsMethodModalOpen(true)}
+                            className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all flex items-center justify-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-widest group"
+                          >
+                            <span>Show more</span>
+                            <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
-                      {[
-                        { label: "Terms of Service", state: agreeToTerms, setter: setAgreeToTerms, show: settings.checkout.show_terms },
-                        { label: "Promotional Updates", state: agreeToPromo, setter: setAgreeToPromo, show: settings.checkout.show_newsletter }
-                      ].filter(c => c.show).map((check, i) => (
-                        <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              checked={check.state}
-                              onChange={(e) => check.setter(e.target.checked)}
-                              className="sr-only"
-                            />
-                            <div className={cn(
-                              "w-5 h-5 rounded-lg border-2 transition-all flex items-center justify-center relative z-10",
-                              check.state ? "bg-brand-primary border-brand-primary shadow-[0_0_10px_rgba(38,188,196,0.3)]" : "border-white/10 group-hover:border-white/20"
-                            )}>
-                              {check.state && <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={4} />}
+
+
+                      <div className="pt-2 space-y-2">
+                        {[
+                          { label: "I have read and agree to Rainyday's Terms of Service.", state: agreeToTerms, setter: setAgreeToTerms, show: settings.checkout.show_terms },
+                          { label: "I would like to receive updates and promotions from Rainyday.", state: agreeToPromo, setter: setAgreeToPromo, show: settings.checkout.show_newsletter }
+                        ].filter(c => c.show).map((check, i) => (
+                          <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
+                            <div className="relative">
+                              <input
+                                type="checkbox"
+                                checked={check.state}
+                                onChange={(e) => check.setter(e.target.checked)}
+                                className="sr-only"
+                              />
+                              <div className={cn(
+                                "w-5 h-5 rounded border transition-all flex items-center justify-center relative z-10",
+                                check.state ? "bg-indigo-500 border-indigo-500" : "bg-white/[0.02] border-white/10 group-hover:border-white/20"
+                              )}>
+                                {check.state && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={3} />}
+                              </div>
                             </div>
-                          </div>
-                          <span className={cn(
-                            "text-[10px] font-black uppercase tracking-widest transition-colors",
-                            check.state ? "text-white" : "text-white/20 group-hover:text-white/40"
-                          )}>I agree to {check.label}</span>
-                        </label>
-                      ))}
+                            <span className={cn(
+                              "text-xs transition-colors",
+                              check.state ? "text-white" : "text-white/40 group-hover:text-white/60"
+                            )}>{check.label}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
+
+
+                  {/* Simple CTA Button */}
                   <Button
                     onClick={handleProceedToPayment}
                     disabled={isProcessing}
-                    className="w-full h-16 bg-brand-primary text-black font-black uppercase tracking-[0.3em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_15px_30px_-10px_rgba(38,188,196,0.3)] flex items-center justify-center gap-4 group relative overflow-hidden disabled:opacity-50"
+                    className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Initializing...</span>
                       </div>
                     ) : (
                       <>
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
-                        <span className="text-xl relative z-10 flex items-center gap-3">
-                          Proceed to Payment
-                          <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                        </span>
+                        <span>Proceed to Payment</span>
+                        <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </Button>
@@ -1006,112 +1088,82 @@ function CheckoutMainContent() {
               ) : (
                 <motion.div
                   key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
                   className="space-y-8"
                 >
-                  <div className="p-8 rounded-[40px] bg-white/[0.03] border border-white/10 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-primary/20 transition-colors duration-1000" />
+                  {/* Top Auto-Process Banner */}
+                  <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-center">
+                    <p className="text-[11px] font-bold text-indigo-400">
+                      Your order will be automatically processed once the payment is received.
+                    </p>
+                  </div>
 
-                    <div className="space-y-8 relative z-10">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.4em]">Payment Method</p>
-                          <h3 className="text-2xl font-black">{selectedMethod}</h3>
-                        </div>
-                        <div className="w-14 h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center">
-                          <Bitcoin className="w-8 h-8 text-brand-primary" />
-                        </div>
+                  <div className="relative pl-12 space-y-12">
+                    {/* Step 1: Destination Address */}
+                    <div className="relative space-y-6">
+                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-sm font-black shadow-[0_0_20px_rgba(99,102,241,0.4)] z-10">
+                        1
+                      </div>
+                      {/* Connector Line to Step 2 */}
+                      <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#6366f1]/40" />
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
+                        <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center p-8 bg-black/40 rounded-[32px] border border-white/5 relative group/qr">
-                        <div className="absolute inset-0 bg-brand-primary/5 blur-3xl opacity-0 group-hover/qr:opacity-100 transition-opacity duration-1000" />
-                        <QrCode className="w-48 h-48 text-white opacity-20 absolute" />
-                        <div className="relative w-44 h-44 bg-white rounded-2xl p-3 shadow-[0_0_50px_rgba(255,255,255,0.1)] group-hover/qr:scale-105 transition-transform duration-500">
-                          <Image
-                            src={cryptoDetails?.qrCodeUrl || "/logo.png"}
-                            alt="QR Code"
-                            fill
-                            className="object-contain p-2"
-                          />
-                        </div>
-                        <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/30 group-hover/qr:text-brand-primary transition-colors">Scan to pay securely</p>
+                      {/* QR Code Container */}
+                      <div className="w-48 h-48 bg-white p-4 rounded-3xl relative group/qr overflow-hidden hover:scale-[1.02] transition-transform duration-500">
+                        <Image
+                          src={cryptoDetails?.qrCodeUrl || "/logo.png"}
+                          alt="QR Code"
+                          fill
+                          className="object-contain p-2"
+                        />
+                        {/* Subtle Scan Line */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/0 via-indigo-500/20 to-indigo-500/0 h-1 top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-[10px] font-black text-white/20 uppercase tracking-widest px-2">
-                            <span>Amount to send</span>
-                            <span className="text-brand-primary">Live Rate</span>
-                          </div>
-                          <div
-                            onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                            className="h-16 px-6 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-between group/copy cursor-pointer hover:bg-white/[0.06] hover:border-brand-primary/30 transition-all"
-                          >
-                            <span className="text-lg font-black tracking-tight">{cryptoDetails?.amount} {cryptoDetails?.payCurrency}</span>
-                            <Copy className="w-5 h-5 text-white/10 group-hover/copy:text-brand-primary transition-colors" />
-                          </div>
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
+                        <div
+                          onClick={() => copyToClipboard(cryptoDetails?.address || '')}
+                          className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/addr"
+                        >
+                          <code className="text-sm font-bold text-white truncate max-w-[240px]">{cryptoDetails?.address || 'Initializing...'}</code>
+                          <Copy className="w-4 h-4 text-white/60 group-hover/addr:text-white transition-colors" />
                         </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-[10px] font-black text-white/20 uppercase tracking-widest px-2">
-                            <span>Destination Address</span>
-                          </div>
-                          <div
-                            onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                            className="h-16 px-6 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-between group/copy cursor-pointer hover:bg-white/[0.06] hover:border-brand-primary/30 transition-all"
-                          >
-                            <span className="text-sm font-bold text-white/60 truncate mr-4">{cryptoDetails?.address}</span>
-                            <Copy className="w-5 h-5 text-white/10 group-hover/copy:text-brand-primary transition-colors shrink-0" />
-                          </div>
-                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open(cryptoDetails?.payLink, '_blank')}
+                          className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
+                        >
+                          Open Wallet
+                          <ExternalLink className="w-4 h-4 group-hover/wallet:scale-110 transition-transform" />
+                        </Button>
                       </div>
+                    </div>
 
-                      <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                            <Clock className="w-5 h-5 text-orange-400 animate-pulse" />
-                          </div>
-                          <div>
-                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Time Remaining</p>
-                            <p className="text-sm font-black text-orange-400">{timeLeft}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Network</p>
-                          <p className="text-sm font-black text-brand-primary">{cryptoDetails?.payCurrency} Native</p>
-                        </div>
+                    {/* Step 2: Exact Amount */}
+                    <div className="relative space-y-6">
+                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#6366f1] flex items-center justify-center text-[#6366f1] text-sm font-black ring-1 ring-[#6366f1]/20">
+                        2
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
+                        <p className="text-sm font-medium text-white/40">You can copy it below.</p>
+                      </div>
+                      <div
+                        onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
+                        className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/amt w-fit min-w-[200px]"
+                      >
+                        <span className="text-sm font-black text-white">{cryptoDetails?.amount || '...'}</span>
+                        <Copy className="w-4 h-4 text-white/60 group-hover/amt:text-white transition-colors ml-6" />
                       </div>
                     </div>
                   </div>
 
-                  <Button
-                    onClick={handleCheckPaymentStatus}
-                    disabled={isProcessing}
-                    className="w-full h-20 bg-brand-primary text-black font-black uppercase tracking-[0.4em] rounded-[32px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_20px_40px_-15px_rgba(38,188,196,0.4)] flex flex-col items-center justify-center group relative overflow-hidden"
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        <span>Verifying...</span>
-                      </div>
-                    ) : paymentStatus === 'processing' ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <Loader2 className="w-7 h-7 animate-spin" />
-                        <span className="text-[8px] tracking-[0.5em]">Confirming on Blockchain...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
-                        <span className="text-xl relative z-10 flex items-center gap-3">
-                          Check Payment Status
-                          <ShieldCheck className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                        </span>
-                        <span className="text-[8px] font-black opacity-40 group-hover:opacity-100 transition-opacity">Auto-checking every 5 seconds</span>
-                      </>
-                    )}
-                  </Button>
                   <button
                     onClick={() => setStep(1)}
                     className="w-full h-10 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-brand-primary transition-all flex items-center justify-center gap-2 group"
@@ -1124,20 +1176,168 @@ function CheckoutMainContent() {
             </AnimatePresence>
 
             {/* Sticky Footer Link */}
-            <div className="mt-auto py-10 border-t border-white/5 flex justify-between items-center bg-gradient-to-t from-[#030607] to-transparent">
+            <div className="mt-auto py-6 border-t border-white/5 flex justify-center items-center bg-gradient-to-t from-[#030607] to-transparent">
               <Link href="/store" className="flex items-center gap-3 text-[10px] font-black text-white/20 hover:text-brand-primary uppercase tracking-[0.3em] transition-all group">
                 <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 Keep Shopping
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <div className="flex items-center gap-4 text-[9px] font-black text-white/10 uppercase tracking-widest ">
-                <span>Secured by Hansa Sentinel</span>
-                <Lock className="w-3 h-3" />
-              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
+
+      <AnimatePresence>
+        {/* Select Payment Method Modal */}
+        {isMethodModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMethodModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-3xl bg-[#0d1117] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <h3 className="text-lg font-bold">Select Payment Method</h3>
+                <button
+                  onClick={() => setIsMethodModalOpen(false)}
+                  className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-white"
+                >
+                  <Plus className="w-5 h-5 rotate-45" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                {cryptoGroups.slice(1).map((group) => (
+                  <div key={group.label} className="space-y-3">
+                    <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {group.items.map((method) => {
+                        const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
+                        const isSelected = selectedMethod === methodName
+
+                        return (
+                          <div
+                            key={method.id + method.network}
+                            onClick={() => {
+                              if (method.name === "Ethereum") {
+                                setIsMethodModalOpen(false)
+                                setIsEthNetworkModalOpen(true)
+                              } else {
+                                setSelectedMethod(methodName)
+                                setIsMethodModalOpen(false)
+                              }
+                            }}
+                            className={cn(
+                              "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                              isSelected ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[14px] font-bold text-white">{method.name}</span>
+                                {method.id === "ltc" && (
+                                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                    <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                    <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
+                            </div>
+
+                            <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                              <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                            </div>
+
+                            {isSelected && (
+                              <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ETH Network Selection Modal */}
+        {isEthNetworkModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEthNetworkModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-xl bg-[#090b0d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/10 rounded-xl">
+                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Select ETH Network</h3>
+                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Choose your preferred network</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEthNetworkModalOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40 hover:text-white"
+                >
+                  <Plus className="w-5 h-5 rotate-45" />
+                </button>
+              </div>
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ETH_NETWORKS.map((method) => {
+                  const methodName = `${method.name} (${method.network})`
+                  const isSelected = selectedMethod === methodName
+
+                  return (
+                    <div
+                      key={method.id}
+                      onClick={() => {
+                        setSelectedMethod(methodName)
+                        setIsEthNetworkModalOpen(false)
+                      }}
+                      className={cn(
+                        "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                        isSelected ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[14px] font-bold text-white">{method.network}</span>
+                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Ethereum</span>
+                      </div>
+                      <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                        <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
@@ -1151,6 +1351,28 @@ function CheckoutMainContent() {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(38, 188, 196, 0.2);
+        }
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 40px rgba(38, 188, 196, 0.3), 0 20px 40px -15px rgba(38, 188, 196, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 60px rgba(38, 188, 196, 0.45), 0 25px 50px -15px rgba(38, 188, 196, 0.5);
+          }
+        }
+        @keyframes cta-breathe {
+          0%, 100% {
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 24px rgba(164,248,255,0.25), 0 12px 40px rgba(0,0,0,0.55);
+          }
+          50% {
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 32px rgba(164,248,255,0.4), 0 12px 40px rgba(0,0,0,0.55);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-\\[pulse-glow_4s_ease-in-out_infinite\\],
+          .animate-\\[cta-breathe_3\\.5s_ease-in-out_infinite\\] {
+            animation: none !important;
+          }
         }
       `}</style>
     </div >

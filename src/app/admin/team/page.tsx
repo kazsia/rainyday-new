@@ -6,17 +6,18 @@ import {
     Plus,
     User,
     Pencil,
-    Shield, // Used for 'All Permissions' visualization if needed
+    Shield,
     Trash,
     UserCircle,
-    Copy, // For copying email if needed
     Loader2,
     X,
+    AlertTriangle,
+    Check,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { getTeamMembers, inviteMember, type TeamMember } from "@/lib/db/team"
+import { getTeamMembers, inviteMember, removeMember, transferOwnership, updateMemberPermissions, type TeamMember } from "@/lib/db/team"
 import { toast } from "sonner"
 import {
     Dialog,
@@ -27,6 +28,27 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
+const AVAILABLE_PERMISSIONS = [
+    { id: "products", label: "Manage Products" },
+    { id: "orders", label: "Manage Orders" },
+    { id: "customers", label: "View Customers" },
+    { id: "settings", label: "Site Settings" },
+    { id: "team", label: "Team Management" },
+    { id: "payments", label: "Payment Settings" },
+]
 
 export default function AdminTeamPage() {
     const [members, setMembers] = useState<TeamMember[]>([])
@@ -34,6 +56,19 @@ export default function AdminTeamPage() {
     const [isInviteOpen, setIsInviteOpen] = useState(false)
     const [inviteEmail, setInviteEmail] = useState("")
     const [isInviting, setIsInviting] = useState(false)
+
+    // Remove Dialog State
+    const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null)
+    const [isRemoving, setIsRemoving] = useState(false)
+
+    // Transfer Dialog State
+    const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null)
+    const [isTransferring, setIsTransferring] = useState(false)
+
+    // Permissions Dialog State
+    const [permissionsTarget, setPermissionsTarget] = useState<TeamMember | null>(null)
+    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+    const [isSavingPermissions, setIsSavingPermissions] = useState(false)
 
     useEffect(() => {
         loadMembers()
@@ -65,6 +100,62 @@ export default function AdminTeamPage() {
         } finally {
             setIsInviting(false)
         }
+    }
+
+    async function handleRemove() {
+        if (!removeTarget) return
+        setIsRemoving(true)
+        try {
+            await removeMember(removeTarget.id)
+            toast.success(`${removeTarget.email} has been removed from the team`)
+            setRemoveTarget(null)
+            loadMembers()
+        } catch (error: any) {
+            toast.error(error.message || "Failed to remove member")
+        } finally {
+            setIsRemoving(false)
+        }
+    }
+
+    async function handleTransfer() {
+        if (!transferTarget) return
+        setIsTransferring(true)
+        try {
+            await transferOwnership(transferTarget.id)
+            toast.success(`Ownership transferred to ${transferTarget.email}`)
+            setTransferTarget(null)
+        } catch (error: any) {
+            toast.error(error.message || "Failed to transfer ownership")
+        } finally {
+            setIsTransferring(false)
+        }
+    }
+
+    async function handleSavePermissions() {
+        if (!permissionsTarget) return
+        setIsSavingPermissions(true)
+        try {
+            await updateMemberPermissions(permissionsTarget.id, selectedPermissions)
+            toast.success(`Permissions updated for ${permissionsTarget?.email}`)
+            setPermissionsTarget(null)
+            loadMembers() // Reload to reflect changes
+        } catch (error: any) {
+            toast.error(error.message || "Failed to save permissions")
+        } finally {
+            setIsSavingPermissions(false)
+        }
+    }
+
+    function openPermissionsDialog(member: TeamMember) {
+        setPermissionsTarget(member)
+        // Load the member's actual permissions
+        setSelectedPermissions(member.permissions || AVAILABLE_PERMISSIONS.map(p => p.id))
+    }
+
+    function togglePermission(id: string) {
+        setSelectedPermissions(prev =>
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        )
     }
 
     return (
@@ -148,13 +239,7 @@ export default function AdminTeamPage() {
                                         </tr>
                                     ) : (
                                         members.map((member) => {
-                                            const isOwner = member.role === 'admin' // In reality we'd check against a specific ID or owner flag
-                                            // For this demo, let's treat the first user as Owner/Hansa if feasible, or just map 'admin' to 'Member' generally
-                                            // mocking the role display based on email for the demo effect if needed,
-                                            // but generally we just show 'Admin'.
-                                            // Adjusting to screenshot logic:
                                             const displayRole = "Admin"
-                                            const permissions = "All Permissions"
 
                                             return (
                                                 <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors">
@@ -178,19 +263,32 @@ export default function AdminTeamPage() {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-1.5">
                                                                 <Shield className="w-3 h-3 text-[var(--sa-fg-dim)]" />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--sa-fg-dim)]">All Permissions</span>
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--sa-fg-dim)]">
+                                                                    {member.permissions?.length === AVAILABLE_PERMISSIONS.length
+                                                                        ? "All Permissions"
+                                                                        : `${member.permissions?.length || 0} of ${AVAILABLE_PERMISSIONS.length}`}
+                                                                </span>
                                                             </div>
 
-                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-[var(--sa-accent)] transition-colors bg-white/5 rounded border border-white/5">
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={() => openPermissionsDialog(member)}
+                                                                    className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-[var(--sa-accent)] transition-colors bg-white/5 rounded border border-white/5"
+                                                                >
                                                                     <Pencil className="w-3 h-3" />
                                                                     Permissions
                                                                 </button>
-                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-amber-400 transition-colors bg-white/5 rounded border border-white/5">
+                                                                <button
+                                                                    onClick={() => setTransferTarget(member)}
+                                                                    className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--sa-fg-muted)] hover:text-amber-400 transition-colors bg-white/5 rounded border border-white/5"
+                                                                >
                                                                     <UserCircle className="w-3 h-3" />
                                                                     Transfer
                                                                 </button>
-                                                                <button className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors bg-rose-500/5 rounded border border-rose-500/10">
+                                                                <button
+                                                                    onClick={() => setRemoveTarget(member)}
+                                                                    className="h-7 px-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors bg-rose-500/5 rounded border border-rose-500/10"
+                                                                >
                                                                     <Trash className="w-3 h-3" />
                                                                     Remove
                                                                 </button>
@@ -207,6 +305,112 @@ export default function AdminTeamPage() {
                     )}
                 </div>
             </div>
+
+            {/* Remove Confirmation Dialog */}
+            <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+                <AlertDialogContent className="bg-[#0A0A0A] border-white/10 text-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-rose-500">
+                            <AlertTriangle className="w-5 h-5" />
+                            Remove Team Member
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-white/60">
+                            Are you sure you want to remove <span className="font-bold text-white">{removeTarget?.email}</span> from the admin team?
+                            They will lose all administrative privileges but can still use the platform as a regular user.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleRemove}
+                            disabled={isRemoving}
+                            className="bg-rose-500 hover:bg-rose-600 text-white"
+                        >
+                            {isRemoving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Remove Member
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Transfer Ownership Dialog */}
+            <AlertDialog open={!!transferTarget} onOpenChange={(open) => !open && setTransferTarget(null)}>
+                <AlertDialogContent className="bg-[#0A0A0A] border-white/10 text-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-amber-400">
+                            <UserCircle className="w-5 h-5" />
+                            Transfer Ownership
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-white/60">
+                            Are you sure you want to transfer store ownership to <span className="font-bold text-white">{transferTarget?.email}</span>?
+                            This action will give them full control over the store, including the ability to manage other team members.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleTransfer}
+                            disabled={isTransferring}
+                            className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+                        >
+                            {isTransferring ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Transfer Ownership
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Permissions Dialog */}
+            <Dialog open={!!permissionsTarget} onOpenChange={(open) => !open && setPermissionsTarget(null)}>
+                <DialogContent className="bg-[#0A0A0A] border-white/10 text-white sm:max-w-[450px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-[var(--sa-accent)]" />
+                            Edit Permissions
+                        </DialogTitle>
+                        <DialogDescription className="text-white/60">
+                            Configure access permissions for <span className="font-bold text-white">{permissionsTarget?.email}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-3">
+                        {AVAILABLE_PERMISSIONS.map((perm) => (
+                            <div
+                                key={perm.id}
+                                onClick={() => togglePermission(perm.id)}
+                                className={cn(
+                                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
+                                    selectedPermissions.includes(perm.id)
+                                        ? "bg-[var(--sa-accent)]/10 border-[var(--sa-accent)]/30"
+                                        : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                                )}
+                            >
+                                <Label className="text-sm font-bold text-white cursor-pointer">{perm.label}</Label>
+                                <div className={cn(
+                                    "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                                    selectedPermissions.includes(perm.id)
+                                        ? "bg-[var(--sa-accent)] border-[var(--sa-accent)]"
+                                        : "border-white/20"
+                                )}>
+                                    {selectedPermissions.includes(perm.id) && <Check className="w-3 h-3 text-black" />}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setPermissionsTarget(null)} className="text-white/40 hover:text-white hover:bg-white/5">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSavePermissions}
+                            disabled={isSavingPermissions}
+                            className="bg-[var(--sa-accent)] text-black font-bold hover:bg-[var(--sa-accent-glow)]"
+                        >
+                            {isSavingPermissions && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                            Save Permissions
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     )
 }
