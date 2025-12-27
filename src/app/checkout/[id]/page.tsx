@@ -890,12 +890,12 @@ function CheckoutMainContent() {
                 <div key={item.s} className="space-y-3 flex-1">
                   <div className={cn(
                     "h-1 w-full rounded-full transition-all duration-1000",
-                    isActiveOrCompleted ? "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]" : "bg-white/5"
+                    isActiveOrCompleted ? "bg-[#a4f8ff] shadow-[0_0_15px_rgba(164,248,255,0.5)]" : "bg-white/5"
                   )} />
                   <div className="space-y-1">
                     <p className={cn(
                       "text-[10px] font-black uppercase tracking-widest transition-colors",
-                      isActiveOrCompleted ? "text-indigo-400" : "text-white/20"
+                      isActiveOrCompleted ? "text-[#a4f8ff]" : "text-white/20"
                     )}>Step {item.s}</p>
                     <p className={cn(
                       "text-xs font-bold tracking-tight transition-colors",
@@ -930,7 +930,7 @@ function CheckoutMainContent() {
                           placeholder="The order confirmation will be sent to this e-mail address."
                           className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
                         />
-                        <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
+                        <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
                       </div>
                     </div>
 
@@ -948,17 +948,17 @@ function CheckoutMainContent() {
                             disabled={!!appliedCoupon || isCheckingCoupon}
                             className={cn(
                               "h-11 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5",
-                              appliedCoupon && "border-indigo-500/40 text-indigo-400"
+                              appliedCoupon && "border-[#a4f8ff]/40 text-[#a4f8ff]"
                             )}
                           />
-                          <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
+                          <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
                           {appliedCoupon ? (
                             <button
                               onClick={() => {
                                 setAppliedCoupon(null)
                                 setCouponCode("")
                               }}
-                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-red-500/40 hover:border-red-500 hover:bg-red-500/10 transition-all rounded-lg text-[9px] font-bold text-red-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest"
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-red-400/40 hover:border-red-400 hover:bg-red-400/10 transition-all rounded-lg text-[9px] font-bold text-red-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest"
                             >
                               Remove
                               <Trash2 className="w-3 h-3" />
@@ -967,7 +967,7 @@ function CheckoutMainContent() {
                             <button
                               onClick={handleApplyCoupon}
                               disabled={isCheckingCoupon || !couponCode}
-                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-indigo-500/40 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all rounded-lg text-[9px] font-bold text-indigo-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-[#a4f8ff]/40 hover:border-[#a4f8ff] hover:bg-[#a4f8ff]/10 transition-all rounded-lg text-[9px] font-bold text-[#a4f8ff] flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
                             >
                               {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
                                 Apply
@@ -1006,7 +1006,7 @@ function CheckoutMainContent() {
                                       placeholder={field.hint || `Enter ${field.name}...`}
                                       className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
                                     />
-                                    <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-indigo-500 group-focus-within:ring-4 group-focus-within:ring-indigo-500/10 pointer-events-none transition-all" />
+                                    <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
                                   </div>
                                 </div>
                               ))}
@@ -1029,7 +1029,7 @@ function CheckoutMainContent() {
                             className={cn(
                               "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
                               selectedMethod === "PayPal"
-                                ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10"
+                                ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
                                 : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
                             )}
                           >
@@ -1061,7 +1061,7 @@ function CheckoutMainContent() {
                                   className={cn(
                                     "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
                                     isSelected
-                                      ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10"
+                                      ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
                                       : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
                                   )}
                                 >
@@ -1084,7 +1084,7 @@ function CheckoutMainContent() {
 
                                   {/* Checkmark for selected */}
                                   {isSelected && (
-                                    <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
+                                    <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
                                   )}
                                 </div>
                               )
@@ -1119,9 +1119,9 @@ function CheckoutMainContent() {
                               />
                               <div className={cn(
                                 "w-5 h-5 rounded border transition-all flex items-center justify-center relative z-10",
-                                check.state ? "bg-indigo-500 border-indigo-500" : "bg-white/[0.02] border-white/10 group-hover:border-white/20"
+                                check.state ? "bg-[#a4f8ff] border-[#a4f8ff]" : "bg-white/[0.02] border-white/10 group-hover:border-white/20"
                               )}>
-                                {check.state && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={3} />}
+                                {check.state && <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />}
                               </div>
                             </div>
                             <span className={cn(
@@ -1140,7 +1140,7 @@ function CheckoutMainContent() {
                   <Button
                     onClick={handleProceedToPayment}
                     disabled={isProcessing}
-                    className="w-full h-11 bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full h-11 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#70d4db] text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
@@ -1164,8 +1164,8 @@ function CheckoutMainContent() {
                   className="space-y-8"
                 >
                   {/* Top Auto-Process Banner */}
-                  <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-center">
-                    <p className="text-[11px] font-bold text-indigo-400">
+                  <div className="p-4 rounded-xl bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-center">
+                    <p className="text-[11px] font-bold text-[#a4f8ff]">
                       Your order will be automatically processed once the payment is received.
                     </p>
                   </div>
@@ -1173,11 +1173,11 @@ function CheckoutMainContent() {
                   <div className="relative pl-12 space-y-12">
                     {/* Step 1: Destination Address */}
                     <div className="relative space-y-6">
-                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-sm font-black shadow-[0_0_20px_rgba(99,102,241,0.4)] z-10">
+                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#a4f8ff] flex items-center justify-center text-black text-sm font-black shadow-[0_0_20px_rgba(164,248,255,0.4)] z-10">
                         1
                       </div>
                       {/* Connector Line to Step 2 */}
-                      <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#6366f1]/40" />
+                      <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#a4f8ff]/40" />
                       <div className="space-y-1">
                         <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
                         <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
@@ -1192,17 +1192,17 @@ function CheckoutMainContent() {
                           className="object-contain p-2"
                         />
                         {/* Subtle Scan Line */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/0 via-indigo-500/20 to-indigo-500/0 h-1 top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#a4f8ff]/0 via-[#a4f8ff]/20 to-[#a4f8ff]/0 h-1 top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
                       </div>
 
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
                         <div
                           onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                          className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/addr"
+                          className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
                         >
-                          <code className="text-sm font-bold text-white truncate max-w-[240px]">{cryptoDetails?.address || 'Initializing...'}</code>
-                          <Copy className="w-4 h-4 text-white/60 group-hover/addr:text-white transition-colors" />
+                          <code className="text-sm font-bold text-black truncate max-w-[240px]">{cryptoDetails?.address || 'Initializing...'}</code>
+                          <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
                         </div>
                         <Button
                           variant="outline"
@@ -1217,7 +1217,7 @@ function CheckoutMainContent() {
 
                     {/* Step 2: Exact Amount */}
                     <div className="relative space-y-6">
-                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#6366f1] flex items-center justify-center text-[#6366f1] text-sm font-black ring-1 ring-[#6366f1]/20">
+                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#a4f8ff] flex items-center justify-center text-[#a4f8ff] text-sm font-black ring-1 ring-[#a4f8ff]/20">
                         2
                       </div>
                       <div className="space-y-1">
@@ -1226,10 +1226,10 @@ function CheckoutMainContent() {
                       </div>
                       <div
                         onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                        className="flex items-center justify-between h-14 px-5 bg-indigo-600 rounded-2xl cursor-pointer hover:bg-indigo-500 transition-all group/amt w-fit min-w-[200px]"
+                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/amt w-fit min-w-[200px]"
                       >
-                        <span className="text-sm font-black text-white">{cryptoDetails?.amount || '...'}</span>
-                        <Copy className="w-4 h-4 text-white/60 group-hover/amt:text-white transition-colors ml-6" />
+                        <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
+                        <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
                       </div>
                     </div>
                   </div>
@@ -1312,7 +1312,7 @@ function CheckoutMainContent() {
                             }}
                             className={cn(
                               "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                              isSelected ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                              isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
                             )}
                           >
                             <div className="flex flex-col">
@@ -1333,7 +1333,7 @@ function CheckoutMainContent() {
                             </div>
 
                             {isSelected && (
-                              <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
+                              <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
                             )}
                           </div>
                         )
@@ -1364,7 +1364,7 @@ function CheckoutMainContent() {
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/10 rounded-xl">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#a4f8ff]/10 rounded-xl">
                     <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
                   </div>
                   <div>
@@ -1393,7 +1393,7 @@ function CheckoutMainContent() {
                       }}
                       className={cn(
                         "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                        isSelected ? "bg-white/[0.05] border border-indigo-500 ring-4 ring-indigo-500/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                        isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
                       )}
                     >
                       <div className="flex flex-col">
@@ -1404,7 +1404,7 @@ function CheckoutMainContent() {
                         <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="w-4 h-4 text-indigo-400 absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
+                        <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
                       )}
                     </div>
                   )
