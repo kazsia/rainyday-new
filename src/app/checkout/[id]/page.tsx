@@ -64,6 +64,7 @@ const paymentMethods = [
   { id: "xmr", name: "Monero", icon: Bitcoin, description: "XMR", color: "#FF6600" },
   { id: "shib", name: "Shiba Inu", icon: Bitcoin, description: "SHIB", color: "#FFA409" },
   { id: "dai", name: "DAI", icon: Bitcoin, description: "Stablecoin", color: "#F5AC37" },
+  { id: "xrp", name: "Ripple", icon: Bitcoin, description: "XRP", color: "#23292F" },
   { id: "paypal", name: "PayPal", icon: CreditCard, description: "Credit Card / PayPal", color: "#0070BA" },
 ]
 
@@ -292,6 +293,7 @@ function CheckoutMainContent() {
           "DAI": "DAI",
           "NotCoin": "NOT",
           "Dogs": "DOGS",
+          "Ripple": "XRP",
         }
 
         // 1. Create or Update the Order in Supabase
@@ -899,63 +901,73 @@ function CheckoutMainContent() {
                             items: [
                               { id: "sol", name: "Solana", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
                               { id: "trx", name: "Tron", icon: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035", network: "TRX", color: "#FF0013" },
-                              { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
                               { id: "bnb", name: "BNB", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
                               { id: "ton", name: "TON", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
+                              { id: "xrp", name: "Ripple", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "Ripple", color: "#23292F" },
                               { id: "pol", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
                               { id: "xmr", name: "Monero", icon: "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035", network: "XMR", color: "#FF6600" },
                               { id: "bch", name: "Bitcoin Cash", icon: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035", network: "BCH", color: "#8DC351" },
                             ]
+                          },
+                          {
+                            label: "Community & Trending",
+                            items: [
+                              { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
+                              { id: "shib", name: "Shiba Inu", icon: "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035", network: "ERC20", color: "#FFA409" },
+                              { id: "not", name: "NotCoin", icon: "https://cryptologos.cc/logos/notcoin-not-logo.svg?v=035", network: "TON", color: "#F5F5F5" },
+                              { id: "dogs", name: "Dogs", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
+                            ]
                           }
-                        ].map((group) => (
-                          <div key={group.label} className="space-y-4">
-                            <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
-                            <div className="flex flex-wrap gap-x-6 gap-y-4">
-                              {group.items.map((method) => {
-                                const methodName = method.name === "USDT" ? `${method.name} (${method.network})` : method.name
-                                const isSelected = selectedMethod === methodName
+                        ]
+                          .map((group) => (
+                            <div key={group.label} className="space-y-4">
+                              <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                              <div className="flex flex-wrap gap-x-6 gap-y-4">
+                                {group.items.map((method) => {
+                                  const methodName = method.name === "USDT" ? `${method.name} (${method.network})` : method.name
+                                  const isSelected = selectedMethod === methodName
 
-                                return (
-                                  <div
-                                    key={method.id + method.network}
-                                    onClick={() => setSelectedMethod(methodName)}
-                                    style={{ "--item-color": method.color } as React.CSSProperties}
-                                    className={cn(
-                                      "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
-                                      isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
-                                    )}
-                                  >
-                                    <div className={cn(
-                                      "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
-                                      isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
-                                    )}>
-                                      <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
-                                    </div>
-
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-2">
-                                        <span className={cn(
-                                          "text-sm font-bold tracking-tight transition-colors",
-                                          isSelected ? "text-white" : "text-white/80 group-hover:text-white"
-                                        )}>{method.name}</span>
-                                        {method.id === "ltc" && (
-                                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                            <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                            <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
-                                          </div>
-                                        )}
+                                  return (
+                                    <div
+                                      key={method.id + method.network}
+                                      onClick={() => setSelectedMethod(methodName)}
+                                      style={{ "--item-color": method.color } as React.CSSProperties}
+                                      className={cn(
+                                        "relative flex items-center gap-3 cursor-pointer group transition-all duration-200 pr-4 py-2 rounded-lg",
+                                        isSelected ? "bg-[var(--item-color)]/10 ring-1 ring-[var(--item-color)]/50" : "hover:bg-white/[0.04]"
+                                      )}
+                                    >
+                                      <div className={cn(
+                                        "w-9 h-9 rounded-full flex items-center justify-center p-1.5 transition-all duration-300",
+                                        isSelected ? "bg-[var(--item-color)]/20 scale-110" : "bg-white/5 group-hover:bg-white/10 group-hover:scale-105"
+                                      )}>
+                                        <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
                                       </div>
-                                      <span className={cn(
-                                        "text-[9px] font-bold uppercase tracking-wide transition-colors",
-                                        isSelected ? "text-[var(--item-color)]" : "text-white/30"
-                                      )}>{method.network}</span>
+
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                          <span className={cn(
+                                            "text-sm font-bold tracking-tight transition-colors",
+                                            isSelected ? "text-white" : "text-white/80 group-hover:text-white"
+                                          )}>{method.name}</span>
+                                          {method.id === "ltc" && (
+                                            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                              <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                              <span className="text-[9px] font-bold text-yellow-400 uppercase tracking-wider">Popular</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <span className={cn(
+                                          "text-[9px] font-bold uppercase tracking-wide transition-colors",
+                                          isSelected ? "text-[var(--item-color)]" : "text-white/30"
+                                        )}>{method.network}</span>
+                                      </div>
                                     </div>
-                                  </div>
-                                )
-                              })}
+                                  )
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
 
                       </div>
                     </div>

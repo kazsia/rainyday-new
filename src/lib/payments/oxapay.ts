@@ -308,6 +308,7 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
         "DAI": "Ethereum",
         "NOT": "TON",
         "DOGS": "TON",
+        "XRP": "Ripple",
     }
 
     const payCurrency = params.payCurrency || "BTC"
