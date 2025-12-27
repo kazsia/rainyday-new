@@ -503,8 +503,8 @@ function InvoiceContent() {
               { s: 3, label: "Receive Your Items" }
             ].map((item) => {
               // For invoice page, Step 1 and 2 are always completed/active.
-              // Step 3 is completed if status is delivered or completed.
-              const isStep3Completed = order.status === 'delivered' || order.status === 'completed'
+              // Step 3 is completed if status is paid, delivered, or completed.
+              const isStep3Completed = order.status === 'paid' || order.status === 'delivered' || order.status === 'completed'
               const isActiveOrCompleted = item.s <= 2 || (item.s === 3 && isStep3Completed)
 
               return (

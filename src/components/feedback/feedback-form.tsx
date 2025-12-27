@@ -123,7 +123,7 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
         <Button
           type="submit"
           disabled={isSubmitting || rating === 0}
-          className="w-full h-14 bg-[#6366f1] hover:bg-[#6366f1] text-white font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:scale-100"
+          className="w-full h-14 bg-[#a4f8ff] hover:bg-[#8ae6ed] text-black font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <div className="flex items-center gap-2">
