@@ -204,6 +204,7 @@ function CheckoutMainContent() {
   const [email, setEmail] = React.useState("")
   const [orderId, setOrderId] = React.useState("")
   const [savedTotal, setSavedTotal] = React.useState(0) // Store total before clearing cart
+  const [savedItems, setSavedItems] = React.useState<any[]>([]) // Store items before clearing cart
   const [customFieldValues, setCustomFieldValues] = React.useState<Record<string, string>>({})
 
   // Progressive disclosure for payment methods
@@ -233,6 +234,9 @@ function CheckoutMainContent() {
     value: number
   } | null>(null)
   const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false)
+
+  // Calculate totals
+
 
   // Calculate totals
   const subtotal = savedTotal || cartTotal
@@ -278,6 +282,38 @@ function CheckoutMainContent() {
     payLink: string
     exchangeRate?: number
   } | null>(null)
+
+  // -- Persistence Logic --
+  // 1. Restore state on mount
+  React.useEffect(() => {
+    if (!urlOrderId) return
+    try {
+      const saved = localStorage.getItem(`checkout_sess_${urlOrderId}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.step && parsed.step > 1) {
+          setSavedItems(parsed.savedItems || [])
+          setSavedTotal(parsed.savedTotal || 0)
+          setCryptoDetails(parsed.cryptoDetails)
+          setStep(parsed.step)
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore checkout session:", e)
+    }
+  }, [urlOrderId])
+
+  // 2. Save state when changed (only for step 2+)
+  React.useEffect(() => {
+    if (!urlOrderId || step === 1) return
+    const state = {
+      step,
+      cryptoDetails,
+      savedItems,
+      savedTotal
+    }
+    localStorage.setItem(`checkout_sess_${urlOrderId}`, JSON.stringify(state))
+  }, [step, cryptoDetails, savedItems, savedTotal, urlOrderId])
 
   // Countdown timer for payment expiration
   const [timeLeft, setTimeLeft] = React.useState<string>("--:--")
@@ -546,7 +582,7 @@ function CheckoutMainContent() {
           const { convertUsdToCrypto } = await import("@/lib/payments/crypto-prices")
           const conversion = await convertUsdToCrypto(total, selectedCrypto)
           if (conversion) {
-            if (!finalCryptoAmount || finalCryptoAmount === String(total) || finalCryptoAmount === "1" || finalCryptoAmount === "1.00") {
+            if (!finalCryptoAmount || finalCryptoAmount === String(total) || finalCryptoAmount === "1" || finalCryptoAmount === "1.00" || finalCryptoAmount === "0" || parseFloat(finalCryptoAmount) === 0) {
               finalCryptoAmount = conversion.cryptoAmount
             }
             exchangeRate = conversion.usdPrice
@@ -565,6 +601,8 @@ function CheckoutMainContent() {
           exchangeRate
         })
 
+        setSavedTotal(total)
+        setSavedItems(cart)
         setStep(2)
         clearCart()
         toast.success("Order created! Processing payment...")
@@ -572,6 +610,8 @@ function CheckoutMainContent() {
       }
 
       // Normal flow for other methods if any
+      setSavedTotal(finalTotal)
+      setSavedItems(cart)
       clearCart()
       router.push(`/invoice?id=${orderId}`)
     } catch (error: any) {
@@ -706,7 +746,7 @@ function CheckoutMainContent() {
 
               <div className="space-y-2 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
                 <AnimatePresence mode="popLayout">
-                  {cart.map((item, idx) => (
+                  {(savedItems.length > 0 ? savedItems : cart).map((item, idx) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -723,30 +763,32 @@ function CheckoutMainContent() {
                           <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variantName}</p>
                         )}
                         <div className="flex items-center gap-3 mt-2">
-                          <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 border border-white/10">
-                            <button
-                              disabled={item.quantity <= 0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateQuantity(item, -1);
-                              }}
-                              className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="text-[10px] font-black w-5 text-center text-white">{item.quantity}</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateQuantity(item, 1);
-                              }}
-                              className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
+                          {savedItems.length > 0 ? null : (
+                            <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 border border-white/10">
+                              <button
+                                disabled={item.quantity <= 0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateQuantity(item, -1);
+                                }}
+                                className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-[10px] font-black w-5 text-center text-white">{item.quantity}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateQuantity(item, 1);
+                                }}
+                                className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                           {/* Increased spacing for cart safety */}
-                          <div className="ml-2">
+                          {!savedItems.length && <div className="ml-2">
                             {pendingDelete === item.id ? (
                               <div className="flex items-center gap-1 animate-in fade-in duration-200">
                                 <button
@@ -781,11 +823,13 @@ function CheckoutMainContent() {
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             )}
-                          </div>
+                          </div>}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-black text-white group-hover:text-brand-primary transition-colors">{formatPrice(item.price * item.quantity)}</p>
+                        {savedItems.length === 0 && (
+                          <p className="text-xs font-black text-white group-hover:text-brand-primary transition-colors">{formatPrice(item.price * item.quantity)}</p>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -1192,7 +1236,13 @@ function CheckoutMainContent() {
                   </div>
 
                   <button
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setStep(1)
+                      setSavedItems([])
+                      if (urlOrderId) {
+                        localStorage.removeItem(`checkout_sess_${urlOrderId}`)
+                      }
+                    }}
                     className="w-full h-10 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-brand-primary transition-all flex items-center justify-center gap-2 group"
                   >
                     <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
