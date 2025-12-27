@@ -45,28 +45,6 @@ import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 import { getOrder, updateOrder } from "@/lib/db/orders"
 import { Suspense } from "react"
 
-// All OxaPay supported cryptocurrencies (exact symbols from their API)
-const paymentMethods = [
-  { id: "balance", name: "Customer Balance", icon: Wallet2, description: "Click to authenticate", color: "#26BCC4" },
-  { id: "bitcoin", name: "Bitcoin", icon: Bitcoin, description: "BTC", color: "#F7931A" },
-  { id: "ethereum", name: "Ethereum", icon: Bitcoin, description: "ETH", color: "#627EEA" },
-  { id: "litecoin", name: "Litecoin", icon: Bitcoin, description: "LTC", color: "#345D9D" },
-  { id: "usdt-trc20", name: "USDT (TRC20)", icon: Bitcoin, description: "Tether on Tron", color: "#26A17B" },
-  { id: "usdt-erc20", name: "USDT (ERC20)", icon: Bitcoin, description: "Tether on Ethereum", color: "#26A17B" },
-  { id: "trx", name: "Tron", icon: Bitcoin, description: "TRX", color: "#FF0013" },
-  { id: "dogecoin", name: "Dogecoin", icon: Bitcoin, description: "DOGE", color: "#C2A633" },
-  { id: "bch", name: "Bitcoin Cash", icon: Bitcoin, description: "BCH", color: "#8DC351" },
-  { id: "bnb", name: "BNB", icon: Bitcoin, description: "BSC", color: "#F3BA2F" },
-  { id: "sol", name: "Solana", icon: Bitcoin, description: "SOL", color: "#9945FF" },
-  { id: "usdc", name: "USDC", icon: Bitcoin, description: "USD Coin", color: "#2775CA" },
-  { id: "ton", name: "TON", icon: Bitcoin, description: "Toncoin", color: "#0088CC" },
-  { id: "pol", name: "Polygon", icon: Bitcoin, description: "POL", color: "#8247E5" },
-  { id: "xmr", name: "Monero", icon: Bitcoin, description: "XMR", color: "#FF6600" },
-  { id: "shib", name: "Shiba Inu", icon: Bitcoin, description: "SHIB", color: "#FFA409" },
-  { id: "dai", name: "DAI", icon: Bitcoin, description: "Stablecoin", color: "#F5AC37" },
-  { id: "xrp", name: "Ripple", icon: Bitcoin, description: "XRP", color: "#23292F" },
-  { id: "paypal", name: "PayPal", icon: CreditCard, description: "Credit Card / PayPal", color: "#0070BA" },
-]
 
 function CheckoutMainContent() {
   const router = useRouter()
@@ -274,28 +252,26 @@ function CheckoutMainContent() {
         const { createPayment } = await import("@/lib/db/payments")
 
         // Map payment method to OxaPay currency codes (exact symbols from their API)
-        const payCurrencyMap: Record<string, string> = {
-          "Bitcoin": "BTC",
-          "Ethereum": "ETH",
-          "Litecoin": "LTC",
-          "USDT (TRC20)": "USDT",
-          "USDT (ERC20)": "USDT",
-          "Tron": "TRX",
-          "Dogecoin": "DOGE",
-          "Bitcoin Cash": "BCH",
-          "BNB": "BNB",
-          "Solana": "SOL",
-          "USDC": "USDC",
-          "TON": "TON",
-          "Polygon": "POL", // OxaPay uses POL, not MATIC
-          "Monero": "XMR",
-          "Shiba Inu": "SHIB",
-          "DAI": "DAI",
-          "Notcoin": "NOT",
-          "DOGS": "DOGS",
-          "Ripple": "XRP",
-          "Toncoin": "TON",
-          "USD coin": "USDC",
+        const payCurrencyMap: Record<string, { currency: string, network?: string }> = {
+          "Bitcoin (BTC)": { currency: "BTC", network: "Bitcoin" },
+          "Ethereum (ETH)": { currency: "ETH", network: "Ethereum" },
+          "Ethereum (ETH-Base)": { currency: "ETH", network: "Base" },
+          "Ethereum (ETH-BEP20)": { currency: "ETH", network: "BSC" },
+          "Tether (USDT-ERC20)": { currency: "USDT", network: "Ethereum" },
+          "Tether (USDT-TRC20)": { currency: "USDT", network: "Tron" },
+          "Tether (USDT-BEP20)": { currency: "USDT", network: "BSC" },
+          "Tether (USDT-Polygon)": { currency: "USDT", network: "Polygon" },
+          "Tether (USDT-TON)": { currency: "USDT", network: "TON" },
+          "Tether (USDT-Solana)": { currency: "USDT", network: "Solana" },
+          "USD Coin (USDC-ERC20)": { currency: "USDC", network: "Ethereum" },
+          "USD Coin (USDC-SPL)": { currency: "USDC", network: "Solana" },
+          "USD Coin (USDC-BEP20)": { currency: "USDC", network: "BSC" },
+          "USD Coin (USDC-Base)": { currency: "USDC", network: "Base" },
+          "BNB (BNB)": { currency: "BNB", network: "BSC" },
+          "Polygon (POL)": { currency: "POL", network: "Polygon" },
+          "Litecoin (LTC)": { currency: "LTC", network: "Litecoin" },
+          "Solana (SOL)": { currency: "SOL", network: "Solana" },
+          "Ripple (XRP)": { currency: "XRP", network: "Ripple" },
         }
 
         // 1. Create or Update the Order in Supabase
@@ -394,10 +370,12 @@ function CheckoutMainContent() {
 
         // 2b. Create the OxaPay Invoice (existing flow)
         const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
+        const methodConfig = payCurrencyMap[selectedMethod] || { currency: "BTC" }
         const response = await createOxaPayWhiteLabelWithInquiry({
           amount: total,
           currency: "USD",
-          payCurrency: payCurrencyMap[selectedMethod] || "BTC",
+          payCurrency: methodConfig.currency,
+          network: methodConfig.network,
           orderId: order.id,
           description: `Order ${order.readable_id} from Rainyday`,
           email: email,
@@ -410,7 +388,7 @@ function CheckoutMainContent() {
         // 3. Create the Payment record with OxaPay track ID and pay_url
         await createPayment({
           order_id: order.id,
-          provider: payCurrencyMap[selectedMethod] || "Crypto",
+          provider: methodConfig.currency || "Crypto",
           amount: total,
           currency: "USD",
           track_id: response.trackId,
@@ -429,7 +407,8 @@ function CheckoutMainContent() {
         // Calculate real crypto amount using live exchange rates
         let finalCryptoAmount = response.amount
         let exchangeRate = 0
-        const selectedCrypto = payCurrencyMap[selectedMethod] || "BTC"
+        const methodConfigLater = payCurrencyMap[selectedMethod] || { currency: "BTC" }
+        const selectedCrypto = methodConfigLater.currency
 
         // If OxaPay didn't return a proper crypto amount, OR if it just mirrored the USD amount, OR if we just want to be sure
         // Always try to calculate strict crypto amount to avoid "1 BTC" issues
@@ -884,40 +863,40 @@ function CheckoutMainContent() {
                           {
                             label: "Major Currencies",
                             items: [
-                              { id: "btc", name: "Bitcoin", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035", network: "BTC", color: "#F7931A" },
-                              { id: "eth", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "ERC20", color: "#627EEA" },
-                              { id: "ltc", name: "Litecoin", icon: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035", network: "LTC", color: "#345D9D" },
+                              { id: "btc", name: "Bitcoin (BTC)", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035", network: "Bitcoin", color: "#F7931A" },
+                              { id: "eth", name: "Ethereum (ETH)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "Mainnet", color: "#627EEA" },
+                              { id: "eth-base", name: "Ethereum (ETH-Base)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "Base", color: "#0052FF" },
+                              { id: "eth-bep20", name: "Ethereum (ETH-BEP20)", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
+                              { id: "ltc", name: "Litecoin (LTC)", icon: "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035", network: "Litecoin", color: "#345D9D" },
                             ]
                           },
                           {
-                            label: "Stablecoins",
+                            label: "Tether (USDT)",
                             items: [
-                              { id: "usdt-trc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
-                              { id: "usdt-erc20", name: "USDT", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
-                              { id: "usdc", name: "USD coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
-                              { id: "dai", name: "DAI", icon: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035", network: "ERC20", color: "#F5AC37" },
+                              { id: "usdt-erc20", name: "Tether (USDT-ERC20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "ERC20", color: "#26A17B" },
+                              { id: "usdt-trc20", name: "Tether (USDT-TRC20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TRC20", color: "#26A17B" },
+                              { id: "usdt-bep20", name: "Tether (USDT-BEP20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "BSC", color: "#26A17B" },
+                              { id: "usdt-polygon", name: "Tether (USDT-Polygon)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "Polygon", color: "#26A17B" },
+                              { id: "usdt-ton", name: "Tether (USDT-TON)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "TON", color: "#26A17B" },
+                              { id: "usdt-solana", name: "Tether (USDT-Solana)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035", network: "Solana", color: "#26A17B" },
+                            ]
+                          },
+                          {
+                            label: "USD Coin (USDC)",
+                            items: [
+                              { id: "usdc-erc20", name: "USD Coin (USDC-ERC20)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "ERC20", color: "#2775CA" },
+                              { id: "usdc-spl", name: "USD Coin (USDC-SPL)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "Solana", color: "#2775CA" },
+                              { id: "usdc-bep20", name: "USD Coin (USDC-BEP20)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "BSC", color: "#2775CA" },
+                              { id: "usdc-base", name: "USD Coin (USDC-Base)", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035", network: "Base", color: "#2775CA" },
                             ]
                           },
                           {
                             label: "Alt Networks",
                             items: [
-                              { id: "sol", name: "Solana", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
-                              { id: "trx", name: "Tron", icon: "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035", network: "TRX", color: "#FF0013" },
-                              { id: "bnb", name: "BNB", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
-                              { id: "ton", name: "Toncoin", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#0088CC" },
-                              { id: "xrp", name: "Ripple", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "XRP", color: "#23292F" },
-                              { id: "pol", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
-                              { id: "xmr", name: "Monero", icon: "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035", network: "XMR", color: "#FF6600" },
-                              { id: "bch", name: "Bitcoin Cash", icon: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035", network: "BCH", color: "#8DC351" },
-                            ]
-                          },
-                          {
-                            label: "Community & Trending",
-                            items: [
-                              { id: "doge", name: "Dogecoin", icon: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035", network: "DOGE", color: "#C2A633" },
-                              { id: "shib", name: "Shiba Inu", icon: "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035", network: "ERC20", color: "#FFA409" },
-                              { id: "not", name: "Notcoin", icon: "https://cryptologos.cc/logos/notcoin-not-logo.svg?v=035", network: "TON", color: "#F5F5F5" },
-                              { id: "dogs", name: "DOGS", icon: "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035", network: "TON", color: "#000000" },
+                              { id: "bnb", name: "BNB (BNB)", icon: "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035", network: "BSC", color: "#F3BA2F" },
+                              { id: "pol", name: "Polygon (POL)", icon: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035", network: "POL", color: "#8247E5" },
+                              { id: "sol", name: "Solana (SOL)", icon: "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035", network: "SOL", color: "#9945FF" },
+                              { id: "xrp", name: "Ripple (XRP)", icon: "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035", network: "Ripple", color: "#23292F" },
                             ]
                           }
                         ]
