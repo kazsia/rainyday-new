@@ -390,8 +390,8 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                   )}
                 </div>
 
-                {/* Variant Selection */}
-                {product.variants && product.variants.length > 0 && (
+                {/* Variant Selection - only show if more than 1 active variant */}
+                {product.variants && product.variants.filter((v: any) => v.is_active).length > 1 && (
                   <div className="mb-8 relative z-10">
                     <p className="text-[10px] font-black text-white/20 mb-4 ml-1 uppercase tracking-[0.3em]">Select Option</p>
                     <div className="grid grid-cols-1 gap-2.5">

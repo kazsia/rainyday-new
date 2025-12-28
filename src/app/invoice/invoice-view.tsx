@@ -380,11 +380,11 @@ function InvoiceContent() {
           }
 
           if (bcStatus.status === 'confirmed' && bcStatus.txId) {
-            setPaymentStatus('completed')
-            toast.success("Payment Confirmed!")
-            clearInterval(pollInterval)
-            loadOrder(false)
-            return
+            // VISUAL ONLY: We rely on OxaPay for the actual "Paid" status trigger.
+            if (!hasShownDetectedToast) {
+              toast.success("Blockchain confirmed! Waiting for payment processor...")
+            }
+            // Do NOT set paymentStatus('completed') here. Wait for OxaPay.
           }
         }
 
@@ -407,6 +407,15 @@ function InvoiceContent() {
             setPaymentStatus('processing')
           }
           if (info.status === 'Paid' && info.txID) {
+            // ACTIVE SYNC: Trigger server update immediately
+            try {
+              const { markOrderAsPaid } = await import("@/lib/actions/checkout")
+              // We pass the txID, and the server action will RE-VERIFY it before marking paid
+              await markOrderAsPaid(order.id, info.txID)
+            } catch (err) {
+              console.error("Failed to sync paid status:", err)
+            }
+
             setPaymentStatus('completed')
             toast.success("Payment Confirmed!")
             clearInterval(pollInterval)

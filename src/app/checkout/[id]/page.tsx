@@ -42,6 +42,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 import { getOrder } from "@/lib/db/orders"
 import { safeCreateOrder, safeUpdateOrder, safeCreatePayment } from "@/lib/actions/safe-checkout"
+import { createOxaPayWhiteLabel, getOxaPayPaymentInfo } from "@/lib/payments/oxapay" // Static import for reliability
 import { Suspense } from "react"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
@@ -603,7 +604,7 @@ function CheckoutMainContent() {
         }
 
         // 2b. Create the OxaPay Invoice (existing flow)
-        const { createOxaPayWhiteLabelWithInquiry } = await import("@/lib/payments/oxapay")
+        // const { createOxaPayWhiteLabel } = await import("@/lib/payments/oxapay") // Using static import
 
         // Parse network from selectedMethod if present
         let payNetwork: string | undefined = undefined
@@ -617,7 +618,7 @@ function CheckoutMainContent() {
           }
         }
 
-        const response = await createOxaPayWhiteLabelWithInquiry({
+        const response = await createOxaPayWhiteLabel({
           amount: total,
           currency: "USD",
           payCurrency: payCurrencyMap[baseMethodName] || "BTC",
@@ -745,7 +746,7 @@ function CheckoutMainContent() {
         }
 
         // 1. Check OxaPay status
-        const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+        // const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
         const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
 
         // 2. PARALLEL: Check blockchain directly for instant detection
@@ -762,10 +763,14 @@ function CheckoutMainContent() {
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
           }
 
-          // We use blockchain for detection, but keep waiting for the provider (OxaPay) 
-          // to confirm the "Paid" status to avoid premature redirection.
-          if (bcStatus.status === 'confirmed' && bcStatus.txId) {
-            setPaymentStatus('processing') // Still processing until provider confirms
+          // When blockchain shows sufficient confirmations (3+), complete the order
+          // Don't wait for OxaPay - trust the blockchain as the source of truth
+          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 3) {
+            // VISUAL ONLY: We rely on OxaPay for the actual "Paid" status trigger.
+            // Just show a helpful toast here.
+            if (!hasShownDetectedToast) {
+              toast.success("Blockchain confirmed! Waiting for payment processor...")
+            }
           }
         }
 
@@ -779,6 +784,15 @@ function CheckoutMainContent() {
             setPaymentStatus('processing')
           }
           if (info.status === 'Paid' && info.txID) {
+            // ACTIVE SYNC: Trigger server update immediately
+            try {
+              const { markOrderAsPaid } = await import("@/lib/actions/checkout")
+              // We pass the txID, and the server action will RE-VERIFY it before marking paid
+              await markOrderAsPaid(existingOrder?.id || '', info.txID)
+            } catch (err) {
+              console.error("Failed to sync paid status:", err)
+            }
+
             setPaymentStatus('completed')
             toast.success("Payment Confirmed! Redirecting...")
             clearInterval(pollInterval)

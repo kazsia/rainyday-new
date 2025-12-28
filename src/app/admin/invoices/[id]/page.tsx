@@ -66,7 +66,21 @@ export default function AdminInvoiceDetailsPage() {
 
   async function loadOrder(id: string) {
     try {
-      const data = await adminGetOrder(id)
+      let data = await adminGetOrder(id)
+
+      // Auto-sync missing TXIDs
+      if (data?.payments) {
+        const paymentsToSync = data.payments.filter((p: any) => p.track_id && !p.tx_id)
+        if (paymentsToSync.length > 0) {
+          const results = await Promise.all(paymentsToSync.map((p: any) => syncPaymentTxId(p.id)))
+          if (results.some(r => r.success)) {
+            // If we found new info, refresh data
+            data = await adminGetOrder(id)
+            toast.success("Payment details synced automatically")
+          }
+        }
+      }
+
       setOrder(data)
 
       // Standardize URL to readable_id if current param is a UUID

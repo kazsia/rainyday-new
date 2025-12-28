@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
         console.log(`[Paylix Webhook] Event: ${eventType}`, payload)
 
         // Paylix sends different events, we care about invoice completions
-        // Based on docs, status webhooks are common.
         const status = payload.status
         const uniqid = payload.uniqid // Paylix's invoice ID
 
@@ -33,13 +32,19 @@ export async function POST(req: NextRequest) {
             // Find our payment record using Paylix's uniqid
             const { data: payment, error } = await supabase
                 .from("payments")
-                .select("id, order_id")
+                .select("id, order_id, status")
                 .eq("track_id", uniqid)
                 .single()
 
             if (error || !payment) {
                 console.error(`[Paylix Webhook] Payment not found for track_id: ${uniqid}`)
                 return NextResponse.json({ error: "Payment not found" }, { status: 404 })
+            }
+
+            // Check if already completed
+            if (payment.status === 'completed') {
+                console.log(`[Paylix Webhook] Payment ${payment.id} already completed, skipping duplicate.`)
+                return NextResponse.json({ success: true })
             }
 
             // Update payment status to completed
@@ -51,6 +56,21 @@ export async function POST(req: NextRequest) {
             })
 
             console.log(`[Paylix Webhook] Success: Payment ${payment.id} for Order ${payment.order_id} marked as completed`)
+        } else if (status === "FAILED" || status === "CANCELED") {
+            const supabase = await createClient()
+            const { data: payment } = await supabase
+                .from("payments")
+                .select("id, status")
+                .eq("track_id", uniqid)
+                .single()
+
+            if (payment && payment.status !== 'completed') {
+                await updatePaymentStatus(payment.id, "failed", {
+                    trackId: uniqid,
+                    payload: payload
+                })
+                console.log(`[Paylix Webhook] Payment ${payment.id} failed/canceled.`)
+            }
         }
 
         return NextResponse.json({ success: true })

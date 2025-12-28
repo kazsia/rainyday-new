@@ -235,6 +235,10 @@ export async function createOxaPayInvoice(params: CreateInvoiceParams) {
  * Get payment information by trackId - returns address, QR code, status, etc.
  * This is the key to white-label - create a regular invoice, then get the details
  */
+/**
+ * Get payment information by trackId - returns address, QR code, status, etc.
+ * Uses V1 endpoint: GET /v1/payment/{track_id}
+ */
 export async function getOxaPayPaymentInfo(trackId: string) {
     if (!MERCHANT_API_KEY) {
         console.error("[OxaPay] OXAPAY_API_KEY is not configured")
@@ -247,15 +251,12 @@ export async function getOxaPayPaymentInfo(trackId: string) {
     }
 
     try {
-        const response = await fetch(`${OXAPAY_API_URL}/merchants/inquiry`, {
-            method: "POST",
+        const response = await fetch(`${OXAPAY_API_URL}/v1/payment/${trackId}`, {
+            method: "GET",
             headers: {
                 "Content-Type": "application/json",
+                "merchant_api_key": MERCHANT_API_KEY,
             },
-            body: JSON.stringify({
-                merchant: MERCHANT_API_KEY,
-                trackId: trackId,
-            }),
         })
 
         if (!response.ok) {
@@ -264,26 +265,53 @@ export async function getOxaPayPaymentInfo(trackId: string) {
         }
 
         const data = await response.json()
-
         console.log("[OxaPay Inquiry] Raw API Response:", JSON.stringify(data, null, 2))
 
-        if (data.result !== 100) {
-            console.error("OxaPay Payment Info Error:", data)
+        if (data.status !== 200 || !data.data) {
+            console.error("OxaPay Payment Info Error (V1):", data)
             return null
         }
 
+        const info = data.data
+
+        // Normalize status to Title Case to match existing app logic
+        // Official V1 Statuses: new, waiting, paying, paid, manual_accept, underpaid, refunding, refunded, expired
+        const normalizeStatus = (s: string) => {
+            if (!s) return "Unknown"
+            const lower = s.toLowerCase()
+
+            if (lower === "paid") return "Paid"
+            if (lower === "manual_accept") return "Paid" // Treat manual acceptance as Paid
+            if (lower === "confirming") return "Confirming" // Legacy/Observed
+            if (lower === "paying") return "Confirming" // Map 'paying' to 'Confirming' for UI continuity
+            if (lower === "waiting") return "Waiting"
+            if (lower === "new") return "New"
+            if (lower === "expired") return "Expired"
+            if (lower === "underpaid") return "Underpaid"
+            if (lower === "refunding") return "Refunding"
+            if (lower === "refunded") return "Refunded"
+            if (lower === "failed") return "Failed"
+
+            return s.charAt(0).toUpperCase() + s.slice(1)
+        }
+
+        const normalizedStatus = normalizeStatus(info.status)
+
+        // V1 returns transactions array: txs: [{ tx_hash: "..." }]
+        const txID = (info.txs && info.txs.length > 0) ? info.txs[0].tx_hash : undefined
+
         return {
-            trackId: data.trackId,
-            status: data.status, // "New", "Waiting", "Confirming", "Paid", "Expired", "Failed"
-            amount: data.amount,
-            currency: data.currency,
-            payCurrency: data.payCurrency,
-            payAmount: data.payAmount,
-            address: data.address,
-            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.address || '')}`,
-            expiredAt: data.expiredAt,
-            txID: data.txID,
-            payLink: data.payLink,
+            trackId: info.track_id,
+            status: normalizedStatus,
+            amount: info.amount,
+            currency: info.currency,
+            payCurrency: info.pay_currency,
+            payAmount: info.pay_amount,
+            address: info.address,
+            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(info.address || '')}`,
+            expiredAt: info.expired_at ? info.expired_at * 1000 : undefined, // V1 is unix seconds
+            txID: txID,
+            payLink: "", // V1 info doesn't seem to return payLink usually, but we have address
         }
     } catch (error) {
         console.error("OxaPay Payment Info Error:", error)
@@ -292,14 +320,49 @@ export async function getOxaPayPaymentInfo(trackId: string) {
 }
 
 /**
+ * Get list of static addresses, optionally filtered by orderId
+ * Useful to check if we already generated one for this order
+ */
+export async function getOxaPayStaticAddressList(params: { orderId?: string, page?: number, size?: number }) {
+    if (!MERCHANT_API_KEY) return null
+
+    try {
+        const url = new URL(`${OXAPAY_API_URL}/v1/payment/static-address`)
+        url.searchParams.append("merchant_api_key", MERCHANT_API_KEY)
+        if (params.orderId) url.searchParams.append("order_id", params.orderId)
+        if (params.page) url.searchParams.append("page", params.page.toString())
+        if (params.size) url.searchParams.append("size", params.size.toString())
+
+        const response = await fetch(url.toString(), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        })
+
+        const data = await response.json()
+        if (data.status === 200 && data.data && data.data.list) {
+            return data.data.list
+        }
+        return []
+    } catch (error) {
+        console.error("[OxaPay Static List] Error:", error)
+        return []
+    }
+}
+
+/**
  * Create white-label payment - Rainyday branded, no OxaPay UI
  * Priority: 1) Invoice address 2) Static address 3) Inquiry 4) PayLink as QR
  */
-export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoiceParams): Promise<WhiteLabelPaymentDetails> {
-    console.log("[OxaPay WhiteLabel] Starting with params:", params)
+/**
+ * Create white-label payment - Rainyday branded, no OxaPay UI
+ * Uses the v1/payment/white-label endpoint
+ */
+export async function createOxaPayWhiteLabel(params: CreateInvoiceParams): Promise<WhiteLabelPaymentDetails> {
+    console.log("[OxaPay WhiteLabel] Creating white-label invoice:", params)
 
-    // Step 0: Try the NEW v1 API endpoint - this is the correct white-label endpoint
-    console.log("[OxaPay WhiteLabel] Step 0 - Trying v1 /payment/white-label endpoint")
+    if (!MERCHANT_API_KEY) {
+        throw new Error("OXAPAY_API_KEY is not configured")
+    }
 
     // Network mapping for OxaPay - required for address generation
     const networkMap: Record<string, string> = {
@@ -329,191 +392,185 @@ export async function createOxaPayWhiteLabelWithInquiry(params: CreateInvoicePar
     const networkAliasMap: Record<string, string> = {
         "BEP20": "BSC",
         "ERC20": "Ethereum",
-        "TRC20": "Tron",
+        "TRC20": "Tron", // OxaPay often accepts TRC20 directly but 'Tron' is safer
         "SPL": "Solana",
         "ETH": "Ethereum",
-        "Base": "Base"
+        "Base": "Base",
+        "Polygon": "Polygon"
     }
 
+    // Determine network: Explicit param -> Alias -> Default from Currency -> Currency itself
     const network = networkAliasMap[params.network || ""] || params.network || networkMap[payCurrency] || payCurrency
 
+    // 1. Try V1 White-Label Endpoint
     try {
-        const v1Response = await fetch(`${OXAPAY_API_URL}/v1/payment/white-label`, {
+        console.log(`[OxaPay WhiteLabel] Attempt 1: V1 API (Network: ${network})`)
+        const response = await fetch(`${OXAPAY_API_URL}/v1/payment/white-label`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "merchant_api_key": MERCHANT_API_KEY!,
+                "merchant_api_key": MERCHANT_API_KEY,
             },
             body: JSON.stringify({
-                pay_currency: payCurrency,
-                network: network,
                 amount: params.amount,
                 currency: params.currency || "USD",
+                pay_currency: params.payCurrency || "BTC",
+                network: network,
+                // life_time vs lifetime: Docs say both? Using life_time for V1 based on recent check, but safety in numbers.
+                life_time: 60,
                 lifetime: 60,
                 fee_paid_by_payer: 0,
-                email: params.email,
-                order_id: params.orderId,
-                description: params.description,
+                under_paid_coverage: 2.5,
                 callback_url: params.callbackUrl,
-            }),
-        })
-
-
-        const v1Data = await v1Response.json()
-        console.log("[OxaPay WhiteLabel] Step 0 - v1 API Response:", JSON.stringify(v1Data, null, 2))
-
-        // v1 API returns address directly on success
-        if (v1Data.address) {
-            console.log("[OxaPay WhiteLabel] SUCCESS - v1 API returned address!")
-            return {
-                trackId: v1Data.track_id || v1Data.trackId || "",
-                address: v1Data.address,
-                amount: v1Data.pay_amount || String(params.amount),
-                currency: params.currency || "USD",
-                payCurrency: v1Data.pay_currency || params.payCurrency || "BTC",
-                qrCodeUrl: v1Data.qrcode || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(v1Data.address)}`,
-                expiresAt: v1Data.expired_at ? new Date(v1Data.expired_at * 1000).getTime() : Date.now() + 60 * 60 * 1000,
-                payLink: v1Data.pay_link || "",
-                isRedirect: false,
-            }
-        }
-        console.error("[OxaPay WhiteLabel] Step 0 FAILURE:", v1Data.message || v1Data.error || "Unknown error")
-    } catch (v1Error) {
-        console.error("[OxaPay WhiteLabel] Step 0 - v1 API Error:", v1Error)
-    }
-
-    // Step 0b: Also try legacy endpoint as fallback
-    console.log("[OxaPay WhiteLabel] Step 0b - Trying legacy /merchants/request/whitelabel endpoint")
-    try {
-        const legacyResponse = await fetch(`${OXAPAY_API_URL}/merchants/request/whitelabel`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                merchant: MERCHANT_API_KEY,
-                amount: params.amount,
-                currency: params.currency || "USD",
-                payCurrency: params.payCurrency || "BTC",
-                lifeTime: 60,
-                feePaidByPayer: 0,
-                underPaidCover: 2.5,
-                callbackUrl: params.callbackUrl,
-                returnUrl: params.returnUrl,
+                return_url: params.returnUrl,
                 description: params.description,
-                orderId: params.orderId,
+                order_id: params.orderId,
                 email: params.email,
             }),
         })
 
-        const legacyData = await legacyResponse.json()
-        console.log("[OxaPay WhiteLabel] Step 0b - Legacy Response:", JSON.stringify(legacyData, null, 2))
+        const data = await response.json()
 
-        if (legacyData.result === 100 && legacyData.address) {
-            console.log("[OxaPay WhiteLabel] SUCCESS - Legacy endpoint returned address!")
-            return {
-                trackId: legacyData.trackId,
-                address: legacyData.address,
-                amount: legacyData.payAmount || String(params.amount),
-                currency: params.currency || "USD",
-                payCurrency: legacyData.payCurrency || params.payCurrency || "BTC",
-                qrCodeUrl: legacyData.qrcode || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(legacyData.address)}`,
-                expiresAt: legacyData.expiredAt || Date.now() + 60 * 60 * 1000,
-                payLink: legacyData.payLink || "",
-                isRedirect: false,
+        if (data.status === 200 && data.data) {
+            const result = data.data
+            // Ensure we have an address
+            if (result.address) {
+                console.log("[OxaPay WhiteLabel] Success via V1 API")
+                return {
+                    trackId: result.track_id,
+                    address: result.address,
+                    amount: result.pay_amount || String(params.amount),
+                    currency: result.currency || "USD",
+                    payCurrency: result.pay_currency,
+                    qrCodeUrl: result.qr_code || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(result.address)}`,
+                    expiresAt: result.expired_at ? result.expired_at * 1000 : Date.now() + 60 * 60 * 1000,
+                    payLink: "",
+                    isRedirect: false,
+                }
             }
         }
-        console.log("[OxaPay WhiteLabel] Step 0b - Legacy failed, trying other fallbacks...")
-    } catch (legacyError) {
-        console.error("[OxaPay WhiteLabel] Step 0b - Legacy Error:", legacyError)
+        console.warn("[OxaPay WhiteLabel] V1 API did not return address:", data.message)
+    } catch (error) {
+        console.error("[OxaPay WhiteLabel] V1 API failed:", error)
     }
 
-    // Step 1: Create regular invoice (for payLink fallback)
-    const invoice = await createOxaPayInvoice(params)
-    console.log("[OxaPay WhiteLabel] Step 1 - Invoice created:", invoice)
 
 
-    // Check if invoice response already contains address
-    if (invoice.address) {
-        console.log("[OxaPay WhiteLabel] SUCCESS - Invoice has address!")
-        return {
-            trackId: invoice.trackId,
-            address: invoice.address,
-            amount: invoice.payAmount || String(params.amount),
-            currency: params.currency || "USD",
-            payCurrency: invoice.payCurrency,
-            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(invoice.address)}`,
-            expiresAt: invoice.expiredAt,
-            payLink: invoice.payUrl,
-            isRedirect: false,
-        }
-    }
+    // 2. Fallback: Static Address (Smart Check & Create)
+    try {
+        console.log("[OxaPay WhiteLabel] Attempt 2: Static Address (Check & Create)")
 
-    // Step 2: Try static address as backup
-    console.log("[OxaPay WhiteLabel] Step 2 - Trying static address for:", params.payCurrency || "BTC")
-    const staticAddress = await generateOxaPayStaticAddress({
-        currency: params.payCurrency || "BTC",
-        orderId: params.orderId,
-        email: params.email,
-        callbackUrl: params.callbackUrl,
-        description: params.description,
-    })
-    console.log("[OxaPay WhiteLabel] Step 2 - Static address result:", staticAddress)
+        // A. Check for existing static address for this Order ID to avoid duplicates
+        // Only if we have a valid Order ID
+        if (params.orderId) {
+            const existingList = await getOxaPayStaticAddressList({ orderId: params.orderId })
+            // Find one that matches our requested currency/network if possible?
+            // The list should filter by orderId so likely relevant.
+            if (existingList && existingList.length > 0) {
+                // Sort by date desc (assuming higher date is newer)
+                const sorted = existingList.sort((a: any, b: any) => b.date - a.date)
+                const latest = sorted[0]
 
-    if (staticAddress && staticAddress.address) {
-        console.log("[OxaPay WhiteLabel] SUCCESS - Static address generated!")
-        return {
-            trackId: staticAddress.trackId || invoice.trackId,
-            address: staticAddress.address,
-            amount: String(params.amount),
-            currency: params.currency || "USD",
-            payCurrency: staticAddress.currency,
-            qrCodeUrl: staticAddress.qrCodeUrl,
-            expiresAt: Date.now() + 60 * 60 * 1000,
-            payLink: invoice.payUrl,
-            isRedirect: false,
-        }
-    }
-
-    // Step 3: Query inquiry endpoint with retries (3s delay between)
-    console.log("[OxaPay WhiteLabel] Step 3 - Starting inquiry polling for trackId:", invoice.trackId)
-    for (let attempt = 0; attempt < 5; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        console.log(`[OxaPay WhiteLabel] Step 3 - Inquiry attempt ${attempt + 1}/5`)
-
-        const paymentInfo = await getOxaPayPaymentInfo(invoice.trackId)
-        console.log(`[OxaPay WhiteLabel] Step 3 - Inquiry result:`, paymentInfo?.address ? "HAS ADDRESS" : "No address yet")
-
-        if (paymentInfo && paymentInfo.address) {
-            console.log("[OxaPay WhiteLabel] SUCCESS - Inquiry returned address!")
-            return {
-                trackId: paymentInfo.trackId,
-                address: paymentInfo.address,
-                amount: paymentInfo.payAmount || String(params.amount),
-                currency: params.currency || "USD",
-                payCurrency: paymentInfo.payCurrency,
-                qrCodeUrl: paymentInfo.qrCodeUrl,
-                expiresAt: paymentInfo.expiredAt,
-                payLink: paymentInfo.payLink || invoice.payUrl,
-                isRedirect: false,
+                console.log("[OxaPay WhiteLabel] Found existing static address")
+                return {
+                    trackId: latest.track_id,
+                    address: latest.address,
+                    amount: String(params.amount), // Static addresses don't store amount, so use requested
+                    currency: params.currency || "USD",
+                    payCurrency: params.payCurrency || "BTC", // Use requested, assume it matches
+                    qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(latest.address)}`,
+                    expiresAt: Date.now() + 24 * 60 * 60 * 1000, // Long expiry for static
+                    payLink: "",
+                    isRedirect: false
+                }
             }
         }
-    }
 
-    // Step 4: Last resort - display QR code for payLink (user scans and goes to OxaPay)
-    console.log("[OxaPay WhiteLabel] FALLBACK - No address obtained, using payLink QR")
-    console.log("[OxaPay WhiteLabel] payUrl:", invoice.payUrl)
+        // B. Create New Static Address if none found
+        const staticAddress = await generateOxaPayStaticAddress({
+            currency: params.payCurrency || "BTC",
+            network: network,
+            orderId: params.orderId,
+            email: params.email,
+            callbackUrl: params.callbackUrl,
+            description: params.description,
+        })
 
-    return {
-        trackId: invoice.trackId,
-        address: "", // No crypto address available
-        amount: String(params.amount),
-        currency: params.currency || "USD",
-        payCurrency: params.payCurrency || "BTC",
-        qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(invoice.payUrl)}`,
-        expiresAt: Date.now() + 60 * 60 * 1000,
-        payLink: invoice.payUrl,
-        isRedirect: false, // Still no redirect - show QR on page
+        if (staticAddress && staticAddress.address) {
+            console.log("[OxaPay WhiteLabel] Success via New Static Address")
+            return {
+                trackId: staticAddress.trackId,
+                address: staticAddress.address,
+                amount: String(params.amount),
+                currency: params.currency || "USD",
+                payCurrency: staticAddress.currency || params.payCurrency || "BTC",
+                qrCodeUrl: staticAddress.qrCodeUrl,
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+                payLink: "",
+                isRedirect: false
+            }
+        }
+    } catch (e) { console.error("[OxaPay Static Fallback Error]", e) }
+
+    // 3. Fallback: Standard Invoice + Address Extraction (The verified "Inquiry" method)
+    try {
+        console.log("[OxaPay WhiteLabel] Attempt 3: Invoice + Inquiry (Polled extraction)")
+
+        // Create regular invoice
+        const invoice = await createOxaPayInvoice(params)
+
+        // If invoice already has address (some legacy endpoints return it)
+        if (invoice.address) {
+            console.log("[OxaPay WhiteLabel] Success via Invoice (Direct Address)")
+            return {
+                trackId: invoice.trackId,
+                address: invoice.address,
+                amount: String(invoice.payAmount),
+                currency: params.currency || "USD",
+                payCurrency: invoice.payCurrency,
+                qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(invoice.address)}`,
+                expiresAt: invoice.expiredAt,
+                payLink: invoice.payUrl,
+                isRedirect: false
+            }
+        }
+
+        // If no address, poll inquiry endpoint
+        console.log("[OxaPay WhiteLabel] Polling inquiry for address...")
+        for (let i = 0; i < 3; i++) {
+            // Wait 1s
+            await new Promise(r => setTimeout(r, 1000))
+            const info = await getOxaPayPaymentInfo(invoice.trackId)
+            if (info && info.address) {
+                console.log("[OxaPay WhiteLabel] Success via Inquiry Polling")
+                return {
+                    trackId: invoice.trackId,
+                    address: info.address,
+                    amount: String(info.payAmount || invoice.payAmount),
+                    currency: params.currency || "USD",
+                    payCurrency: info.payCurrency || invoice.payCurrency,
+                    qrCodeUrl: info.qrCodeUrl,
+                    expiresAt: info.expiredAt || invoice.expiredAt,
+                    payLink: invoice.payUrl,
+                    isRedirect: false
+                }
+            }
+        }
+
+        // 4. Force Static Address as last resort if Inquiry fails?
+        // Reuse the static address logic if available?
+        // Or just fail.
+
+        // 5. Absolute Last Resort: Return Invoice but NO redirect.
+        // We throw error because "dont redirect" is strict.
+        // OR we return the payLink but isRedirect: false, and the UI will show QR code for the LINK?
+        // The UI (checkout page) handles `qrCodeUrl`. If we set `address` to empty, UI says "Error generating address".
+        // We must error out.
+        throw new Error("Could not generate a white-label address. Please try a different payment method or network.")
+
+    } catch (error: any) {
+        console.error("OxaPay White-Label Final Error:", error)
+        throw new Error(error.message || "Payment generation failed")
     }
 }
 
