@@ -21,7 +21,7 @@ export interface TransactionStatus {
 async function trackBTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // Primary: Mempool.space
-        const response = await fetch(`https://mempool.space/api/address/${address}/txs`)
+        const response = await fetch(`https://mempool.space/api/address/${address}/txs`, { signal: AbortSignal.timeout(4000) })
         if (response.ok) {
             const txs = await response.json()
             if (txs && txs.length > 0) {
@@ -45,7 +45,7 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
                     detected: true,
                     confirmations: confirmations,
                     txId: latestTx.txid,
-                    status: confirmations >= 1 ? 'confirmed' : 'detected',
+                    status: confirmations >= 2 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
                     amountReceived: amountSatoshis / 100000000,
                     timestamp: txTimestamp
@@ -54,7 +54,7 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
         }
 
         // Secondary: BlockCypher - with proper timestamp filtering
-        const bcResponse = await fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/full?limit=5`)
+        const bcResponse = await fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
         if (bcResponse.ok) {
             const data = await bcResponse.json()
             const bcTxs = data.txs || []
@@ -79,7 +79,7 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
                     detected: true,
                     confirmations: confirmations,
                     txId: tx.hash,
-                    status: confirmations >= 1 ? 'confirmed' : 'detected',
+                    status: confirmations >= 2 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
                     amountReceived,
                     timestamp: txTime
@@ -99,7 +99,7 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
 async function trackETH(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // Use full address endpoint to get transaction list with timestamps
-        const response = await fetch(`https://api.blockcypher.com/v1/eth/main/addrs/${address}/full?limit=5`)
+        const response = await fetch(`https://api.blockcypher.com/v1/eth/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
         if (response.ok) {
             const data = await response.json()
             const txs = data.txs || []
@@ -123,7 +123,7 @@ async function trackETH(address: string, minTimestamp?: number): Promise<Transac
                     detected: true,
                     confirmations: confirmations,
                     txId: tx.hash,
-                    status: confirmations >= 12 ? 'confirmed' : 'detected',
+                    status: confirmations >= 2 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
                     timestamp: txTime
                 }
@@ -148,7 +148,8 @@ async function trackSOL(address: string, minTimestamp?: number): Promise<Transac
                 id: 1,
                 method: 'getSignaturesForAddress',
                 params: [address, { limit: 1 }]
-            })
+            }),
+            signal: AbortSignal.timeout(4000)
         })
         if (response.ok) {
             const data = await response.json()
@@ -182,7 +183,7 @@ async function trackSOL(address: string, minTimestamp?: number): Promise<Transac
 async function trackLTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // Use full address endpoint to get transaction list with timestamps
-        const response = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${address}/full?limit=5`)
+        const response = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
         if (response.ok) {
             const data = await response.json()
 
@@ -259,7 +260,7 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
 async function trackBlockCypher(address: string, coin: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // Use full address endpoint to get transaction list with timestamps
-        const response = await fetch(`https://api.blockcypher.com/v1/${coin}/main/addrs/${address}/full?limit=5`)
+        const response = await fetch(`https://api.blockcypher.com/v1/${coin}/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
         if (response.ok) {
             const data = await response.json()
             const txs = data.txs || []
@@ -300,7 +301,7 @@ async function trackBlockCypher(address: string, coin: string, minTimestamp?: nu
  */
 async function trackTRX(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
-        const response = await fetch(`https://api.trongrid.io/v1/accounts/${address}/transactions?only_confirmed=false&limit=1`)
+        const response = await fetch(`https://api.trongrid.io/v1/accounts/${address}/transactions?only_confirmed=false&limit=1`, { signal: AbortSignal.timeout(4000) })
         if (response.ok) {
             const data = await response.json()
             if (data.success && data.data && data.data.length > 0) {
@@ -314,7 +315,7 @@ async function trackTRX(address: string, minTimestamp?: number): Promise<Transac
                 return {
                     detected: true,
                     confirmations: 1,
-                    status: 'confirmed',
+                    status: 'confirmed', // TRX finalized is instant/1
                     txId: latest.txID,
                     lastCheck: new Date(),
                     timestamp: txTimestamp
@@ -336,7 +337,8 @@ async function trackBSC(address: string, minTimestamp?: number): Promise<Transac
     try {
         // Use BscScan public API (no API key needed for basic queries, but rate limited)
         const response = await fetch(
-            `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc`
+            `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc`,
+            { signal: AbortSignal.timeout(4000) }
         )
         if (response.ok) {
             const data = await response.json()
@@ -356,7 +358,7 @@ async function trackBSC(address: string, minTimestamp?: number): Promise<Transac
                         detected: true,
                         confirmations: confirmations,
                         txId: tx.hash,
-                        status: confirmations >= 12 ? 'confirmed' : 'detected',
+                        status: confirmations >= 2 ? 'confirmed' : 'detected',
                         lastCheck: new Date(),
                         timestamp: txTime
                     }

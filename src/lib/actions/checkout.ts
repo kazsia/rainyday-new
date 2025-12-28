@@ -43,7 +43,34 @@ export async function markOrderAsPaid(orderId: string, txId: string) {
                 verifiedProvider = info.payCurrency || verifiedProvider
                 console.log(`[PAYMENT_VERIFY] Verified via OxaPay: ${JSON.stringify(info)}`)
             } else {
-                console.log("[PAYMENT_VERIFY] OxaPay verification failed or returned non-paid status.")
+                console.log("[PAYMENT_VERIFY] OxaPay verification failed/slow. Falling back to Blockchain verification...")
+
+                // Fallback: Verify directly on Blockchain
+                // This allows us to "beat" the payment processor if the blockchain is faster
+                if (payment.address && payment.currency) { // We need the crypto details stored on payment
+                    const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
+                    // We try to guess the currency from provider if not explicit, but ideally it should be saved
+                    const currencyToCheck = payment.currency === 'USD' ? (payment.provider || 'BTC') : payment.currency
+
+                    // We look for ANY recent transaction on this address that matches our criteria
+                    const bcStatus = await trackAddressStatus(payment.address, currencyToCheck)
+
+                    if (bcStatus.detected && (bcStatus.status === 'confirmed' || bcStatus.confirmations >= 1)) {
+                        // Double check: Does the TX match?
+                        if (bcStatus.txId === txId || !txId) {
+                            isVerified = true
+                            verifiedProvider = currencyToCheck
+                            console.log(`[PAYMENT_VERIFY] Verified via Blockchain: ${JSON.stringify(bcStatus)}`)
+                        }
+                    }
+                } else {
+                    // Try to recover address from order if not on payment
+                    const { getOrder } = await import("@/lib/db/orders")
+                    const order = await getOrder(orderId)
+                    // If we have custom fields with address (unlikely for now) or recreate the payment details...
+                    // For now, if we can't find address, we can't verify on blockchain.
+                    console.warn("[PAYMENT_VERIFY] Cannot verify on blockchain: Missing address/currency on payment record.")
+                }
             }
         } catch (verifyError) {
             console.error("[PAYMENT_VERIFY] Verification failed:", verifyError)

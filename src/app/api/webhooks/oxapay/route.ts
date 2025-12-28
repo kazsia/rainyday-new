@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         // Official V1 can be "Paid", "paid", "manual_accept"
         const normalizedStatus = status.toLowerCase()
 
-        if (normalizedStatus === "paid" || normalizedStatus === "manual_accept") {
+        if (normalizedStatus === "paid" || normalizedStatus === "manual_accept" || normalizedStatus === "confirming") {
             const supabase = await createAdminClient()
 
             // Find our internal payment record using trackId (canonical)

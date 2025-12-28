@@ -176,13 +176,21 @@ export default function AdminInvoiceDetailsPage() {
     if (!txId) return "#"
     const p = provider.toLowerCase()
     if (p.includes('btc') || p.includes('bitcoin')) return `https://mempool.space/tx/${txId}`
-    if (p.includes('eth') || p.includes('ethereum')) return `https://etherscan.io/tx/${txId}`
+    if (p.includes('eth') || p.includes('ethereum') || p.includes('erc20')) return `https://etherscan.io/tx/${txId}`
     if (p.includes('ltc') || p.includes('litecoin')) return `https://live.blockcypher.com/ltc/tx/${txId}`
     if (p.includes('doge')) return `https://live.blockcypher.com/doge/tx/${txId}`
-    if (p.includes('trx') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
-    if (p.includes('bnb') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
-    if (p.includes('sol')) return `https://solscan.io/tx/${txId}`
-    return "#"
+    if (p.includes('trx') || p.includes('tron') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
+    if (p.includes('bnb') || p.includes('bsc') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
+    if (p.includes('sol') || p.includes('solana')) return `https://solscan.io/tx/${txId}`
+    if (p.includes('ton')) return `https://tonviewer.com/transaction/${txId}`
+    if (p.includes('pol') || p.includes('polygon') || p.includes('matic')) return `https://polygonscan.com/tx/${txId}`
+    if (p.includes('xrp') || p.includes('ripple')) return `https://xrpscan.com/tx/${txId}`
+    if (p.includes('xmr') || p.includes('monero')) return `https://xmrchain.net/tx/${txId}`
+    if (p.includes('bch') || p.includes('bitcoin cash')) return `https://blockchair.com/bitcoin-cash/transaction/${txId}`
+
+    // Fallback
+    if (txId.startsWith('0x')) return `https://etherscan.io/search?q=${txId}`
+    return `https://blockchair.com/search?q=${txId}`
   }
 
   if (isLoading) return <AdminLayout>

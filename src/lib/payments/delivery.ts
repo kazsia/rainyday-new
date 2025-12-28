@@ -31,6 +31,8 @@ export async function deliverProduct(orderId: string) {
 
     const deliveredAssets: any[] = []
 
+    let deliveryFailure = false
+
     // 2. For each item, claim stock or fetch from dynamic webhook
     for (const item of order.order_items) {
         // Fetch product details for items
@@ -94,6 +96,7 @@ export async function deliverProduct(orderId: string) {
                 }
             } catch (e) {
                 console.error(`Dynamic delivery failed for product ${product.id}:`, e)
+                deliveryFailure = true
             }
         } else if (product.delivery_type === 'service') {
             // Decrement stock for service if not unlimited
@@ -127,9 +130,11 @@ export async function deliverProduct(orderId: string) {
 
     const deliveryContent = hasAssets
         ? "Your digital assets are ready."
-        : hasServiceProducts
-            ? "Your service order has been confirmed. You will receive further instructions via email."
-            : "Your order has been processed."
+        : deliveryFailure
+            ? "Automatic delivery failed. Please contact support."
+            : hasServiceProducts
+                ? "Your service order has been confirmed. You will receive further instructions via email."
+                : "Your order has been processed."
 
     const { error: deliveryError } = await supabase
         .from("deliveries")

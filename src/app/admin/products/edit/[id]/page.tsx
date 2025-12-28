@@ -658,6 +658,21 @@ export default function EditProductPage() {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
                                         </div>
                                     </div>
+
+                                    {formData.delivery_type === 'dynamic' && (
+                                        <div className="space-y-3">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Webhook URL</label>
+                                            <Input
+                                                value={formData.webhook_url}
+                                                onChange={e => setFormData({ ...formData, webhook_url: e.target.value })}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                placeholder="https://your-api.com/callback"
+                                            />
+                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                                A POST request will be sent to this URL upon purchase to generate the delivery content.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

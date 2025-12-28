@@ -98,6 +98,27 @@ const ETH_NETWORKS = [
 ]
 
 
+const getExplorerUrl = (txId: string, provider: string) => {
+  if (!txId) return "#"
+  const p = provider.toLowerCase()
+  if (p.includes('btc') || p.includes('bitcoin')) return `https://mempool.space/tx/${txId}`
+  if (p.includes('eth') || p.includes('ethereum') || p.includes('erc20')) return `https://etherscan.io/tx/${txId}`
+  if (p.includes('ltc') || p.includes('litecoin')) return `https://live.blockcypher.com/ltc/tx/${txId}`
+  if (p.includes('doge')) return `https://live.blockcypher.com/doge/tx/${txId}`
+  if (p.includes('trx') || p.includes('tron') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
+  if (p.includes('bnb') || p.includes('bsc') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
+  if (p.includes('sol') || p.includes('solana')) return `https://solscan.io/tx/${txId}`
+  if (p.includes('ton')) return `https://tonviewer.com/transaction/${txId}`
+  if (p.includes('pol') || p.includes('polygon') || p.includes('matic')) return `https://polygonscan.com/tx/${txId}`
+  if (p.includes('xrp') || p.includes('ripple')) return `https://xrpscan.com/tx/${txId}`
+  if (p.includes('xmr') || p.includes('monero')) return `https://xmrchain.net/tx/${txId}`
+  if (p.includes('bch') || p.includes('bitcoin cash')) return `https://blockchair.com/bitcoin-cash/transaction/${txId}`
+
+  // Fallback
+  if (txId.startsWith('0x')) return `https://etherscan.io/search?q=${txId}`
+  return `https://blockchair.com/search?q=${txId}`
+}
+
 function CheckoutMainContent() {
   const router = useRouter()
   const params = useParams()
@@ -744,15 +765,24 @@ function CheckoutMainContent() {
           return
         }
 
-        // 1. Check OxaPay status
-        // const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
-        const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
+        // 1. & 2. PARALLEL EXECUTION: Check both simultaneously for speed
+        const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+        const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
 
-        // 2. PARALLEL: Check blockchain directly for instant detection
+        // Prepare promises
+        const oxaPayPromise = getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
+
+        let blockchainPromise = Promise.resolve(null as any)
         if (cryptoDetails?.address && cryptoDetails.payCurrency) {
-          const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
           const minTimestamp = existingOrder?.created_at ? Math.floor(new Date(existingOrder.created_at).getTime() / 1000) : undefined
-          const bcStatus = await trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency, minTimestamp)
+          blockchainPromise = trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency, minTimestamp)
+        }
+
+        // Execute in parallel
+        const [info, bcStatus] = await Promise.all([oxaPayPromise, blockchainPromise])
+
+        // Handle Blockchain Result
+        if (bcStatus) {
           setBlockchainStatus(bcStatus)
 
           // If blockchain detected payment before OxaPay, show it!
@@ -762,18 +792,16 @@ function CheckoutMainContent() {
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
           }
 
-          // When blockchain shows sufficient confirmations (3+), complete the order
+          // When blockchain shows sufficient confirmations (2+), complete the order
           // Don't wait for OxaPay - trust the blockchain as the source of truth
-          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 3) {
-            // VISUAL ONLY: We rely on OxaPay for the actual "Paid" status trigger.
-            // Just show a helpful toast here.
+          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2) {
             if (!hasShownDetectedToast) {
               toast.success("Blockchain confirmed! Waiting for payment processor...")
             }
           }
         }
 
-        // 3. Check OxaPay response
+        // Handle OxaPay Result
         if (info) {
           if (info.status === 'Paid' || info.status === 'Confirming') {
             if (!hasShownDetectedToast) {
@@ -787,7 +815,10 @@ function CheckoutMainContent() {
             try {
               const { markOrderAsPaid } = await import("@/lib/actions/checkout")
               // We pass the txID, and the server action will RE-VERIFY it before marking paid
-              await markOrderAsPaid(existingOrder?.id || '', info.txID)
+              await markOrderAsPaid(existingOrder?.id || '', info.txID, {
+                address: cryptoDetails?.address,
+                currency: cryptoDetails?.payCurrency
+              })
             } catch (err) {
               console.error("Failed to sync paid status:", err)
             }
@@ -1491,6 +1522,18 @@ function CheckoutMainContent() {
                             </p>
                           </div>
                         </div>
+                      )}
+
+                      {blockchainStatus?.txId && (
+                        <a
+                          href={getExplorerUrl(blockchainStatus.txId, cryptoDetails?.payCurrency || "")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-white/40 hover:bg-white/10 hover:text-white transition-all group"
+                        >
+                          VIEW ON BLOCKCHAIN
+                          <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        </a>
                       )}
                     </div>
                   </div>
