@@ -43,7 +43,6 @@ import {
     Timer,
     Shuffle,
     Ban,
-    Layers,
     Share2,
     RotateCcw,
     GripHorizontal
