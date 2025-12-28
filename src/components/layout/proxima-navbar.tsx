@@ -25,7 +25,7 @@ import {
     SheetClose,
 } from "@/components/ui/sheet"
 
-import { getAverageRating } from "@/lib/db/feedbacks"
+import { getStoreStats } from "@/lib/db/stats"
 
 const navLinks = [
     { name: "Products", href: "/store" },
@@ -41,15 +41,15 @@ export function ProximaNavbar() {
     const { cartCount, isHydrated: cartHydrated } = useCart()
     const { currency, setCurrency, symbol, isHydrated: currencyHydrated } = useCurrency()
     const [mounted, setMounted] = React.useState(false)
-    const [ratingData, setRatingData] = React.useState<{ average: number, count: number } | null>(null)
+    const [stats, setStats] = React.useState<{ sales: number, buyers: number, rating: string } | null>(null)
 
     React.useEffect(() => {
         setMounted(true)
-        async function loadRating() {
-            const data = await getAverageRating()
-            setRatingData(data)
+        async function loadStats() {
+            const data = await getStoreStats()
+            setStats(data)
         }
-        loadRating()
+        loadStats()
     }, [])
 
     return (
@@ -77,10 +77,10 @@ export function ProximaNavbar() {
                                 )}
                             >
                                 {link.name}
-                                {isFeedback && ratingData && ratingData.count > 0 && (
+                                {isFeedback && stats && (
                                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-[10px] font-bold text-brand-primary border border-brand-primary/20">
                                         <Star className="w-2.5 h-2.5 fill-current" />
-                                        {ratingData.average}
+                                        {stats.rating}
                                     </span>
                                 )}
                             </Link>
@@ -90,6 +90,26 @@ export function ProximaNavbar() {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-3 md:gap-4 ml-auto lg:ml-0">
+                    {/* Stats Pills (Desktop) */}
+                    {stats && (
+                        <div className="hidden xl:flex items-center gap-2 mr-2">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest leading-none mb-1">Store Performance</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                                        <div className="w-1 h-1 rounded-full bg-brand-primary animate-pulse" />
+                                        <span className="text-[11px] font-bold text-white/70 uppercase tracking-tight">{stats.sales.toLocaleString()} Sales</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                                        <User className="w-3 h-3 text-white/40" />
+                                        <span className="text-[11px] font-bold text-white/70 uppercase tracking-tight">{stats.buyers.toLocaleString()} Buyers</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-px h-8 bg-white/5 mx-2" />
+                        </div>
+                    )}
+
                     {/* Currency Selector */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -146,15 +166,29 @@ export function ProximaNavbar() {
                                                 )}
                                             >
                                                 {link.name}
-                                                {link.name === "Feedback" && ratingData && ratingData.count > 0 && (
+                                                {link.name === "Feedback" && stats && (
                                                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-[10px] font-bold text-brand-primary border border-brand-primary/20">
                                                         <Star className="w-2.5 h-2.5 fill-current" />
-                                                        {ratingData.average}
+                                                        {stats.rating}
                                                     </span>
                                                 )}
                                             </Link>
                                         </SheetClose>
                                     ))}
+
+                                    {/* Mobile Stats */}
+                                    {stats && (
+                                        <div className="mt-4 pt-4 border-t border-white/5 px-4 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Sales</span>
+                                                <span className="text-xs font-bold text-white/60">{stats.sales.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Buyers</span>
+                                                <span className="text-xs font-bold text-white/60">{stats.buyers.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </SheetContent>
                         </Sheet>

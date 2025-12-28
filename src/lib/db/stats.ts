@@ -27,6 +27,7 @@ export async function getStoreStats() {
         const { data: buyersData, error: buyersError } = await supabase
             .from("orders")
             .select("email")
+            .in("status", ["paid", "completed", "delivered"]) // Only count real buyers who paid
 
         let uniqueBuyers = 0
         if (buyersData) {
@@ -39,7 +40,7 @@ export async function getStoreStats() {
             .select("rating")
             .eq("is_approved", true)
 
-        let averageRating = 4.98 // Default fallback
+        let averageRating = parseFloat(base_rating || "4.98")
         if (feedbackData && feedbackData.length > 0) {
             const sum = feedbackData.reduce((acc, curr) => acc + curr.rating, 0)
             averageRating = sum / feedbackData.length
@@ -48,14 +49,13 @@ export async function getStoreStats() {
         return {
             sales: (base_sales || 0) + (salesCount || 0),
             buyers: (base_buyers || 0) + uniqueBuyers,
-            rating: feedbackData && feedbackData.length > 0 ? averageRating.toFixed(2) : (base_rating || "4.98")
+            rating: averageRating.toFixed(2)
         }
 
     } catch (error) {
         console.error("Critical error in getStoreStats:", error)
-        // Try to get default settings even in catch block if possible, or use hardcoded fallbacks
         return {
-            sales: 1460,
+            sales: 1460, // Design fallback
             buyers: 162,
             rating: "4.98"
         }

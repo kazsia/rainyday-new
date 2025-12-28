@@ -43,7 +43,6 @@ import {
     Timer,
     Shuffle,
     Ban,
-    Share2,
     RotateCcw,
     GripHorizontal
 } from "lucide-react"
@@ -111,6 +110,9 @@ export default function EditProductPage() {
         deliverable_selection_method: 'last' as 'last' | 'first' | 'random',
         is_unlimited: false,
         disabled_payment_methods: [] as string[],
+        payment_restrictions_enabled: false,
+        min_quantity: 1,
+        max_quantity: 100,
     })
 
     useEffect(() => {
@@ -149,6 +151,9 @@ export default function EditProductPage() {
                     deliverable_selection_method: productData.deliverable_selection_method || 'last',
                     is_unlimited: !!productData.is_unlimited,
                     disabled_payment_methods: productData.disabled_payment_methods || [],
+                    payment_restrictions_enabled: !!productData.payment_restrictions_enabled,
+                    min_quantity: productData.min_quantity || 1,
+                    max_quantity: productData.max_quantity || 100,
                 })
             } catch (error) {
                 toast.error("Failed to load product data")
@@ -174,7 +179,10 @@ export default function EditProductPage() {
                 slashed_price: formData.slashed_price ? Number(formData.slashed_price) : undefined,
                 stock_count: Number(formData.stock_count),
                 custom_fields: formData.custom_fields,
-                is_unlimited: !!formData.is_unlimited
+                is_unlimited: !!formData.is_unlimited,
+                min_quantity: Number(formData.min_quantity) || 1,
+                max_quantity: Number(formData.max_quantity) || 100,
+                payment_restrictions_enabled: !!formData.payment_restrictions_enabled,
             })
             toast.success("Product updated successfully")
             if (exitAfter) {
@@ -485,10 +493,12 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
-                            {/* Options & Variants */}
-                            <div className="space-y-6">
-                                <VariantManager productId={id as string} deliveryType={formData.delivery_type} />
-                            </div>
+                            {/* Options & Variants - Only shown when product-level stock is disabled */}
+                            {!formData.payment_restrictions_enabled && (
+                                <div className="space-y-6">
+                                    <VariantManager productId={id as string} deliveryType={formData.delivery_type} />
+                                </div>
+                            )}
 
 
 
@@ -577,13 +587,25 @@ export default function EditProductPage() {
 
                             {/* Stock & Delivery Section */}
                             <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-                                <div className="px-5 py-4 border-b border-white/5 flex items-center gap-4 bg-[#0a0c14]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
-                                        <Package className="w-5 h-5 text-white/40" />
+                                <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-[#0a0c14]">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
+                                            <Package className="w-5 h-5 text-white/40" />
+                                        </div>
+                                        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Stock & Delivery</h2>
                                     </div>
-                                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Stock & Delivery</h2>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                                            {formData.payment_restrictions_enabled ? 'Enabled' : 'Disabled'}
+                                        </span>
+                                        <Switch
+                                            checked={formData.payment_restrictions_enabled}
+                                            onCheckedChange={(checked) => setFormData({ ...formData, payment_restrictions_enabled: checked })}
+                                            className="data-[state=checked]:bg-[#a4f8ff]"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="p-6 space-y-6">
+                                <div className={cn("p-6 space-y-6 transition-opacity", !formData.payment_restrictions_enabled && "opacity-40 pointer-events-none")}>
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="space-y-1">
@@ -648,45 +670,20 @@ export default function EditProductPage() {
                                         )}
                                     </div>
 
-                                    {/* Deliverables Type Cards */}
+                                    {/* Delivery Method Dropdown */}
                                     <div className="space-y-3 pt-4 border-t border-white/5">
-                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Deliverables Type</label>
-                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
-                                            Determines how the product is delivered to the customer.
-                                        </p>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {[
-                                                { id: "serials", title: "Serials", desc: "Delivers serial keys, codes, or text content.", icon: Layers },
-                                                { id: "service", title: "Service", desc: "Manual fulfillment with instructions.", icon: Share2 },
-                                                { id: "dynamic", title: "Dynamic", desc: "Delivers content from webhook.", icon: Waveform }
-                                            ].map((type) => (
-                                                <div
-                                                    key={type.id}
-                                                    onClick={() => setFormData({ ...formData, delivery_type: type.id })}
-                                                    className={cn(
-                                                        "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-3 group relative",
-                                                        formData.delivery_type === type.id
-                                                            ? "bg-[#a4f8ff]/10 border-[#a4f8ff]/50 shadow-lg shadow-[#a4f8ff]/5"
-                                                            : "bg-[#0f111a] border-white/5 hover:border-white/10 active:scale-[0.98]"
-                                                    )}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className={cn(
-                                                            "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                                                            formData.delivery_type === type.id ? "bg-[#a4f8ff]/20 text-[#a4f8ff]" : "bg-white/5 text-white/40 group-hover:bg-white/10"
-                                                        )}>
-                                                            <type.icon className="w-4 h-4" />
-                                                        </div>
-                                                        {formData.delivery_type === type.id && (
-                                                            <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className={cn("text-[13px] font-bold mb-1", formData.delivery_type === type.id ? "text-white" : "text-white/80")}>{type.title}</h3>
-                                                        <p className="text-[10px] text-white/40 leading-snug">{type.desc}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Delivery Method</label>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full h-14 px-4 pr-12 rounded-xl bg-[#0f111a] border border-white/5 text-sm font-bold text-white appearance-none focus:outline-none focus:border-[#a4f8ff]/50 transition-all cursor-pointer"
+                                                value={formData.delivery_type}
+                                                onChange={e => setFormData({ ...formData, delivery_type: e.target.value })}
+                                            >
+                                                <option value="serials">Serials (Manual/Bulk)</option>
+                                                <option value="service">Service (Manual Fulfillment)</option>
+                                                <option value="dynamic">Dynamic (Webhook)</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
                                         </div>
                                     </div>
 
@@ -699,60 +696,92 @@ export default function EditProductPage() {
                                                 className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
                                                 placeholder="https://your-api.com/callback"
                                             />
-                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
-                                                A POST request will be sent to this URL upon purchase to generate the delivery content.
-                                            </p>
                                         </div>
                                     )}
 
                                     {/* Deliverable Selection Method (only for serials) */}
                                     {formData.delivery_type === 'serials' && (
-                                        <div className="space-y-3 pt-4 border-t border-white/5">
+                                        <div className="space-y-3">
                                             <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Deliverable Selection Method</label>
-                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
-                                                Choose how the system determines which deliverables to deliver to the customer.
-                                            </p>
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {[
-                                                    { id: 'last', label: 'Last', sub: 'The last added item will be delivered first.', icon: RotateCcw },
-                                                    { id: 'first', label: 'First', sub: 'The first added item will be delivered first.', icon: GripHorizontal },
-                                                    { id: 'random', label: 'Random', sub: 'A random item will be delivered.', icon: Shuffle }
-                                                ].map((method) => {
-                                                    const isSelected = formData.deliverable_selection_method === method.id
-                                                    return (
-                                                        <div
-                                                            key={method.id}
-                                                            onClick={() => setFormData({ ...formData, deliverable_selection_method: method.id as any })}
-                                                            className={cn(
-                                                                "relative p-4 rounded-xl border cursor-pointer transition-all hover:bg-[#a4f8ff]/5 flex items-center gap-4 group",
-                                                                isSelected
-                                                                    ? "bg-[#a4f8ff]/5 border-[#a4f8ff] shadow-[0_0_20px_-10px_#a4f8ff]"
-                                                                    : "bg-[#0f111a] border-white/5 hover:border-white/10"
-                                                            )}
-                                                        >
-                                                            <div className={cn(
-                                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
-                                                                isSelected ? "border-[#a4f8ff] bg-[#a4f8ff]/20" : "border-white/10 group-hover:border-white/20"
-                                                            )}>
-                                                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />}
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className={cn("text-sm font-bold mb-0.5", isSelected ? "text-white" : "text-white/80")}>{method.label}</div>
-                                                                <div className="text-[11px] text-white/40 leading-snug">{method.sub}</div>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
+                                            <div className="relative">
+                                                <select
+                                                    className="w-full h-14 px-4 pr-12 rounded-xl bg-[#0f111a] border border-white/5 text-sm font-bold text-white appearance-none focus:outline-none focus:border-[#a4f8ff]/50 transition-all cursor-pointer"
+                                                    value={formData.deliverable_selection_method}
+                                                    onChange={e => setFormData({ ...formData, deliverable_selection_method: e.target.value as any })}
+                                                >
+                                                    <option value="last">Last (LIFO)</option>
+                                                    <option value="first">First (FIFO)</option>
+                                                    <option value="random">Random</option>
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
                                             </div>
                                         </div>
                                     )}
 
+                                    {/* Min/Max Quantity */}
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Min Qty</label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                value={formData.min_quantity}
+                                                onChange={e => setFormData({ ...formData, min_quantity: parseInt(e.target.value) || 1 })}
+                                                placeholder="1"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Max Qty</label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                value={formData.max_quantity}
+                                                onChange={e => setFormData({ ...formData, max_quantity: parseInt(e.target.value) || 100 })}
+                                                placeholder="100"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Price</label>
+                                            <Input
+                                                type="number"
+                                                step="0.01"
+                                                min={0}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                value={formData.price}
+                                                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
+                                                Slashed Price <span className="text-[9px] opacity-50 font-normal">(optional)</span>
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                step="0.01"
+                                                min={0}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                value={formData.slashed_price === 0 ? '' : formData.slashed_price}
+                                                onChange={e => {
+                                                    const val = e.target.value
+                                                    setFormData({ ...formData, slashed_price: val === '' ? 0 : parseFloat(val) })
+                                                }}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Disabled Payment Methods */}
                                     <div className="space-y-3 pt-4 border-t border-white/5">
-                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Disabled Payment Methods</label>
-                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
-                                            Disable specific payment methods for this product. Customers won't be able to pay with disabled methods.
-                                        </p>
+                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
+                                            Disabled Payment Methods <span className="text-[9px] opacity-50 font-normal">(optional)</span>
+                                        </label>
                                         <div className="flex flex-wrap gap-2">
                                             {["PayPal", "Bitcoin", "Ethereum", "Litecoin", "Tether (TRC20)", "Tether (ERC20)", "Solana", "USDC"].map((method) => {
                                                 const isDisabled = formData.disabled_payment_methods.includes(method)

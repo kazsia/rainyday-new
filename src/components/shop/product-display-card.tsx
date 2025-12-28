@@ -176,12 +176,6 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand-primary/5 border border-brand-primary/10 transition-transform group-hover:scale-105">
-                                        <TrendingUp className="w-3 h-3 text-brand-primary" />
-                                        <span className="text-[9px] font-bold text-brand-primary uppercase">Best Value</span>
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 items-center">

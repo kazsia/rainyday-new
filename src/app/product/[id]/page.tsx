@@ -75,6 +75,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
   const minQty = selectedVariant?.min_quantity || product?.min_quantity || 1
   const maxQty = selectedVariant?.max_quantity || product?.max_quantity || 1000000
   const currentPrice = selectedVariant ? selectedVariant.price : product?.price
+  const slashedPrice = selectedVariant?.slashed_price || product?.slashed_price
   const currentStock = selectedVariant ? selectedVariant.stock_count : (product?.stock_count || 0)
   const isUnlimited = selectedVariant ? selectedVariant.is_unlimited : (product?.is_unlimited || false)
   const isOutOfStock = !isUnlimited && (currentStock <= 0)
@@ -342,11 +343,18 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                 {/* Price Display */}
                 <div className="flex items-start justify-between mb-6 relative z-10">
                   <div>
-                    <SparklesText
-                      text={`$${currentPrice.toFixed(2)}`}
-                      className="text-4xl font-black text-white tracking-tighter"
-                      sparklesCount={8}
-                    />
+                    <div className="flex items-baseline gap-3">
+                      <SparklesText
+                        text={`$${currentPrice.toFixed(2)}`}
+                        className="text-4xl font-black text-white tracking-tighter"
+                        sparklesCount={8}
+                      />
+                      {slashedPrice && slashedPrice > currentPrice && (
+                        <span className="text-xl font-bold text-white/30 line-through decoration-red-500/60 decoration-2">
+                          ${slashedPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">per item</p>
                   </div>
                   <div className="text-right">
@@ -382,12 +390,6 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       </motion.div>
                     )
                   })}
-                  {(!product.badge_links || product.badge_links.length === 0) && (
-                    <div className="bg-brand-primary/10 text-brand-primary border-brand-primary/20 font-black text-[9px] rounded-lg px-3 py-1.5 gap-2 uppercase tracking-widest border flex items-center shadow-lg">
-                      <CheckCircle2 className="w-3 h-3" />
-                      AUTHENTIC PRODUCT
-                    </div>
-                  )}
                 </div>
 
                 {/* Variant Selection - only show if more than 1 active variant */}

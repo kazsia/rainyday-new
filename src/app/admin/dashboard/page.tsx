@@ -1,10 +1,13 @@
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { getDashboardStats, getChartData, getRecentOrders, getTopProducts, getTopCustomers } from "@/lib/db/dashboard"
 import { RevenueChart } from "@/components/admin/dashboard/revenue-chart"
-import { Calendar, CreditCard, DollarSign, ShoppingCart, Users, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { DashboardRealtimeRefresh } from "@/components/admin/dashboard/dashboard-realtime-refresh"
+import { RecentOrdersSection } from "@/components/admin/dashboard/recent-orders-section"
+import { Calendar, CreditCard, DollarSign, ShoppingCart, Users, ArrowUpRight, ArrowDownRight, TrendingUp, CheckCircle2, Clock, Mail, Bitcoin, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+
 import { DateRangePicker } from "@/components/admin/dashboard/date-range-picker"
 
 export default async function AdminDashboardPage(props: {
@@ -26,6 +29,7 @@ export default async function AdminDashboardPage(props: {
 
     return (
         <AdminLayout>
+            <DashboardRealtimeRefresh />
             <div className="space-y-6 max-w-[100rem] mx-auto">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
@@ -85,154 +89,136 @@ export default async function AdminDashboardPage(props: {
                 </div>
 
                 {/* Recent Orders */}
-                <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden shadow-sm">
-                    <div className="px-5 py-3.5 border-b border-[var(--sa-border)] flex items-center justify-between bg-white/[0.01]">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-[11px] font-bold text-white uppercase tracking-wider">Recent Orders</h3>
-                            <div className="px-1.5 py-0.5 rounded-full bg-[var(--sa-accent-muted)] border border-[var(--sa-accent-glow)] text-[9px] font-bold text-[var(--sa-accent)] uppercase">Live</div>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-[var(--sa-fg-muted)] hover:text-white uppercase font-bold tracking-wider" asChild>
-                            <Link href="/admin/orders">View All</Link>
-                        </Button>
-                    </div>
-                    {/* Desktop/Tablet Table View */}
-                    <div className="hidden md:block overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left text-xs min-w-[700px]">
-                            <thead>
-                                <tr className="border-b border-[var(--sa-border)] text-[var(--sa-fg-dim)] text-[9px] uppercase font-bold tracking-widest bg-black/20">
-                                    <th className="px-5 py-3">Product</th>
-                                    <th className="px-5 py-3">Price</th>
-                                    <th className="px-5 py-3">Status</th>
-                                    <th className="px-5 py-3">Method</th>
-                                    <th className="px-5 py-3">Customer</th>
-                                    <th className="px-5 py-3 text-right">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[var(--sa-border)]">
-                                {recentOrders.map((order) => (
-                                    <tr key={order.id} className="group hover:bg-[var(--sa-card-hover)] transition-colors">
-                                        <td className="px-5 py-2.5 font-bold text-white">{order.product}</td>
-                                        <td className="px-5 py-2.5 text-[var(--sa-fg-muted)] font-medium">{order.price}</td>
-                                        <td className="px-5 py-2.5">
-                                            <span className={cn(
-                                                "px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
-                                                order.paid === 'Paid'
-                                                    ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
-                                                    : "bg-amber-500/5 text-amber-400 border-amber-500/10"
-                                            )}>
-                                                {order.paid}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-2.5">
-                                            <div className="flex items-center gap-1.5 text-[var(--sa-fg-dim)]">
-                                                <CreditCard className="w-3 h-3" />
-                                                <span className="text-[10px] font-bold uppercase tracking-tighter">{order.method}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-2.5 text-[var(--sa-fg-muted)] text-[11px] truncate max-w-[180px]">{order.email}</td>
-                                        <td className="px-5 py-2.5 text-[var(--sa-fg-dim)] text-right text-[10px] font-mono">
-                                            {order.time}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden divide-y divide-[var(--sa-border)]">
-                        {recentOrders.map((order) => (
-                            <div key={order.id} className="p-4 space-y-3">
-                                <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-bold text-[var(--sa-fg-bright)]">{order.product}</p>
-                                        <p className="text-[10px] text-[var(--sa-fg-dim)] font-mono">{order.time}</p>
-                                    </div>
-                                    <span className={cn(
-                                        "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border",
-                                        order.paid === 'Paid'
-                                            ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/10"
-                                            : "bg-amber-500/5 text-amber-500 border-amber-500/10"
-                                    )}>
-                                        {order.paid}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[10px] text-[var(--sa-fg-dim)] uppercase font-bold tracking-wider">Customer</span>
-                                        <span className="text-[var(--sa-fg-muted)] truncate max-w-[150px]">{order.email}</span>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-[10px] text-[var(--sa-fg-dim)] uppercase font-bold tracking-wider">Amount</span>
-                                        <span className="font-bold text-[var(--sa-fg-bright)]">{order.price}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 pt-1">
-                                    <CreditCard className="w-3.5 h-3.5 text-[var(--sa-fg-dim)]" />
-                                    <span className="text-[10px] font-medium text-[var(--sa-fg-muted)] uppercase tracking-widest">{order.method}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <RecentOrdersSection recentOrders={recentOrders} />
 
                 {/* Top Lists Grid */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Top Products */}
                     <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
-                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center bg-white/[0.01]">
-                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Top 5 Products</h3>
-                        </div>
-                        <div className="p-2 space-y-1">
-                            {topProducts.map((prod, i) => (
-                                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center text-brand text-xs font-black">
-                                            #{i + 1}
-                                        </div>
-                                        <span className="text-sm font-bold text-[var(--sa-fg-bright)]">{prod.name}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between sm:justify-end gap-8 text-sm sm:flex-1">
-                                        <div className="flex flex-col items-end sm:items-end">
-                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Sales</span>
-                                            <span className="text-[var(--sa-fg-muted)] font-bold">{prod.sales}</span>
-                                        </div>
-                                        <div className="flex flex-col items-end sm:items-end w-24">
-                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Revenue</span>
-                                            <span className="text-brand font-black">${prod.revenue.toFixed(2)}</span>
-                                        </div>
-                                    </div>
+                        <div className="px-5 py-4 border-b border-[var(--sa-border)] flex justify-between items-center bg-gradient-to-r from-white/[0.02] to-transparent">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--sa-accent)]/20 to-[var(--sa-accent)]/5 border border-[var(--sa-accent)]/20 flex items-center justify-center">
+                                    <ShoppingCart className="w-3.5 h-3.5 text-[var(--sa-accent)]" />
                                 </div>
-                            ))}
+                                <h3 className="text-[11px] font-bold text-white uppercase tracking-widest">Top Products</h3>
+                            </div>
+                            <span className="text-[10px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-wider">Revenue</span>
+                        </div>
+                        <div className="divide-y divide-[var(--sa-border)]">
+                            {(() => {
+                                const maxRevenue = Math.max(...topProducts.map(p => p.revenue), 1)
+                                return topProducts.map((prod, i) => {
+                                    const percentage = (prod.revenue / maxRevenue) * 100
+                                    const rankColors = [
+                                        'from-amber-400 to-yellow-500',
+                                        'from-slate-300 to-slate-400',
+                                        'from-amber-600 to-amber-700',
+                                        'from-[var(--sa-accent)] to-cyan-400',
+                                        'from-[var(--sa-accent)] to-cyan-400'
+                                    ]
+                                    return (
+                                        <div key={i} className="group relative">
+                                            {/* Progress bar background */}
+                                            <div
+                                                className="absolute inset-0 bg-gradient-to-r from-[var(--sa-accent)]/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                            <div className="relative flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-all">
+                                                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                                    <div className={cn(
+                                                        "w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-black shadow-sm",
+                                                        i < 3
+                                                            ? `bg-gradient-to-br ${rankColors[i]} text-black/80`
+                                                            : "bg-white/[0.05] border border-[var(--sa-border)] text-[var(--sa-fg-dim)]"
+                                                    )}>
+                                                        {i + 1}
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <span className="text-[13px] font-semibold text-white truncate">{prod.name}</span>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[10px] text-[var(--sa-fg-dim)]">{prod.sales.toLocaleString()} sales</span>
+                                                            <div className="hidden sm:flex items-center gap-1.5 flex-1 max-w-[100px]">
+                                                                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-gradient-to-r from-[var(--sa-accent)] to-cyan-400 rounded-full transition-all duration-500"
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end pl-4">
+                                                    <span className="text-sm font-bold text-[var(--sa-accent)]">${prod.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            })()}
                         </div>
                     </div>
 
                     {/* Top Customers */}
                     <div className="bg-[var(--sa-card)] border border-[var(--sa-border)] rounded-xl overflow-hidden">
-                        <div className="p-5 border-b border-[var(--sa-border)] flex justify-between items-center bg-white/[0.01]">
-                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Top 5 Customers</h3>
-                        </div>
-                        <div className="p-2 space-y-1">
-                            {topCustomers.map((cust, i) => (
-                                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[var(--sa-card-hover)] rounded-lg transition-colors gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white/[0.02] border border-[var(--sa-border)] flex items-center justify-center text-[var(--sa-fg-dim)] text-[10px] font-black">
-                                            {cust.email.charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm font-bold text-[var(--sa-fg-bright)] truncate max-w-[200px]">{cust.email}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between sm:justify-end gap-8 text-sm sm:flex-1">
-                                        <div className="flex flex-col items-end sm:items-end">
-                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Orders</span>
-                                            <span className="text-[var(--sa-fg-muted)] font-bold">{cust.orders}</span>
-                                        </div>
-                                        <div className="flex flex-col items-end sm:items-end w-24">
-                                            <span className="text-[10px] sm:hidden font-bold text-white/20 uppercase tracking-widest">Spent</span>
-                                            <span className="text-brand font-black">${cust.spent.toFixed(2)}</span>
-                                        </div>
-                                    </div>
+                        <div className="px-5 py-4 border-b border-[var(--sa-border)] flex justify-between items-center bg-gradient-to-r from-white/[0.02] to-transparent">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20 flex items-center justify-center">
+                                    <Users className="w-3.5 h-3.5 text-purple-400" />
                                 </div>
-                            ))}
+                                <h3 className="text-[11px] font-bold text-white uppercase tracking-widest">Top Customers</h3>
+                            </div>
+                            <span className="text-[10px] font-bold text-[var(--sa-fg-dim)] uppercase tracking-wider">Spent</span>
+                        </div>
+                        <div className="divide-y divide-[var(--sa-border)]">
+                            {(() => {
+                                const maxSpent = Math.max(...topCustomers.map(c => c.spent), 1)
+                                const avatarColors = [
+                                    'from-purple-500 to-pink-500',
+                                    'from-blue-500 to-cyan-400',
+                                    'from-emerald-500 to-teal-400',
+                                    'from-orange-500 to-amber-400',
+                                    'from-rose-500 to-pink-400'
+                                ]
+                                return topCustomers.map((cust, i) => {
+                                    const percentage = (cust.spent / maxSpent) * 100
+                                    return (
+                                        <div key={i} className="group relative">
+                                            <div
+                                                className="absolute inset-0 bg-gradient-to-r from-purple-500/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                            <div className="relative flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-all">
+                                                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                                    <div className={cn(
+                                                        "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shadow-sm bg-gradient-to-br",
+                                                        avatarColors[i % avatarColors.length]
+                                                    )}>
+                                                        {cust.email.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <span className="text-[13px] font-semibold text-white truncate">{cust.email}</span>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[10px] text-[var(--sa-fg-dim)]">{cust.orders} order{cust.orders !== 1 ? 's' : ''}</span>
+                                                            <div className="hidden sm:flex items-center gap-1.5 flex-1 max-w-[100px]">
+                                                                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-gradient-to-r from-purple-500 to-pink-400 rounded-full transition-all duration-500"
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end pl-4">
+                                                    <span className="text-sm font-bold text-purple-400">${cust.spent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            })()}
                         </div>
                     </div>
                 </div>

@@ -764,14 +764,20 @@ function CheckoutMainContent() {
     if (step !== 2 || !orderId) return
 
     let hasShownDetectedToast = false
+    let hasShownExpiredToast = false
+    let hasCompleted = false
     let consecutiveErrors = 0
 
     // Poll every 3 seconds for faster detection
     const pollInterval = setInterval(async () => {
+      // Skip if already completed or expired
+      if (hasCompleted || hasShownExpiredToast) return
+
       try {
         // 0. Check internal DB status (Real-time sync for admin manual actions)
         const currentOrder = await getOrder(orderId)
         if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
+          hasCompleted = true
           setPaymentStatus('completed')
           toast.success("Order marked as paid! Finalizing...")
           clearInterval(pollInterval)
@@ -827,6 +833,7 @@ function CheckoutMainContent() {
             setPaymentStatus('processing')
           }
           if (info.status === 'Paid' && info.txID) {
+            hasCompleted = true
             // ACTIVE SYNC: Trigger server update immediately
             try {
               const { markOrderAsPaid } = await import("@/lib/actions/checkout")
@@ -846,10 +853,11 @@ function CheckoutMainContent() {
               router.push(`/invoice?id=${orderId}`)
             }, 500)
           }
-          if (info.status === 'Expired' || info.status === 'Failed') {
+          if ((info.status === 'Expired' || info.status === 'Failed') && !hasShownExpiredToast) {
+            hasShownExpiredToast = true
+            clearInterval(pollInterval)
             setPaymentStatus('expired')
             toast.error("Payment expired. Please try again.")
-            clearInterval(pollInterval)
           }
         }
       } catch (error: any) {

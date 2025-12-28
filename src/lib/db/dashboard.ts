@@ -211,10 +211,12 @@ export async function getRecentOrders(limit = 10, range?: { from: Date; to: Date
 
         return data?.map((o: any) => ({
             id: o.id,
+            readable_id: o.readable_id,
             product: (o.order_items as any[])?.[0]?.product?.name || "Unknown",
             price: `$${Number(o.total ?? 0).toFixed(2)}`,
             paid: o.status === 'paid' || o.status === 'delivered' ? `+$${Number(o.total ?? 0).toFixed(2)}` : 'Pending',
             method: formatPaymentMethod((o.payments as any[])?.[0]?.provider),
+            provider: (o.payments as any[])?.[0]?.provider || "Crypto",
             email: o.email,
             time: getTimeAgo(new Date(o.created_at)),
             status: o.status
