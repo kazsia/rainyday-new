@@ -846,7 +846,7 @@ function CheckoutMainContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 2000) // Faster 2-second polling
+    }, 500) // Extreme 0.5-second polling
 
     return () => clearInterval(pollInterval)
   }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
@@ -1458,7 +1458,7 @@ function CheckoutMainContent() {
                           onClick={() => copyToClipboard(cryptoDetails?.address || '')}
                           className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
                         >
-                          <code className="text-sm font-bold text-black truncate max-w-[240px]">{cryptoDetails?.address || 'Initializing...'}</code>
+                          <code className="text-sm font-bold text-black break-all">{cryptoDetails?.address || 'Initializing...'}</code>
                           <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
                         </div>
                         <Button
@@ -1518,7 +1518,11 @@ function CheckoutMainContent() {
                           <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
                             <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
                             <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
-                              {paymentStatus === 'completed' ? 'Confirmed' : 'Confirming...'}
+                              {paymentStatus === 'completed'
+                                ? 'Confirmed'
+                                : blockchainStatus
+                                  ? `${blockchainStatus.confirmations || 0}/2 Confirmations`
+                                  : 'Confirming...'}
                             </p>
                           </div>
                         </div>

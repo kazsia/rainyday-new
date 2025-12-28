@@ -275,11 +275,11 @@ export default function AdminProductsPage() {
                                         <td className="px-5 py-3">
                                             <span className={cn(
                                                 "text-[10px] font-black px-1.5 py-0.5 rounded border",
-                                                product.stock_count > 0
+                                                (product.is_unlimited || product.stock_count > 0)
                                                     ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
                                                     : "text-rose-400 bg-rose-400/5 border-rose-500/10"
                                             )}>
-                                                {product.stock_count === -1 ? "∞" : product.stock_count}
+                                                {product.is_unlimited ? "∞" : product.stock_count}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3 text-[11px] text-[var(--sa-fg-dim)]">
@@ -394,8 +394,8 @@ export default function AdminProductsPage() {
                                     <div className="flex items-center gap-2">
                                         <span className={cn(
                                             "text-xs font-bold",
-                                            product.stock_count > 0 ? "text-brand-primary" : "text-red-500"
-                                        )}>{product.stock_count} left</span>
+                                            (product.is_unlimited || product.stock_count > 0) ? "text-brand-primary" : "text-red-500"
+                                        )}>{product.is_unlimited ? "∞" : `${product.stock_count} left`}</span>
                                         <span className="text-[10px] text-white/40">• {product.is_active ? 'Public' : 'Hidden'}</span>
                                     </div>
                                 </div>

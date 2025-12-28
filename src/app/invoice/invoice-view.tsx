@@ -760,15 +760,15 @@ function InvoiceContent() {
                                         <div className="space-y-3">
                                           {itemAssets.length > 0 ? (
                                             itemAssets.map((d: any, i: number) => (
-                                              <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 group/code">
-                                                <code className="text-sm font-medium text-white/60 tracking-tight break-all overflow-hidden text-ellipsis whitespace-nowrap">{d}</code>
-                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#a4f8ff] cursor-pointer transition-colors ml-4 shrink-0" onClick={() => copyToClipboard(d)} />
+                                              <div key={i} className="flex items-start justify-between py-3 border-b border-white/5 last:border-b-0 group/code">
+                                                <p className="text-sm font-medium text-white/70 break-words whitespace-pre-wrap pr-4 leading-relaxed flex-1">{d}</p>
+                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#a4f8ff] cursor-pointer transition-colors shrink-0 mt-0.5" onClick={() => copyToClipboard(d)} />
                                               </div>
                                             ))
                                           ) : (
-                                            <div className="p-4 rounded-xl bg-background border border-white/5 flex items-center gap-3 text-white/60">
+                                            <div className="py-3 flex items-center gap-3 text-white/60">
                                               <CheckCircle2 className="w-4 h-4 text-green-400" />
-                                              <span className="text-xs">Access confirmed. {item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
+                                              <span className="text-sm">{item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
                                             </div>
                                           )}
                                         </div>
@@ -1000,7 +1000,7 @@ function InvoiceContent() {
                                 onClick={() => copyToClipboard(paymentDetails.address)}
                                 className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
                               >
-                                <code className="text-sm font-bold text-black truncate max-w-[240px]">{paymentDetails.address || 'Initializing...'}</code>
+                                <code className="text-sm font-bold text-black break-all">{paymentDetails.address || 'Initializing...'}</code>
                                 <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
                               </div>
                               <Button

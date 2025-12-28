@@ -102,6 +102,22 @@ export async function createTicketReply(reply: {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", reply.ticket_id)
 
+    // Send email notification if this is an admin reply
+    if (reply.is_admin_reply) {
+        const { sendTicketReplyEmail } = await import("@/lib/email/email")
+
+        // Get ticket details for email
+        const { data: ticket } = await supabase
+            .from("tickets")
+            .select("id, subject, email")
+            .eq("id", reply.ticket_id)
+            .single()
+
+        if (ticket?.email) {
+            await sendTicketReplyEmail(ticket, reply.message)
+        }
+    }
+
     return data
 }
 
@@ -112,6 +128,23 @@ export async function updateTicketStatus(id: string, status: TicketStatus) {
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", id)
         .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
+export async function getTicketDetails(id: string) {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from("tickets")
+        .select(`
+            *,
+            ticket_replies(*),
+            profiles:user_id (email)
+        `)
+        .eq("id", id)
+        .order("created_at", { foreignTable: "ticket_replies", ascending: true })
         .single()
 
     if (error) throw error

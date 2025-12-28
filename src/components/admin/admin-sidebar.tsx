@@ -14,6 +14,7 @@ import { CreditCard } from "lucide-react"
 import { ChevronDown } from "lucide-react"
 import { ExternalLink } from "lucide-react"
 import { Layout } from "lucide-react"
+import { MessageSquare } from "lucide-react"
 
 import { useState, useEffect, Suspense } from "react"
 import { Logo } from "@/components/layout/logo"
@@ -42,6 +43,7 @@ const navigation = [
             { name: "Invoices", href: "/admin/invoices" },
             { name: "Customers", href: "/admin/customers" },
             { name: "Feedbacks", href: "/admin/feedbacks" },
+            { name: "Tickets", href: "/admin/tickets" },
         ]
     },
     { name: "Configure", href: "/admin/storefront?tab=identity", icon: Settings },

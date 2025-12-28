@@ -239,7 +239,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         product.status_color === 'yellow' ? "text-yellow-400" :
                           product.status_color === 'green' ? "text-green-400" :
                             "text-brand-primary"
-                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited" : "In Stock"))}</span>
+                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : "In Stock")}</span>
                 </div>
               </div>
 
@@ -303,7 +303,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       <div className="flex items-center gap-2 pt-4">
                         <div className={cn("w-1.5 h-1.5 rounded-full", isOutOfStock ? "bg-red-500" : "bg-emerald-500")} />
                         <span className={cn("text-[13px] font-bold", isOutOfStock ? "text-red-400" : "text-emerald-400")}>
-                          {isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited Available" : `${currentStock} In Stock`)}
+                          {isOutOfStock ? "Out of Stock" : "In Stock"}
                         </span>
                       </div>
                     </>
@@ -358,7 +358,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                           product.status_color === 'yellow' ? "text-yellow-400" :
                             product.status_color === 'green' ? "text-green-400" :
                               "text-brand-primary"
-                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited" : "In Stock"))}</span>
+                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : "In Stock")}</span>
                   </div>
                 </div>
 
@@ -425,7 +425,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                       ? "bg-[#a4f8ff]/10 text-[#a4f8ff]"
                                       : variant.stock_count <= 0 ? "bg-red-500/10 text-red-400" : "text-white/40"
                                   )}>
-                                    {variant.is_unlimited ? "Unlimited" : (variant.stock_count <= 0 ? "Out of Stock" : `${variant.stock_count} in stock`)}
+                                    {variant.stock_count <= 0 && !variant.is_unlimited ? "Out of Stock" : "In Stock"}
                                   </span>
                                 </div>
                               </div>
@@ -448,7 +448,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-[10px] font-black text-white/20 ml-1 uppercase tracking-[0.3em]">Quantity</p>
                       <p className="text-[10px] font-bold text-white/30">
-                        {isUnlimited ? <span className="text-brand-primary">Unlimited</span> : <><span className="text-brand-primary">{currentStock}</span> available</>}
+                        {isUnlimited ? <span className="text-brand-primary">In Stock</span> : <><span className="text-brand-primary">{currentStock}</span> available</>}
                       </p>
                     </div>
                     <div className="relative group">

@@ -376,3 +376,43 @@ export async function sendDeliveryCompletedEmail(order: Order, deliveredAssets: 
         html: wrapTemplate(content, storeName, invoiceUrl)
     })
 }
+
+/**
+ * Send ticket reply notification email
+ */
+export async function sendTicketReplyEmail(ticket: {
+    id: string
+    subject: string
+    email: string
+}, replyMessage: string) {
+    if (!ticket.email) {
+        console.log("[EMAIL] No email for ticket:", ticket.id)
+        return { success: false, error: "No email address" }
+    }
+
+    const settings = await getSiteSettings()
+    const storeName = settings.general?.name || "Rainyday"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "https://rainyday-new.vercel.app")
+    const ticketUrl = `${baseUrl}/support`
+
+    const content = `
+        <h2 style="margin: 0 0 16px 0; color: #333; font-size: 20px; font-weight: 600;">New Reply to Your Ticket</h2>
+        <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">Regarding: <strong style="color: #333;">${ticket.subject}</strong></p>
+        <p style="margin: 0 0 24px 0; color: #999; font-size: 12px;">Ticket #${ticket.id.slice(0, 8)}</p>
+        
+        <div style="padding: 20px; background-color: #f8f9fa; border-left: 4px solid #00d4ff; border-radius: 4px; margin-bottom: 24px;">
+            <p style="margin: 0; color: #333; line-height: 1.7; white-space: pre-wrap;">${replyMessage}</p>
+        </div>
+        
+        <p style="margin: 0; color: #666; font-size: 14px;">
+            You can reply to this email or visit your support page to continue the conversation.
+        </p>
+    `
+
+    return sendEmail({
+        to: ticket.email,
+        subject: `Re: ${ticket.subject} - ${storeName}`,
+        html: wrapTemplate(content, storeName, ticketUrl),
+        replyTo: settings.email?.from_email || undefined
+    })
+}

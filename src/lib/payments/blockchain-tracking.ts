@@ -163,7 +163,7 @@ async function trackSOL(address: string, minTimestamp?: number): Promise<Transac
 
                 return {
                     detected: true,
-                    confirmations: latest.confirmationStatus === 'finalized' ? 1 : 0,
+                    confirmations: latest.confirmationStatus === 'finalized' ? 2 : (latest.confirmationStatus === 'confirmed' ? 1 : 0),
                     txId: latest.signature,
                     status: latest.confirmationStatus === 'finalized' ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
