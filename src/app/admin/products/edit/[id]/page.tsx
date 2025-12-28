@@ -42,7 +42,12 @@ import {
     TextCursorInput,
     Timer,
     Shuffle,
-    Ban
+    Ban,
+    Layers,
+    Share2,
+    Activity,
+    RotateCcw,
+    GripHorizontal
 } from "lucide-react"
 import { getProduct, updateProduct, deleteProduct, getCategories } from "@/lib/db/products"
 import { uploadAsset } from "@/lib/db/settings"
@@ -105,8 +110,9 @@ export default function EditProductPage() {
         badges: [] as string[],
         custom_fields: [] as any[],
         sales_timespan: "all_time",
-        deliverable_selection_method: 'last',
+        deliverable_selection_method: 'last' as 'last' | 'first' | 'random',
         is_unlimited: false,
+        disabled_payment_methods: [] as string[],
     })
 
     useEffect(() => {
@@ -144,6 +150,7 @@ export default function EditProductPage() {
                     sales_timespan: productData.sales_timespan || "all_time",
                     deliverable_selection_method: productData.deliverable_selection_method || 'last',
                     is_unlimited: !!productData.is_unlimited,
+                    disabled_payment_methods: productData.disabled_payment_methods || [],
                 })
             } catch (error) {
                 toast.error("Failed to load product data")
@@ -570,7 +577,213 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
+                            {/* Stock & Delivery Section */}
+                            <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                                <div className="px-5 py-4 border-b border-white/5 flex items-center gap-4 bg-[#0a0c14]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
+                                        <Package className="w-5 h-5 text-white/40" />
+                                    </div>
+                                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Stock & Delivery</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="space-y-1">
+                                                <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Stock Status</label>
+                                                <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                                    {formData.delivery_type === 'serials'
+                                                        ? "Stock is managed via deliverables for serials."
+                                                        : "Choose if this product has unlimited stock."}
+                                                </p>
+                                            </div>
+                                            {formData.delivery_type !== 'serials' && (
+                                                <div className="flex items-center gap-3 bg-[#0f111a] border border-white/5 rounded-xl px-4 py-2">
+                                                    <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest">Unlimited</span>
+                                                    <Switch
+                                                        checked={formData.is_unlimited}
+                                                        onCheckedChange={(checked) => setFormData({ ...formData, is_unlimited: checked })}
+                                                        className="data-[state=checked]:bg-[#a4f8ff]"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
 
+                                        {formData.delivery_type !== 'serials' && !formData.is_unlimited && (
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Stock Count</label>
+                                                <Input
+                                                    type="number"
+                                                    className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                    value={formData.stock_count}
+                                                    onChange={e => setFormData({ ...formData, stock_count: parseInt(e.target.value) })}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {formData.delivery_type === 'serials' && (
+                                            <div className="space-y-3">
+                                                <div className="p-4 bg-[#0f111a] border border-white/5 rounded-xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <Package className="w-4 h-4 text-white/20" />
+                                                        <span className="text-sm font-medium text-white/60">Current Stock Assets:</span>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-[#a4f8ff]">{formData.stock_count}</span>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => setIsStockDialogOpen(true)}
+                                                    className="w-full h-12 border-[#a4f8ff]/30 bg-[#a4f8ff]/5 hover:bg-[#a4f8ff]/10 text-[#a4f8ff] hover:text-[#8aefff] font-bold text-[11px] uppercase tracking-[0.1em] rounded-xl transition-all gap-2"
+                                                >
+                                                    <Layers className="w-4 h-4" />
+                                                    Manage Stock Assets
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        {formData.is_unlimited && formData.delivery_type !== 'serials' && (
+                                            <div className="p-4 bg-[#a4f8ff]/5 border border-[#a4f8ff]/20 rounded-xl flex items-center gap-3">
+                                                <Zap className="w-4 h-4 text-[#a4f8ff] animate-pulse" />
+                                                <span className="text-sm font-bold text-[#a4f8ff]">Unlimited Stock Enabled</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Deliverables Type Cards */}
+                                    <div className="space-y-3 pt-4 border-t border-white/5">
+                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Deliverables Type</label>
+                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                            Determines how the product is delivered to the customer.
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {[
+                                                { id: "serials", title: "Serials", desc: "Delivers serial keys, codes, or text content.", icon: Layers },
+                                                { id: "service", title: "Service", desc: "Manual fulfillment with instructions.", icon: Share2 },
+                                                { id: "dynamic", title: "Dynamic", desc: "Delivers content from webhook.", icon: Activity }
+                                            ].map((type) => (
+                                                <div
+                                                    key={type.id}
+                                                    onClick={() => setFormData({ ...formData, delivery_type: type.id })}
+                                                    className={cn(
+                                                        "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-3 group relative",
+                                                        formData.delivery_type === type.id
+                                                            ? "bg-[#a4f8ff]/10 border-[#a4f8ff]/50 shadow-lg shadow-[#a4f8ff]/5"
+                                                            : "bg-[#0f111a] border-white/5 hover:border-white/10 active:scale-[0.98]"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                                            formData.delivery_type === type.id ? "bg-[#a4f8ff]/20 text-[#a4f8ff]" : "bg-white/5 text-white/40 group-hover:bg-white/10"
+                                                        )}>
+                                                            <type.icon className="w-4 h-4" />
+                                                        </div>
+                                                        {formData.delivery_type === type.id && (
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className={cn("text-[13px] font-bold mb-1", formData.delivery_type === type.id ? "text-white" : "text-white/80")}>{type.title}</h3>
+                                                        <p className="text-[10px] text-white/40 leading-snug">{type.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {formData.delivery_type === 'dynamic' && (
+                                        <div className="space-y-3">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Webhook URL</label>
+                                            <Input
+                                                value={formData.webhook_url}
+                                                onChange={e => setFormData({ ...formData, webhook_url: e.target.value })}
+                                                className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                placeholder="https://your-api.com/callback"
+                                            />
+                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                                A POST request will be sent to this URL upon purchase to generate the delivery content.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Deliverable Selection Method (only for serials) */}
+                                    {formData.delivery_type === 'serials' && (
+                                        <div className="space-y-3 pt-4 border-t border-white/5">
+                                            <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Deliverable Selection Method</label>
+                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                                Choose how the system determines which deliverables to deliver to the customer.
+                                            </p>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {[
+                                                    { id: 'last', label: 'Last', sub: 'The last added item will be delivered first.', icon: RotateCcw },
+                                                    { id: 'first', label: 'First', sub: 'The first added item will be delivered first.', icon: GripHorizontal },
+                                                    { id: 'random', label: 'Random', sub: 'A random item will be delivered.', icon: Shuffle }
+                                                ].map((method) => {
+                                                    const isSelected = formData.deliverable_selection_method === method.id
+                                                    return (
+                                                        <div
+                                                            key={method.id}
+                                                            onClick={() => setFormData({ ...formData, deliverable_selection_method: method.id as any })}
+                                                            className={cn(
+                                                                "relative p-4 rounded-xl border cursor-pointer transition-all hover:bg-[#a4f8ff]/5 flex items-center gap-4 group",
+                                                                isSelected
+                                                                    ? "bg-[#a4f8ff]/5 border-[#a4f8ff] shadow-[0_0_20px_-10px_#a4f8ff]"
+                                                                    : "bg-[#0f111a] border-white/5 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
+                                                                isSelected ? "border-[#a4f8ff] bg-[#a4f8ff]/20" : "border-white/10 group-hover:border-white/20"
+                                                            )}>
+                                                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className={cn("text-sm font-bold mb-0.5", isSelected ? "text-white" : "text-white/80")}>{method.label}</div>
+                                                                <div className="text-[11px] text-white/40 leading-snug">{method.sub}</div>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Disabled Payment Methods */}
+                                    <div className="space-y-3 pt-4 border-t border-white/5">
+                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Disabled Payment Methods</label>
+                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                            Disable specific payment methods for this product. Customers won't be able to pay with disabled methods.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {["PayPal", "Bitcoin", "Ethereum", "Litecoin", "Tether (TRC20)", "Tether (ERC20)", "Solana", "USDC"].map((method) => {
+                                                const isDisabled = formData.disabled_payment_methods.includes(method)
+                                                return (
+                                                    <button
+                                                        key={method}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newDisabled = isDisabled
+                                                                ? formData.disabled_payment_methods.filter(m => m !== method)
+                                                                : [...formData.disabled_payment_methods, method]
+                                                            setFormData({ ...formData, disabled_payment_methods: newDisabled })
+                                                        }}
+                                                        className={cn(
+                                                            "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all flex items-center gap-2",
+                                                            isDisabled
+                                                                ? "bg-red-500/10 border-red-500/50 text-red-500"
+                                                                : "bg-[#0f111a] border-white/5 text-white/40 hover:border-white/20 hover:text-white/60"
+                                                        )}
+                                                    >
+                                                        {method}
+                                                        {isDisabled && <Ban className="w-3 h-3" />}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Live Stats */}
                             <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
