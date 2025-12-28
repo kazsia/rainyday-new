@@ -239,7 +239,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         product.status_color === 'yellow' ? "text-yellow-400" :
                           product.status_color === 'green' ? "text-green-400" :
                             "text-brand-primary"
-                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : "In Stock")}</span>
+                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`))}</span>
                 </div>
               </div>
 
@@ -303,7 +303,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       <div className="flex items-center gap-2 pt-4">
                         <div className={cn("w-1.5 h-1.5 rounded-full", isOutOfStock ? "bg-red-500" : "bg-emerald-500")} />
                         <span className={cn("text-[13px] font-bold", isOutOfStock ? "text-red-400" : "text-emerald-400")}>
-                          {isOutOfStock ? "Out of Stock" : "In Stock"}
+                          {isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`)}
                         </span>
                       </div>
                     </>
@@ -358,7 +358,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                           product.status_color === 'yellow' ? "text-yellow-400" :
                             product.status_color === 'green' ? "text-green-400" :
                               "text-brand-primary"
-                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : "In Stock")}</span>
+                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`))}</span>
                   </div>
                 </div>
 
@@ -425,7 +425,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                       ? "bg-[#a4f8ff]/10 text-[#a4f8ff]"
                                       : variant.stock_count <= 0 ? "bg-red-500/10 text-red-400" : "text-white/40"
                                   )}>
-                                    {variant.stock_count <= 0 && !variant.is_unlimited ? "Out of Stock" : "In Stock"}
+                                    {variant.stock_count <= 0 && !variant.is_unlimited ? "Out of Stock" : (variant.is_unlimited ? "In Stock" : `${variant.stock_count} In Stock`)}
                                   </span>
                                 </div>
                               </div>

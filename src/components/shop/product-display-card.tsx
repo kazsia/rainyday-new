@@ -136,7 +136,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
                                     ? "bg-red-500/10 border-red-500/20 text-red-400"
                                     : "bg-brand-primary/10 border-brand-primary/20 text-brand-primary"
                             )}>
-                                {isOutOfStock ? "Out of Stock" : (status_label || "In Stock")}
+                                {isOutOfStock ? "Out of Stock" : (status_label || (effectiveIsUnlimited ? "In Stock" : `${productCount} In Stock`))}
                             </div>
                         </div>
 
