@@ -346,6 +346,17 @@ function InvoiceContent() {
 
     const pollInterval = setInterval(async () => {
       try {
+        // 0. Check internal DB status (Real-time sync for admin manual actions)
+        const { getOrder } = await import("@/lib/db/orders")
+        const currentOrder = await getOrder(order.id)
+        if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
+          setPaymentStatus('completed')
+          toast.success("Order confirmed! Finalizing...")
+          clearInterval(pollInterval)
+          loadOrder(false)
+          return
+        }
+
         // 1. Check OxaPay status
         const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
         const { getCryptoPrice } = await import("@/lib/payments/crypto-prices")

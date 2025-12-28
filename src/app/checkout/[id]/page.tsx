@@ -731,6 +731,19 @@ function CheckoutMainContent() {
     // Poll every 3 seconds for faster detection
     const pollInterval = setInterval(async () => {
       try {
+        // 0. Check internal DB status (Real-time sync for admin manual actions)
+        const { getOrder } = await import("@/lib/db/orders")
+        const currentOrder = await getOrder(orderId)
+        if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
+          setPaymentStatus('completed')
+          toast.success("Order marked as paid! Finalizing...")
+          clearInterval(pollInterval)
+          setTimeout(() => {
+            router.push(`/invoice?id=${orderId}`)
+          }, 2000)
+          return
+        }
+
         // 1. Check OxaPay status
         const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
         const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
