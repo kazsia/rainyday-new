@@ -90,7 +90,7 @@ export default function EditProductPage() {
         is_active: true,
         visibility: "public",
         image_url: "",
-        hide_stock_count: false,
+        hide_stock: false,
         delivery_type: "serials", // serials, service, dynamic
         webhook_url: "",
         status_label: "In Stock!",
@@ -126,7 +126,7 @@ export default function EditProductPage() {
                     is_active: productData.is_active,
                     visibility: productData.visibility || (productData.is_active ? "public" : "hidden"),
                     image_url: productData.image_url || "",
-                    hide_stock_count: !!productData.hide_stock_count,
+                    hide_stock: !!productData.hide_stock,
                     delivery_type: productData.delivery_type || "serials",
                     webhook_url: productData.webhook_url || "",
                     status_label: productData.status_label || "In Stock!",
@@ -156,13 +156,13 @@ export default function EditProductPage() {
 
         setIsSubmitting(true)
         try {
+            const { sales_timespan, badges, ...cleanFormData } = formData as any
             await updateProduct(id as string, {
-                ...formData,
+                ...cleanFormData,
                 category_id: (formData.category_id === "none" || formData.category_id === "") ? null : formData.category_id,
                 price: Number(formData.price),
                 slashed_price: formData.slashed_price ? Number(formData.slashed_price) : undefined,
                 stock_count: Number(formData.stock_count),
-
                 custom_fields: formData.custom_fields
             })
             toast.success("Product updated successfully")

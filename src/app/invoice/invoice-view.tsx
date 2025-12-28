@@ -40,6 +40,19 @@ const getPaymentIcon = (provider: string) => {
   return null
 }
 
+const getExplorerUrl = (txId: string, provider: string) => {
+  if (!txId) return "#"
+  const p = provider.toLowerCase()
+  if (p.includes('btc') || p.includes('bitcoin')) return `https://mempool.space/tx/${txId}`
+  if (p.includes('eth') || p.includes('ethereum')) return `https://etherscan.io/tx/${txId}`
+  if (p.includes('ltc') || p.includes('litecoin')) return `https://live.blockcypher.com/ltc/tx/${txId}`
+  if (p.includes('doge')) return `https://live.blockcypher.com/doge/tx/${txId}`
+  if (p.includes('trx') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
+  if (p.includes('bnb') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
+  if (p.includes('sol')) return `https://solscan.io/tx/${txId}`
+  return "#"
+}
+
 function InvoiceContent() {
   const { settings } = useSiteSettingsWithDefaults()
   const searchParams = useSearchParams()
@@ -582,8 +595,14 @@ function InvoiceContent() {
                     { label: "Total Price", value: `$${Number(order.total).toFixed(2)}` },
                     ...(isPaid && paymentDetails?.amount ? [{ label: `Total Amount (${paymentDetails.payCurrency})`, value: `${paymentDetails.amount} ${paymentDetails.payCurrency}` }] : []),
                     { label: "Created At", value: new Date(order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) },
+                    ...(isPaid && payment?.tx_id ? [{
+                      label: "Transaction Hash",
+                      value: payment.tx_id,
+                      copy: true,
+                      link: getExplorerUrl(payment.tx_id, payment.provider || "")
+                    }] : []),
                     ...(isPaid ? [{ label: "Completed At", value: new Date(order.updated_at || order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) }] : []),
-                  ].map((item, i) => (
+                  ].map((item: any, i) => (
                     <div key={i} className="flex items-start justify-between py-1.5 group/item">
                       <span className="text-sm font-medium text-white/40">{item.label}</span>
                       <div className="flex items-center gap-3">
@@ -595,7 +614,18 @@ function InvoiceContent() {
                             <Copy className="w-4 h-4" />
                           </button>
                         )}
-                        <span className="text-sm font-medium text-white/90 text-right">{item.value}</span>
+                        {item.link ? (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-[#a4f8ff] hover:underline text-right truncate max-w-[200px]"
+                          >
+                            {item.value}
+                          </a>
+                        ) : (
+                          <span className="text-sm font-medium text-white/90 text-right">{item.value}</span>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -134,7 +134,7 @@ export async function replaceStock(productId: string, items: string[], type: str
     const { count } = await countQuery
 
     if (variantId) {
-        await supabase.from("variants").update({ stock_count: count || 0 }).eq("id", variantId)
+        await supabase.from("product_variants").update({ stock_count: count || 0 }).eq("id", variantId)
     } else {
         await supabase.from("products").update({ stock_count: count || 0 }).eq("id", productId)
     }

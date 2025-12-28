@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { adminGetOrder, retriggerDelivery, updateOrderStatus } from "@/lib/db/orders"
 import { createBlacklistEntry } from "@/lib/db/blacklist"
+import { syncPaymentTxId } from "@/lib/db/payments"
 import { Button } from "@/components/ui/button"
 import {
   ChevronLeft,
@@ -55,6 +56,7 @@ export default function AdminInvoiceDetailsPage() {
   const [order, setOrder] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRetriggering, setIsRetriggering] = useState(false)
+  const [isSyncing, setIsSyncing] = useState<string | null>(null)
 
   useEffect(() => {
     if (params.id) {
@@ -101,6 +103,23 @@ export default function AdminInvoiceDetailsPage() {
     }
   }
 
+  async function handleSyncPayment(paymentId: string) {
+    setIsSyncing(paymentId)
+    try {
+      const result = await syncPaymentTxId(paymentId)
+      if (result.success) {
+        toast.success("Payment data synced successfully")
+        await loadOrder(params.id as string)
+      } else {
+        toast.error(result.message || "Failed to sync payment data")
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sync payment data")
+    } finally {
+      setIsSyncing(null)
+    }
+  }
+
   // Helper for status badges (reused style)
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -131,6 +150,19 @@ export default function AdminInvoiceDetailsPage() {
     if (p.includes('usdt')) return <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035" className="w-4 h-4" alt="USDT" />
     if (p.includes('paypal') || p === 'pp') return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" className="w-4 h-4" alt="PayPal" />
     return <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[8px]">?</div>
+  }
+
+  const getExplorerUrl = (txId: string, provider: string) => {
+    if (!txId) return "#"
+    const p = provider.toLowerCase()
+    if (p.includes('btc') || p.includes('bitcoin')) return `https://mempool.space/tx/${txId}`
+    if (p.includes('eth') || p.includes('ethereum')) return `https://etherscan.io/tx/${txId}`
+    if (p.includes('ltc') || p.includes('litecoin')) return `https://live.blockcypher.com/ltc/tx/${txId}`
+    if (p.includes('doge')) return `https://live.blockcypher.com/doge/tx/${txId}`
+    if (p.includes('trx') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
+    if (p.includes('bnb') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
+    if (p.includes('sol')) return `https://solscan.io/tx/${txId}`
+    return "#"
   }
 
   if (isLoading) return <AdminLayout>
@@ -499,14 +531,36 @@ export default function AdminInvoiceDetailsPage() {
                     </td>
                     <td className="px-10 py-8">
                       <div className="flex flex-col gap-1">
-                        <code className="text-xs text-white/60 font-medium truncate max-w-[200px]" title={pay.tx_id || pay.track_id || pay.id}>
-                          {pay.tx_id || pay.track_id || pay.id}
-                        </code>
+                        {pay.tx_id ? (
+                          <a
+                            href={getExplorerUrl(pay.tx_id, pay.provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-brand hover:underline font-medium truncate max-w-[200px]"
+                            title={pay.tx_id}
+                          >
+                            {pay.tx_id}
+                          </a>
+                        ) : (
+                          <code className="text-xs text-white/60 font-medium truncate max-w-[200px]" title={pay.track_id || "-"}>
+                            {pay.track_id || "-"}
+                          </code>
+                        )}
                         {pay.tx_id && (
                           <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Blockchain TXID</span>
                         )}
                         {!pay.tx_id && pay.track_id && (
-                          <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Track ID</span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Track ID</span>
+                            <button
+                              onClick={() => handleSyncPayment(pay.id)}
+                              disabled={isSyncing === pay.id}
+                              className="w-fit text-[8px] font-black text-brand hover:text-brand/80 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                            >
+                              <RefreshCw className={cn("w-2.5 h-2.5", isSyncing === pay.id && "animate-spin")} />
+                              Sync TXID
+                            </button>
+                          </div>
                         )}
                       </div>
                     </td>

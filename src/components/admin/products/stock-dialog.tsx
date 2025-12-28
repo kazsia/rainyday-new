@@ -117,6 +117,7 @@ export function StockDialog({
 
             await replaceStock(productId, items, 'text', variantId)
             toast.success("Stock updated successfully")
+            onStockChange?.(items.length)
             onOpenChange(false)
         } catch (error) {
             toast.error("Failed to update stock")
@@ -159,7 +160,7 @@ export function StockDialog({
                             className={cn(
                                 "flex-1 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all",
                                 activeTab === "add"
-                                    ? "bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/20"
+                                    ? "bg-[#a4f8ff] text-black shadow-lg shadow-[#a4f8ff]/20"
                                     : "bg-transparent text-white/30 hover:text-white/50"
                             )}
                         >
@@ -170,7 +171,7 @@ export function StockDialog({
                             className={cn(
                                 "flex-1 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all",
                                 activeTab === "update"
-                                    ? "bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/20"
+                                    ? "bg-[#a4f8ff] text-black shadow-lg shadow-[#a4f8ff]/20"
                                     : "bg-transparent text-white/30 hover:text-white/50"
                             )}
                         >
@@ -193,12 +194,12 @@ export function StockDialog({
                                 <Textarea
                                     value={bulkContent}
                                     onChange={(e) => setBulkContent(e.target.value)}
-                                    placeholder={`example1\n2\n#\n#\n#\n#\n#\n#$`}
-                                    className="min-h-[200px] font-medium text-sm bg-[#0a0c14] border-white/10 text-white placeholder:text-white/10 resize-none rounded-xl focus-visible:ring-[#6366f1]/50 focus-visible:border-[#6366f1]/50 transition-all p-4"
+                                    placeholder="Enter deliverables here..."
+                                    className="min-h-[200px] font-medium text-sm bg-[#0a0c14] border-white/10 text-white placeholder:text-white/10 resize-none rounded-xl focus-visible:ring-[#a4f8ff]/50 focus-visible:border-[#a4f8ff]/50 transition-all p-4"
                                 />
-                                <div className="absolute bottom-4 right-4 bg-[#6366f1] w-5 h-5 rounded-full flex items-center justify-center shadow-lg shadow-[#6366f1]/20">
+                                <div className="absolute bottom-4 right-4 bg-[#a4f8ff] w-5 h-5 rounded-full flex items-center justify-center shadow-lg shadow-[#a4f8ff]/20">
                                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M1 4L3.5 6.5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </div>
                             </div>
@@ -220,8 +221,8 @@ export function StockDialog({
                                     <Textarea
                                         value={bulkContent}
                                         onChange={(e) => setBulkContent(e.target.value)}
-                                        placeholder={`Item 1\nItem 2\nItem 3`}
-                                        className="min-h-[200px] font-medium text-sm bg-[#0a0c14] border-white/10 text-white placeholder:text-white/10 resize-none rounded-xl focus-visible:ring-[#6366f1]/50 focus-visible:border-[#6366f1]/50 transition-all p-4"
+                                        placeholder="No stock items currently..."
+                                        className="min-h-[200px] font-medium text-sm bg-[#0a0c14] border-white/10 text-white placeholder:text-white/10 resize-none rounded-xl focus-visible:ring-[#a4f8ff]/50 focus-visible:border-[#a4f8ff]/50 transition-all p-4"
                                     />
                                 )}
                                 <div className="absolute bottom-4 right-4 bg-orange-500 w-5 h-5 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20 group cursor-help">
@@ -249,7 +250,7 @@ export function StockDialog({
                     <Button
                         onClick={handleSave}
                         disabled={activeTab === "add" && isAdding}
-                        className="h-11 px-8 text-[11px] font-black uppercase tracking-widest bg-[#6366f1] hover:opacity-90 text-white shadow-lg shadow-[#6366f1]/20 rounded-xl gap-2 transition-all border-none"
+                        className="h-11 px-8 text-[11px] font-black uppercase tracking-widest bg-[#a4f8ff] hover:opacity-90 text-black shadow-lg shadow-[#a4f8ff]/20 rounded-xl gap-2 transition-all border-none"
                     >
                         {isAdding ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

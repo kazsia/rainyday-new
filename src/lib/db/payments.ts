@@ -228,3 +228,35 @@ export async function getPaymentByOrder(orderId: string) {
     if (error && error.code !== "PGRST116") throw error
     return data
 }
+export async function syncPaymentTxId(paymentId: string) {
+    const supabase = await createAdminClient()
+
+    // 1. Get payment details
+    const { data: payment, error: fetchError } = await supabase
+        .from("payments")
+        .select("track_id, provider")
+        .eq("id", paymentId)
+        .single()
+
+    if (fetchError || !payment || !payment.track_id) {
+        throw new Error("Payment not found or has no track ID")
+    }
+
+    // 2. Fetch latest data from OxaPay
+    const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+    const info = await getOxaPayPaymentInfo(payment.track_id)
+
+    if (!info || !info.txID) {
+        return { success: false, message: "No transaction ID found at provider yet." }
+    }
+
+    // 3. Update database
+    const { error: updateError } = await supabase
+        .from("payments")
+        .update({ tx_id: info.txID })
+        .eq("id", paymentId)
+
+    if (updateError) throw updateError
+
+    return { success: true, txId: info.txID }
+}
