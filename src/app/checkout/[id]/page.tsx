@@ -40,7 +40,7 @@ import { Logo } from "@/components/layout/logo"
 import { SparklesText } from "@/components/ui/sparkles-text"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
-import { getOrder } from "@/lib/db/orders"
+import { getOrder, updateOrderStatus } from "@/lib/db/orders"
 import { safeCreateOrder, safeUpdateOrder, safeCreatePayment } from "@/lib/actions/safe-checkout"
 import { createOxaPayWhiteLabel, getOxaPayPaymentInfo } from "@/lib/payments/oxapay" // Static import for reliability
 import { Suspense } from "react"
@@ -403,18 +403,34 @@ function CheckoutMainContent() {
     localStorage.setItem(`checkout_sess_${urlOrderId}`, JSON.stringify(state))
   }, [step, cryptoDetails, savedItems, savedTotal, urlOrderId])
 
-  // Countdown timer for payment expiration
+  // Countdown timer for payment expiration (1 hour from order creation)
   const [timeLeft, setTimeLeft] = React.useState<string>("--:--")
+  const [isExpired, setIsExpired] = React.useState(false)
 
   React.useEffect(() => {
-    if (!cryptoDetails?.expiresAt || step !== 2) return
+    // Use order creation time + 1 hour, or fallback to crypto expiry
+    const orderCreatedAt = existingOrder?.created_at ? new Date(existingOrder.created_at).getTime() : null
+    const expiryTime = orderCreatedAt ? orderCreatedAt + (60 * 60 * 1000) : cryptoDetails?.expiresAt
 
-    const updateTimer = () => {
+    if (!expiryTime || step !== 2) return
+
+    const updateTimer = async () => {
       const now = Date.now()
-      const remaining = cryptoDetails.expiresAt - now
+      const remaining = expiryTime - now
 
       if (remaining <= 0) {
         setTimeLeft("EXPIRED")
+        setIsExpired(true)
+
+        // Mark order as expired if it hasn't been paid
+        if (orderId && existingOrder?.status === 'pending') {
+          try {
+            await updateOrderStatus(orderId, 'expired')
+            toast.error("This invoice has expired. Please create a new order.")
+          } catch (error) {
+            console.error("Failed to mark order as expired:", error)
+          }
+        }
         return
       }
 
@@ -426,7 +442,7 @@ function CheckoutMainContent() {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [cryptoDetails?.expiresAt, step])
+  }, [existingOrder?.created_at, cryptoDetails?.expiresAt, step, orderId, existingOrder?.status])
 
   React.useEffect(() => {
     // Only redirect to store if cart is truly empty AND we are NOT processing an order 

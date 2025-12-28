@@ -318,13 +318,17 @@ function InvoiceContent() {
   }, [order?.id, order?.status])
 
 
-  // Countdown timer for payment expiration
+  // Countdown timer for payment expiration (1 hour from order creation)
   useEffect(() => {
-    if (!paymentDetails?.expiresAt || order?.status !== 'pending') return
+    // Use order creation time + 1 hour, or fallback to payment expiry
+    const orderCreatedAt = order?.created_at ? new Date(order.created_at).getTime() : null
+    const expiryTime = orderCreatedAt ? orderCreatedAt + (60 * 60 * 1000) : paymentDetails?.expiresAt
+
+    if (!expiryTime || order?.status !== 'pending') return
 
     const updateTimer = () => {
       const now = Date.now()
-      const remaining = paymentDetails.expiresAt - now
+      const remaining = expiryTime - now
 
       if (remaining <= 0) {
         setTimeLeft("EXPIRED")
@@ -347,7 +351,7 @@ function InvoiceContent() {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [paymentDetails?.expiresAt, order?.status])
+  }, [order?.created_at, paymentDetails?.expiresAt, order?.status, order?.id])
 
   // Poll for payment status - FASTER 3s polling with blockchain tracking
   useEffect(() => {
