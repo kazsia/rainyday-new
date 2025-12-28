@@ -13,13 +13,17 @@ import { toast } from "sonner"
 
 import { Star, MessageSquareQuote, CheckCircle2, Copy, Download, ChevronDown, ExternalLink, Clock, User, Mail, CreditCard, Search, ShieldCheck, ArrowRight, Lock, QrCode, Wallet, Loader2, LockKeyhole, Ban } from "lucide-react"
 import { getOrder } from "@/lib/db/orders"
+import { getOxaPayPaymentInfo } from "@/lib/payments/oxapay"
+import { getCryptoPrice } from "@/lib/payments/crypto-prices"
+import { trackAddressStatus } from "@/lib/payments/blockchain-tracking"
+import { markOrderAsPaid } from "@/lib/actions/checkout"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/layout/logo"
 import { cn } from "@/lib/utils"
 import { SparklesText } from "@/components/ui/sparkles-text"
-import { trackAddressStatus, TransactionStatus } from "@/lib/payments/blockchain-tracking"
+import { TransactionStatus } from "@/lib/payments/blockchain-tracking"
 import { FeedbackForm } from "@/components/feedback/feedback-form"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 
@@ -347,7 +351,7 @@ function InvoiceContent() {
     const pollInterval = setInterval(async () => {
       try {
         // 0. Check internal DB status (Real-time sync for admin manual actions)
-        const { getOrder } = await import("@/lib/db/orders")
+        // 0. Check internal DB status (Real-time sync for admin manual actions)
         const currentOrder = await getOrder(order.id)
         if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
           setPaymentStatus('completed')
@@ -358,9 +362,6 @@ function InvoiceContent() {
         }
 
         // 1. Check OxaPay status
-        const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
-        const { getCryptoPrice } = await import("@/lib/payments/crypto-prices")
-
         const info = await getOxaPayPaymentInfo(paymentDetails.trackId)
 
         // 2. Fetch latest price
@@ -409,7 +410,6 @@ function InvoiceContent() {
           if (info.status === 'Paid' && info.txID) {
             // ACTIVE SYNC: Trigger server update immediately
             try {
-              const { markOrderAsPaid } = await import("@/lib/actions/checkout")
               // We pass the txID, and the server action will RE-VERIFY it before marking paid
               await markOrderAsPaid(order.id, info.txID)
             } catch (err) {

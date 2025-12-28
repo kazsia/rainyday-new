@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyOxaPaySignature } from "@/lib/payments/oxapay"
 import { updatePaymentStatus } from "@/lib/db/payments"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST(req: NextRequest) {
     try {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         const normalizedStatus = status.toLowerCase()
 
         if (normalizedStatus === "paid" || normalizedStatus === "manual_accept") {
-            const supabase = await createClient()
+            const supabase = await createAdminClient()
 
             // Find our internal payment record using trackId (canonical)
             const { data: payment } = await supabase
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
                 console.error(`[OxaPay Webhook] Payment not found for trackId ${trackId}`)
             }
         } else if (status === "failed" || status === "expired" || status === "canceled") {
-            const supabase = await createClient()
+            const supabase = await createAdminClient()
             const { data: payment } = await supabase
                 .from("payments")
                 .select("id, status")

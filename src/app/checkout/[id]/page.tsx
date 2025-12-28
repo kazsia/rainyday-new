@@ -733,7 +733,6 @@ function CheckoutMainContent() {
     const pollInterval = setInterval(async () => {
       try {
         // 0. Check internal DB status (Real-time sync for admin manual actions)
-        const { getOrder } = await import("@/lib/db/orders")
         const currentOrder = await getOrder(orderId)
         if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
           setPaymentStatus('completed')
@@ -798,7 +797,7 @@ function CheckoutMainContent() {
             clearInterval(pollInterval)
             setTimeout(() => {
               router.push(`/invoice?id=${orderId}`)
-            }, 2000)
+            }, 500)
           }
           if (info.status === 'Expired' || info.status === 'Failed') {
             setPaymentStatus('expired')
@@ -816,7 +815,7 @@ function CheckoutMainContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 3000) // Faster 3-second polling
+    }, 2000) // Faster 2-second polling
 
     return () => clearInterval(pollInterval)
   }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
@@ -836,7 +835,7 @@ function CheckoutMainContent() {
           toast.success("Payment Confirmed! Redirecting...")
           setTimeout(() => {
             router.push(`/invoice?id=${orderId}`)
-          }, 2000)
+          }, 500)
         } else if (info.status === 'Expired') {
           setPaymentStatus('expired')
           toast.error("Payment expired. Please try again.")

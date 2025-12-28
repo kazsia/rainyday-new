@@ -1,5 +1,5 @@
 "use server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export type SiteSettings = {
     general: {
@@ -122,7 +122,7 @@ export type SiteSettings = {
 
 export async function getSiteSettings(): Promise<SiteSettings> {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { data, error } = await supabase.from('site_settings').select('key, value')
 
         if (error) {
@@ -344,7 +344,7 @@ export async function getAllSettings() {
 
 export async function getSetting(key: string) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { data } = await supabase.from('site_settings').select('value').eq('key', key).limit(1)
         return data?.[0]?.value
     } catch (e) {

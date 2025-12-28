@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyPaylixSignature } from "@/lib/payments/paylix"
 import { updatePaymentStatus } from "@/lib/db/payments"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         const uniqid = payload.uniqid // Paylix's invoice ID
 
         if (status === "COMPLETED") {
-            const supabase = await createClient()
+            const supabase = await createAdminClient()
 
             // Find our payment record using Paylix's uniqid
             const { data: payment, error } = await supabase
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
             console.log(`[Paylix Webhook] Success: Payment ${payment.id} for Order ${payment.order_id} marked as completed`)
         } else if (status === "FAILED" || status === "CANCELED") {
-            const supabase = await createClient()
+            const supabase = await createAdminClient()
             const { data: payment } = await supabase
                 .from("payments")
                 .select("id, status")

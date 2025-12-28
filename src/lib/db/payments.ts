@@ -217,7 +217,7 @@ export async function updatePaymentStatus(
 }
 
 export async function getPaymentByOrder(orderId: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     const { data, error } = await supabase
         .from("payments")
