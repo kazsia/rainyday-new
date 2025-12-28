@@ -3,7 +3,14 @@
 import { createPayment, updatePaymentStatus, getPaymentByOrder } from "@/lib/db/payments"
 import { incrementCouponUsage } from "@/lib/actions/coupons"
 
-export async function markOrderAsPaid(orderId: string, txId: string) {
+export async function markOrderAsPaid(
+    orderId: string,
+    txId: string,
+    details?: {
+        address?: string,
+        currency?: string
+    }
+) {
     try {
         console.log(`[PAYMENT_VERIFY] Attempting to mark order ${orderId} as paid with TXID: ${txId}`)
 
@@ -23,14 +30,16 @@ export async function markOrderAsPaid(orderId: string, txId: string) {
                 provider: "Crypto", // Default fallback
                 amount: order.total,
                 currency: "USD",
-                track_id: txId
+                track_id: txId,
+                crypto_address: details?.address
             })
         }
 
         // 2. SECURITY CHECK: Verify the transaction status before trusting it
         // Check OxaPay first (if it's an OxaPay track ID or matches their usage)
         let isVerified = false
-        let verifiedProvider = payment.provider || "Crypto"
+        // Prioritize OxaPay info, then payment provider, then details passed from client (least trusted but useful hint)
+        let verifiedProvider = payment.provider || details?.currency || "Crypto"
 
         try {
             const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
@@ -47,13 +56,20 @@ export async function markOrderAsPaid(orderId: string, txId: string) {
 
                 // Fallback: Verify directly on Blockchain
                 // This allows us to "beat" the payment processor if the blockchain is faster
-                if (payment.address && payment.currency) { // We need the crypto details stored on payment
+
+                // Use stored address or passed details
+                const addressToCheck = payment.crypto_address || details?.address
+                // Guess currency: stored currency (if not USD), or provider (if not Crypto), or passed detail
+                const currencyToCheck = (payment.currency !== 'USD' ? payment.currency : null)
+                    || (payment.provider !== 'Crypto' ? payment.provider : null)
+                    || details?.currency
+                    || 'BTC'
+
+                if (addressToCheck) {
                     const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
-                    // We try to guess the currency from provider if not explicit, but ideally it should be saved
-                    const currencyToCheck = payment.currency === 'USD' ? (payment.provider || 'BTC') : payment.currency
 
                     // We look for ANY recent transaction on this address that matches our criteria
-                    const bcStatus = await trackAddressStatus(payment.address, currencyToCheck)
+                    const bcStatus = await trackAddressStatus(addressToCheck, currencyToCheck)
 
                     if (bcStatus.detected && (bcStatus.status === 'confirmed' || bcStatus.confirmations >= 1)) {
                         // Double check: Does the TX match?
@@ -65,9 +81,6 @@ export async function markOrderAsPaid(orderId: string, txId: string) {
                     }
                 } else {
                     // Try to recover address from order if not on payment
-                    const { getOrder } = await import("@/lib/db/orders")
-                    const order = await getOrder(orderId)
-                    // If we have custom fields with address (unlikely for now) or recreate the payment details...
                     // For now, if we can't find address, we can't verify on blockchain.
                     console.warn("[PAYMENT_VERIFY] Cannot verify on blockchain: Missing address/currency on payment record.")
                 }
