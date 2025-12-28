@@ -76,6 +76,11 @@ export async function updatePaymentStatus(
     if (details?.providerPaymentId) updates.provider_payment_id = details.providerPaymentId
     if (details?.provider) updates.provider = details.provider
 
+    // Extract TXID from payload if available (OxaPay standard: txID)
+    if (details?.payload?.txID) {
+        updates.tx_id = details.payload.txID
+    }
+
     const { data: payment, error } = await supabase
         .from("payments")
         .update(updates)

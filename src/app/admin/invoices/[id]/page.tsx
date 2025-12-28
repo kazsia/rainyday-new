@@ -498,7 +498,17 @@ export default function AdminInvoiceDetailsPage() {
                       </span>
                     </td>
                     <td className="px-10 py-8">
-                      <code className="text-xs text-white/20 font-medium">{pay.id}</code>
+                      <div className="flex flex-col gap-1">
+                        <code className="text-xs text-white/60 font-medium truncate max-w-[200px]" title={pay.tx_id || pay.track_id || pay.id}>
+                          {pay.tx_id || pay.track_id || pay.id}
+                        </code>
+                        {pay.tx_id && (
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Blockchain TXID</span>
+                        )}
+                        {!pay.tx_id && pay.track_id && (
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Track ID</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
