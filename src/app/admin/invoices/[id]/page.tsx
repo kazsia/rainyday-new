@@ -212,7 +212,7 @@ export default function AdminInvoiceDetailsPage() {
                 Manually Process Invoice
               </Button>
             )}
-            <Button className="h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.id}`, '_blank')}>
+            <Button className="h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.payments?.[0]?.track_id || order.readable_id || order.id}`, '_blank')}>
               <LinkIcon className="w-4 h-4 mr-2" />
               View Invoice
             </Button>

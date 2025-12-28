@@ -405,7 +405,7 @@ export default function AdminInvoicesPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-[var(--sa-card)] border-[var(--sa-border)] text-white p-1">
-                                                    <DropdownMenuItem onClick={() => window.open(`/invoice?id=${ord.id}`, '_blank')} className="text-[11px] cursor-pointer focus:bg-white/5">
+                                                    <DropdownMenuItem onClick={() => window.open(`/invoice?id=${ord.payment?.track_id || ord.readable_id || ord.id}`, '_blank')} className="text-[11px] cursor-pointer focus:bg-white/5">
                                                         <ExternalLink className="w-3.5 h-3.5 mr-2" />
                                                         View Invoice
                                                     </DropdownMenuItem>

@@ -172,9 +172,28 @@ export async function getOrder(id: string) {
         query.eq("readable_id", id)
     }
 
-    const { data, error } = await query.single()
+    const { data, error } = await query.maybeSingle()
 
+    if (error) console.error("Error fetching order:", error)
+
+    if (data) return data
+
+    // Fallback: Try to find by Payment Track ID (if not UUID)
+    if (!isUuid) {
+        const { data: payment } = await supabase
+            .from("payments")
+            .select("order_id")
+            .eq("track_id", id)
+            .maybeSingle()
+
+        if (payment?.order_id) {
+            return getOrder(payment.order_id)
+        }
+    }
+
+    if (!data && !error) throw new Error("Order not found")
     if (error) throw error
+
     return data
 }
 
