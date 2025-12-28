@@ -11,7 +11,7 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 
-import { Star, MessageSquareQuote, CheckCircle2, Copy, Download, ChevronDown, ExternalLink, Clock, User, Mail, CreditCard, Search, ShieldCheck, ArrowRight, Lock, QrCode, Wallet, Loader2, LockKeyhole } from "lucide-react"
+import { Star, MessageSquareQuote, CheckCircle2, Copy, Download, ChevronDown, ExternalLink, Clock, User, Mail, CreditCard, Search, ShieldCheck, ArrowRight, Lock, QrCode, Wallet, Loader2, LockKeyhole, Ban } from "lucide-react"
 import { getOrder } from "@/lib/db/orders"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -970,6 +970,26 @@ function InvoiceContent() {
                               <ExternalLink className="w-4 h-4" />
                               Pay with OxaPay
                             </Button>
+                          </>
+                        ) : order.status === 'cancelled' ? (
+                          <>
+                            <div className="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
+                              <Ban className="w-8 h-8 text-white/20" />
+                            </div>
+                            <div className="space-y-2 relative z-10">
+                              <p className="text-lg font-black tracking-tighter text-white/40 uppercase">Order Cancelled</p>
+                              <p className="text-[10px] font-bold text-white/30 max-w-[250px] mx-auto">This order has been cancelled and cannot be paid.</p>
+                            </div>
+                          </>
+                        ) : (order.status === 'expired' || paymentStatus === 'expired') ? (
+                          <>
+                            <div className="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
+                              <Clock className="w-8 h-8 text-white/20" />
+                            </div>
+                            <div className="space-y-2 relative z-10">
+                              <p className="text-lg font-black tracking-tighter text-white/40 uppercase">Invoice Expired</p>
+                              <p className="text-[10px] font-bold text-white/30 max-w-[250px] mx-auto">This invoice has expired. Please create a new order.</p>
+                            </div>
                           </>
                         ) : (
                           <>
