@@ -249,8 +249,8 @@ export default function AdminInvoiceDetailsPage() {
               <div className="flex items-center justify-between group">
                 <span className="text-xs font-black text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">ID</span>
                 <div className="flex items-center gap-2">
-                  <code className="text-xs font-medium text-white/60">{order.readable_id}</code>
-                  <button onClick={() => copyToClipboard(order.id)} className="p-1.5 rounded-lg hover:bg-white/5 text-white/20 hover:text-white transition-colors">
+                  <code className="text-xs font-medium text-white/60">{order.payments?.[0]?.track_id || order.readable_id}</code>
+                  <button onClick={() => copyToClipboard(order.payments?.[0]?.track_id || order.readable_id)} className="p-1.5 rounded-lg hover:bg-white/5 text-white/20 hover:text-white transition-colors">
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                 </div>
