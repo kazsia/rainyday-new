@@ -10,9 +10,14 @@ export type CouponValidationResult = {
         code: string
     }
     message?: string
+    appliesTo?: 'all' | 'specific'
+    applicableProductIds?: string[]
 }
 
-export async function validateCoupon(code: string): Promise<CouponValidationResult> {
+export async function validateCoupon(
+    code: string,
+    cartProductIds?: string[]
+): Promise<CouponValidationResult> {
     if (!code) {
         return { valid: false, message: "Please enter a coupon code" }
     }
@@ -20,13 +25,16 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
     const supabase = await createClient()
 
     // normalize code
-    const normalizedCode = code.trim()
+    const normalizedCode = code.trim().toUpperCase()
 
     try {
         const { data: coupon, error } = await supabase
             .from("coupons")
-            .select("*")
-            .eq("code", normalizedCode)
+            .select(`
+                *,
+                coupon_products (product_id)
+            `)
+            .ilike("code", normalizedCode)
             .single()
 
         if (error || !coupon) {
@@ -45,6 +53,53 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
             return { valid: false, message: "This coupon has reached its usage limit" }
         }
 
+        // Check product-specific restrictions
+        if (coupon.applies_to === 'specific') {
+            const couponProductIds = coupon.coupon_products?.map((cp: any) => cp.product_id) || []
+
+            if (couponProductIds.length === 0) {
+                return { valid: false, message: "This coupon has no valid products assigned" }
+            }
+
+            // If cart product IDs are provided, check if any match
+            if (cartProductIds && cartProductIds.length > 0) {
+                const matchingProducts = cartProductIds.filter(id => couponProductIds.includes(id))
+
+                if (matchingProducts.length === 0) {
+                    return { valid: false, message: "This coupon doesn't apply to items in your cart" }
+                }
+
+                // Return which products the coupon applies to
+                return {
+                    valid: true,
+                    discount: {
+                        type: coupon.discount_type,
+                        value: Number(coupon.discount_value),
+                        code: coupon.code
+                    },
+                    message: matchingProducts.length === cartProductIds.length
+                        ? "Coupon applied successfully"
+                        : "Coupon applied to eligible items",
+                    appliesTo: 'specific',
+                    applicableProductIds: matchingProducts
+                }
+            }
+
+            // If no cart provided but coupon is specific, still return valid with product info
+            return {
+                valid: true,
+                discount: {
+                    type: coupon.discount_type,
+                    value: Number(coupon.discount_value),
+                    code: coupon.code
+                },
+                message: "Coupon applied successfully",
+                appliesTo: 'specific',
+                applicableProductIds: couponProductIds
+            }
+        }
+
+        // Coupon applies to all products
         return {
             valid: true,
             discount: {
@@ -52,7 +107,8 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
                 value: Number(coupon.discount_value),
                 code: coupon.code
             },
-            message: "Coupon applied successfully"
+            message: "Coupon applied successfully",
+            appliesTo: 'all'
         }
 
     } catch (error) {
@@ -60,12 +116,13 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
         return { valid: false, message: "Error validating coupon" }
     }
 }
+
 export async function incrementCouponUsage(code: string) {
     const supabase = await createClient()
     const { data: coupon, error: fetchError } = await supabase
         .from("coupons")
         .select("id, used_count")
-        .eq("code", code)
+        .ilike("code", code.trim().toUpperCase())
         .single()
 
     if (fetchError || !coupon) {

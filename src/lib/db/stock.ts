@@ -81,3 +81,61 @@ export async function deleteStock(ids: string[], productId: string, variantId?: 
         await supabase.rpc('increment_stock', { p_product_id: productId, p_amount: -ids.length })
     }
 }
+
+export async function replaceStock(productId: string, items: string[], type: string = 'text', variantId?: string) {
+    const supabase = await createAdminClient()
+
+    // 1. Delete all UNUSED stock for this variant/product
+    let deleteQuery = supabase
+        .from("delivery_assets")
+        .delete()
+        .eq("product_id", productId)
+        .eq("is_used", false)
+
+    if (variantId) {
+        deleteQuery = deleteQuery.eq("variant_id", variantId)
+    } else {
+        deleteQuery = deleteQuery.is("variant_id", null)
+    }
+
+    const { error: deleteError } = await deleteQuery
+    if (deleteError) throw deleteError
+
+    // 2. Add new stock if any
+    if (items && items.length > 0) {
+        const assets = items.map(content => ({
+            product_id: productId,
+            content: content,
+            type: type,
+            is_used: false,
+            variant_id: variantId || null
+        }))
+
+        const { error: insertError } = await supabase
+            .from("delivery_assets")
+            .insert(assets)
+
+        if (insertError) throw insertError
+    }
+
+    // 3. Recalculate stock count (safest way to ensure accuracy after replace)
+    // We can use a count query and then update
+    let countQuery = supabase
+        .from("delivery_assets")
+        .select("*", { count: 'exact', head: true })
+        .eq("product_id", productId)
+        .eq("is_used", false)
+
+    if (variantId) {
+        countQuery = countQuery.eq("variant_id", variantId)
+    } else {
+        countQuery = countQuery.is("variant_id", null)
+    }
+    const { count } = await countQuery
+
+    if (variantId) {
+        await supabase.from("variants").update({ stock_count: count || 0 }).eq("id", variantId)
+    } else {
+        await supabase.from("products").update({ stock_count: count || 0 }).eq("id", productId)
+    }
+}

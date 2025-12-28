@@ -4,19 +4,34 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { Loader2, Trash2, Plus, Edit2, Save, X, Layers, ChevronDown, ChevronUp } from "lucide-react"
-import { getVariants, createVariant, updateVariant, deleteVariant } from "@/lib/db/products"
+import { Loader2, Trash2, Plus, Edit2, Save, X, Layers, ChevronDown, ChevronUp, GripVertical, Box, Zap, Share2, Activity } from "lucide-react"
+import { getVariants, createVariant, updateVariant, deleteVariant, reorderVariants } from "@/lib/db/products"
 import { cn } from "@/lib/utils"
-import { StockManager } from "./stock-manager"
+import { StockDialog } from "./stock-dialog"
+import { Reorder, useDragControls } from "framer-motion"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { GripHorizontal, RotateCcw, Shuffle, ArrowRightLeft, Ban } from "lucide-react"
 
 interface Variant {
     id: string
     name: string
+    description: string | null
     price: number
     slashed_price: number | null
     stock_count: number
+    min_quantity: number
+    max_quantity: number
     is_active: boolean
     webhook_url: string | null
+    instructions: string | null
+    volume_discounts: { quantity: number; percentage: number }[]
+    disable_volume_discounts_on_coupon: boolean
+    deliverable_selection_method: 'last' | 'first' | 'random'
+    disabled_payment_methods: string[]
+    delivery_type: 'serials' | 'service' | 'dynamic'
 }
 
 interface VariantManagerProps {
@@ -24,55 +39,516 @@ interface VariantManagerProps {
     deliveryType?: string
 }
 
+interface VariantItemProps {
+    variant: Variant
+    isExpanded: boolean
+    setExpandedId: (id: string | null) => void
+    editData: Partial<Variant>
+    setEditData: (data: Partial<Variant>) => void
+    editingId: string | null
+    setEditingId: (id: string | null) => void
+    handleUpdate: (id: string) => void
+    handleDeleteVariant: (id: string) => void
+    setStockDialogVariant: (variant: Variant) => void
+}
+
+function VariantItem({
+    variant,
+    isExpanded,
+    setExpandedId,
+    editData,
+    setEditData,
+    editingId,
+    setEditingId,
+    handleUpdate,
+    handleDeleteVariant,
+    setStockDialogVariant
+}: VariantItemProps) {
+    const controls = useDragControls()
+
+    return (
+        <Reorder.Item
+            value={variant}
+            dragListener={false}
+            dragControls={controls}
+            className={cn(
+                "bg-[#101320] border rounded-2xl overflow-hidden transition-all duration-200",
+                isExpanded ? "border-[#a4f8ff]/30 shadow-2xl shadow-[#a4f8ff]/5 z-10" : "border-white/5 hover:border-white/10"
+            )}
+        >
+            <div
+                className={cn(
+                    "px-5 py-4 flex items-center justify-between cursor-pointer group transition-colors",
+                    isExpanded ? "bg-[#a4f8ff]/5" : "hover:bg-white/[0.02]"
+                )}
+                onClick={() => setExpandedId(isExpanded ? null : variant.id)}
+            >
+                <div className="flex items-center gap-4">
+                    <div
+                        className="p-1.5 text-white/10 hover:text-white/40 transition-colors cursor-grab active:cursor-grabbing"
+                        onPointerDown={(e) => controls.start(e)}
+                    >
+                        <GripVertical className="w-4 h-4" />
+                    </div>
+                    <span className={cn(
+                        "text-[12px] font-black uppercase tracking-wider transition-colors",
+                        isExpanded ? "text-[#a4f8ff]" : "text-white/60 group-hover:text-white"
+                    )}>
+                        {variant.name}
+                    </span>
+                </div>
+                <div className="flex items-center gap-3">
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-white/20" /> : <ChevronDown className="w-4 h-4 text-white/20" />}
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="p-8 space-y-8 border-t border-white/5">
+                    <div className="space-y-3">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Name</label>
+                        <Input
+                            value={editData.name !== undefined ? editData.name : variant.name}
+                            onChange={e => {
+                                setEditingId(variant.id)
+                                setEditData({ ...editData, name: e.target.value })
+                            }}
+                            className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                            placeholder="Variant Name"
+                        />
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Description <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                        <Input
+                            value={editData.description !== undefined ? editData.description || "" : variant.description || ""}
+                            onChange={e => {
+                                setEditingId(variant.id)
+                                setEditData({ ...editData, description: e.target.value })
+                            }}
+                            className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                            placeholder="Variant Description"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Price</label>
+                            <Input
+                                type="number"
+                                value={editData.price !== undefined ? editData.price : variant.price}
+                                onChange={e => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, price: parseFloat(e.target.value) })
+                                }}
+                                className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-4 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                                placeholder="Variant Price"
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Slashed Price <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                            <Input
+                                type="number"
+                                value={editData.slashed_price !== undefined ? editData.slashed_price || "" : variant.slashed_price || ""}
+                                onChange={e => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, slashed_price: e.target.value === "" ? null : parseFloat(e.target.value) })
+                                }}
+                                className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                                placeholder="1.00"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="space-y-1">
+                            <label className="text-[14px] font-medium text-white ml-1 block">Stock</label>
+                            {(editData.delivery_type || variant.delivery_type || 'serials') === 'serials' ? (
+                                <p className="text-[12px] text-white/40 font-normal ml-1">Click on the button to set the stock for this variant.</p>
+                            ) : (
+                                <p className="text-[12px] text-white/40 font-normal ml-1">This variant has unlimited stock.</p>
+                            )}
+                        </div>
+                        {(editData.delivery_type || variant.delivery_type || 'serials') === 'serials' ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setStockDialogVariant(variant)}
+                                className="h-12 px-4 border-[#a4f8ff] bg-transparent hover:bg-[#a4f8ff]/10 text-[#a4f8ff] hover:text-[#8aefff] font-medium text-[13px] gap-2 rounded-lg transition-all"
+                            >
+                                <Box className="w-4 h-4" />
+                                Set Stock <span className="opacity-60 text-[12px]">({variant.stock_count})</span>
+                            </Button>
+                        ) : (
+                            <div className="h-12 px-4 border border-[#a4f8ff]/20 bg-[#a4f8ff]/5 text-[#a4f8ff] font-medium text-[13px] gap-2 rounded-lg flex items-center w-full md:w-auto">
+                                <Zap className="w-4 h-4" />
+                                Unlimited Stock
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Min Quantity <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                            <Input
+                                type="number"
+                                value={editData.min_quantity !== undefined ? editData.min_quantity : variant.min_quantity}
+                                onChange={e => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, min_quantity: e.target.value === "" ? 1 : parseInt(e.target.value) })
+                                }}
+                                className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                                placeholder="1"
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Max Quantity <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                            <Input
+                                type="number"
+                                value={editData.max_quantity !== undefined ? editData.max_quantity : variant.max_quantity}
+                                onChange={e => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, max_quantity: e.target.value === "" ? 10 : parseInt(e.target.value) })
+                                }}
+                                className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                                placeholder="10"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Volume Discounts <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+
+                        <div className="grid grid-cols-[1fr,1fr,auto] gap-3 items-start">
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    placeholder="Quantity..."
+                                    className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20 pr-10"
+                                    id={`vd-qty-${variant.id}`}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 uppercase">pcs</div>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    placeholder="Percentage..."
+                                    className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20 pr-10"
+                                    id={`vd-pct-${variant.id}`}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 uppercase">% off</div>
+                            </div>
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    const qtyEl = document.getElementById(`vd-qty-${variant.id}`) as HTMLInputElement
+                                    const pctEl = document.getElementById(`vd-pct-${variant.id}`) as HTMLInputElement
+                                    if (!qtyEl?.value || !pctEl?.value) return
+
+                                    const currentDiscounts = (editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []
+                                    const newDiscounts = [...currentDiscounts, { quantity: parseInt(qtyEl.value), percentage: parseFloat(pctEl.value) }]
+
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, volume_discounts: newDiscounts })
+
+                                    qtyEl.value = ""
+                                    pctEl.value = ""
+                                }}
+                                className="h-12 w-10 p-0 rounded-lg bg-[#a4f8ff]/10 hover:bg-[#a4f8ff]/20 border border-[#a4f8ff]/20 text-[#a4f8ff]"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        {/* List of active discounts */}
+                        {((editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []).length > 0 && (
+                            <div className="space-y-2 mt-3">
+                                {((editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []).map((discount, idx) => (
+                                    <div key={idx} className="flex items-center justify-between bg-[#0b0d16] border border-[#1e202e] rounded-lg px-3 py-2">
+                                        <div className="flex items-center gap-4 text-xs font-medium text-white/80">
+                                            <span>{discount.quantity} pcs</span>
+                                            <span className="text-white/20">•</span>
+                                            <span>{discount.percentage}% off</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const currentDiscounts = (editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []
+                                                const newDiscounts = currentDiscounts.filter((_, i) => i !== idx)
+                                                setEditingId(variant.id)
+                                                setEditData({ ...editData, volume_discounts: newDiscounts })
+                                            }}
+                                            className="text-white/20 hover:text-red-400 transition-colors"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-2">
+                            <Checkbox
+                                id={`vd-disable-${variant.id}`}
+                                checked={editData.disable_volume_discounts_on_coupon !== undefined ? editData.disable_volume_discounts_on_coupon : variant.disable_volume_discounts_on_coupon}
+                                onCheckedChange={(checked) => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, disable_volume_discounts_on_coupon: !!checked })
+                                }}
+                                className="border-white/10 data-[state=checked]:bg-[#a4f8ff] data-[state=checked]:border-[#a4f8ff]"
+                            />
+                            <label
+                                htmlFor={`vd-disable-${variant.id}`}
+                                className="text-[13px] font-medium text-white/80 select-none cursor-pointer"
+                            >
+                                Disable Volume Discounts when a Coupon is applied
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Override Instructions <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                        <p className="text-[12px] text-white/40 font-normal ml-1 mb-2">Override the default instructions for this variant.</p>
+                        <RichTextEditor
+                            value={editData.instructions !== undefined ? editData.instructions || "" : variant.instructions || ""}
+                            onChange={(val) => {
+                                setEditingId(variant.id)
+                                setEditData({ ...editData, instructions: val })
+                            }}
+                            className="min-h-[150px]"
+                            placeholder="To use this product variant, follow these instructions..."
+                        />
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Deliverables Type</label>
+                        <p className="text-[12px] text-white/40 font-normal ml-1 mb-3">Determines how the product is delivered to the customer.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                                { id: "serials", title: "Serials", desc: "Delivers serial keys.", icon: Layers },
+                                { id: "service", title: "Service", desc: "Delivers instructions.", icon: Share2 },
+                                { id: "dynamic", title: "Dynamic", desc: "Delivers from webhook.", icon: Activity }
+                            ].map((type) => (
+                                <div
+                                    key={type.id}
+                                    onClick={() => {
+                                        setEditingId(variant.id)
+                                        setEditData({ ...editData, delivery_type: type.id as any })
+                                    }}
+                                    className={cn(
+                                        "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-3 group relative",
+                                        (editData.delivery_type || variant.delivery_type || 'serials') === type.id
+                                            ? "bg-[#a4f8ff]/10 border-[#a4f8ff]/50 shadow-lg shadow-[#a4f8ff]/5"
+                                            : "bg-[#0b0d16] border-[#1e202e] hover:border-white/10 active:scale-[0.98]"
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className={cn(
+                                            "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                            (editData.delivery_type || variant.delivery_type || 'serials') === type.id ? "bg-[#a4f8ff]/20 text-[#a4f8ff]" : "bg-white/5 text-white/40 group-hover:bg-white/10"
+                                        )}>
+                                            <type.icon className="w-4 h-4" />
+                                        </div>
+                                        {(editData.delivery_type || variant.delivery_type || 'serials') === type.id && (
+                                            <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className={cn("text-[13px] font-bold mb-1", (editData.delivery_type || variant.delivery_type || 'serials') === type.id ? "text-white" : "text-white/80")}>{type.title}</h3>
+                                        <p className="text-[11px] text-white/40 leading-snug">{type.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+
+
+                    {((editData.delivery_type || variant.delivery_type || 'serials') === 'dynamic') && (
+                        <div className="space-y-3 pt-2">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Webhook URL</label>
+                            <Input
+                                value={editData.webhook_url !== undefined ? editData.webhook_url || "" : variant.webhook_url || ""}
+                                onChange={e => {
+                                    setEditingId(variant.id)
+                                    setEditData({ ...editData, webhook_url: e.target.value })
+                                }}
+                                className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20"
+                                placeholder="https://your-api.com/callback"
+                            />
+                            <p className="text-[11px] text-white/40 ml-1">A POST request will be sent to this URL upon purchase.</p>
+                        </div>
+                    )}
+
+                    {((editData.delivery_type || variant.delivery_type || 'serials') === 'serials') && (
+                        <div className="space-y-3 pt-2">
+                            <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Deliverable Selection Method</label>
+                            <p className="text-[12px] text-white/40 font-normal ml-1 mb-3">Choose how will the system determine which deliverables to deliver to the customer.</p>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                {[
+                                    { id: 'last', label: 'Last', sub: 'The last item will be delivered first.', icon: RotateCcw },
+                                    { id: 'first', label: 'First', sub: 'The first item will be delivered first.', icon: GripHorizontal },
+                                    { id: 'random', label: 'Random', sub: 'A random item will be delivered.', icon: Shuffle }
+                                ].map((method) => {
+                                    const currentMethod = editData.deliverable_selection_method !== undefined ? editData.deliverable_selection_method : (variant.deliverable_selection_method || 'last')
+                                    const isSelected = currentMethod === method.id
+
+                                    return (
+                                        <div
+                                            key={method.id}
+                                            onClick={() => {
+                                                setEditingId(variant.id)
+                                                setEditData({ ...editData, deliverable_selection_method: method.id as any })
+                                            }}
+                                            className={cn(
+                                                "relative p-4 rounded-xl border cursor-pointer transition-all hover:bg-[#a4f8ff]/5 flex items-center gap-4 group",
+                                                isSelected
+                                                    ? "bg-[#a4f8ff]/5 border-[#a4f8ff] shadow-[0_0_20px_-10px_#a4f8ff]"
+                                                    : "bg-[#0b0d16] border-[#1e202e] hover:border-white/10"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
+                                                isSelected ? "border-[#a4f8ff] bg-[#a4f8ff]/20" : "border-white/10 group-hover:border-white/20"
+                                            )}>
+                                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#a4f8ff] shadow-[0_0_8px_#a4f8ff]" />}
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <div className={cn("text-sm font-bold mb-0.5", isSelected ? "text-white" : "text-white/80")}>{method.label}</div>
+                                                <div className="text-[11px] text-white/40 leading-snug">{method.sub}</div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-3 pt-2">
+                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Disabled Payment Methods <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
+                        <p className="text-[12px] text-white/40 font-normal ml-1">Disable specific payment methods on this variant.</p>
+                        {/* Simplified dropdown for now since we don't have the full list of methods handy here, can be expanded later */}
+                        <div className="flex flex-wrap gap-2">
+                            {["PayPal", "Bitcoin", "Ethereum", "Litecoin", "Tether", "Solana", "USDC"].map((method) => {
+                                const currentDisabled = editData.disabled_payment_methods !== undefined ? editData.disabled_payment_methods : (variant.disabled_payment_methods || [])
+                                const isDisabled = currentDisabled.includes(method)
+                                return (
+                                    <button
+                                        key={method}
+                                        type="button"
+                                        onClick={() => {
+                                            const newDisabled = isDisabled
+                                                ? currentDisabled.filter(m => m !== method)
+                                                : [...currentDisabled, method]
+                                            setEditingId(variant.id)
+                                            setEditData({ ...editData, disabled_payment_methods: newDisabled })
+                                        }}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all flex items-center gap-2",
+                                            isDisabled
+                                                ? "bg-red-500/10 border-red-500/50 text-red-500"
+                                                : "bg-[#0b0d16] border-[#1e202e] text-white/40 hover:border-white/20 hover:text-white/60"
+                                        )}
+                                    >
+                                        {method}
+                                        {isDisabled && <Ban className="w-3 h-3" />}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+
+
+                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                        <button
+                            type="button"
+                            onClick={() => handleDeleteVariant(variant.id)}
+                            className="h-9 px-4 rounded-lg border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Remove Variant
+                        </button>
+                        <div className="flex items-center gap-3">
+                            {editingId === variant.id && (
+                                <Button
+                                    type="button"
+                                    className="bg-[#a4f8ff] hover:bg-[#8aefff] text-black text-[10px] font-black uppercase tracking-widest px-6 h-12 rounded-xl"
+                                    onClick={() => handleUpdate(variant.id)}
+                                >
+                                    Save Changes
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+        </Reorder.Item >
+    )
+}
+
 export function VariantManager({ productId, deliveryType }: VariantManagerProps) {
     const [variants, setVariants] = useState<Variant[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [isVariantsLoading, setIsVariantsLoading] = useState(true)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [isAdding, setIsAdding] = useState(false)
-    const [expandedStockId, setExpandedStockId] = useState<string | null>(null)
-
-    const [newVariant, setNewVariant] = useState({
-        name: "",
-        price: 0,
-        slashed_price: "",
-        stock_count: 0,
-        webhook_url: ""
-    })
+    const [stockDialogVariant, setStockDialogVariant] = useState<Variant | null>(null)
+    const [isCreating, setIsCreating] = useState(false)
 
     const [editData, setEditData] = useState<Partial<Variant>>({})
+    const [expandedId, setExpandedId] = useState<string | null>(null)
 
     useEffect(() => {
         loadVariants()
     }, [productId])
 
-    async function loadVariants() {
-        setIsLoading(true)
+    async function loadVariants(silent = false) {
+        if (!silent) setIsVariantsLoading(true)
         try {
             const data = await getVariants(productId)
             setVariants(data || [])
         } catch (error) {
             toast.error("Failed to load variants")
         } finally {
-            setIsLoading(false)
+            if (!silent) setIsVariantsLoading(false)
         }
     }
 
     async function handleAdd() {
-        if (!newVariant.name) return
+        setIsCreating(true)
         try {
-            await createVariant(productId, {
-                ...newVariant,
-                price: Number(newVariant.price),
-                slashed_price: newVariant.slashed_price ? Number(newVariant.slashed_price) : null,
-                stock_count: Number(newVariant.stock_count),
-                webhook_url: newVariant.webhook_url || null
-            })
-            toast.success("Variant added")
-            setIsAdding(false)
-            setNewVariant({ name: "", price: 0, slashed_price: "", stock_count: 0, webhook_url: "" })
-            loadVariants()
-        } catch (error) {
-            toast.error("Failed to add variant")
+            const nextNumber = variants.length + 1
+            const newVariantData = {
+                name: `Variant ${nextNumber}`,
+                description: "",
+                price: 0,
+                slashed_price: null,
+                stock_count: 0,
+                min_quantity: 1,
+                max_quantity: 10,
+                webhook_url: null,
+                instructions: "",
+                volume_discounts: [],
+                disable_volume_discounts_on_coupon: false,
+                deliverable_selection_method: 'last',
+                disabled_payment_methods: [],
+                delivery_type: (deliveryType as 'serials' | 'service' | 'dynamic') || 'serials'
+            }
+
+            const created = await createVariant(productId, newVariantData)
+
+            if (created) {
+                toast.success("Variant added")
+                await loadVariants()
+                setExpandedId(created.id)
+            }
+        } catch (error: any) {
+            console.error("ADD VARIANT ERROR:", error)
+            toast.error("Failed to add variant: " + (error.message || "Unknown error"))
+        } finally {
+            setIsCreating(false)
         }
     }
 
@@ -83,7 +559,15 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                 price: editData.price !== undefined ? Number(editData.price) : undefined,
                 slashed_price: editData.slashed_price !== undefined ? (editData.slashed_price ? Number(editData.slashed_price) : null) : undefined,
                 stock_count: editData.stock_count !== undefined ? Number(editData.stock_count) : undefined,
-                webhook_url: editData.webhook_url !== undefined ? editData.webhook_url : undefined
+                min_quantity: editData.min_quantity !== undefined ? Number(editData.min_quantity) : undefined,
+                max_quantity: editData.max_quantity !== undefined ? Number(editData.max_quantity) : undefined,
+                webhook_url: editData.webhook_url !== undefined ? editData.webhook_url : undefined,
+                instructions: editData.instructions !== undefined ? editData.instructions : undefined,
+                volume_discounts: editData.volume_discounts !== undefined ? editData.volume_discounts : undefined,
+                disable_volume_discounts_on_coupon: editData.disable_volume_discounts_on_coupon !== undefined ? editData.disable_volume_discounts_on_coupon : undefined,
+                deliverable_selection_method: editData.deliverable_selection_method !== undefined ? editData.deliverable_selection_method : undefined,
+                disabled_payment_methods: editData.disabled_payment_methods !== undefined ? editData.disabled_payment_methods : undefined,
+                delivery_type: editData.delivery_type !== undefined ? editData.delivery_type : undefined
             })
             toast.success("Variant updated")
             setEditingId(null)
@@ -104,228 +588,77 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
         }
     }
 
-    if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-brand-primary" /></div>
+    async function handleReorder(newOrder: Variant[]) {
+        setVariants(newOrder)
+        try {
+            const variantOrder = newOrder.map((v, index) => ({
+                id: v.id,
+                sort_order: index
+            }))
+            await reorderVariants(variantOrder)
+        } catch (error) {
+            toast.error("Failed to save new order")
+        }
+    }
+
+    if (isVariantsLoading) return <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-brand-primary" /></div>
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest">Product Variants</h3>
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-12 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
+                        <Layers className="w-5 h-5 text-white/40" />
+                    </div>
+                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Variants</h2>
+                </div>
                 <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsAdding(true)}
-                    className="h-8 text-xs font-bold text-brand-primary hover:bg-brand-primary/10 gap-2"
+                    variant="outline"
+                    className="h-9 px-4 bg-transparent border-[#a4f8ff]/20 hover:border-[#a4f8ff]/40 hover:bg-[#a4f8ff]/5 text-[#a4f8ff] hover:text-[#8aefff] font-bold text-[10px] uppercase tracking-[0.1em] rounded-lg transition-all"
+                    onClick={handleAdd}
+                    disabled={isCreating}
                 >
-                    <Plus className="w-3.5 h-3.5" />
-                    ADD VARIANT
+                    {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+                    {isCreating ? "Adding..." : "Add Variant"}
                 </Button>
             </div>
 
-            <div className="space-y-3">
-                {isAdding && (
-                    <div className="p-4 rounded-xl bg-brand-primary/5 border border-brand-primary/20 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-white/40 uppercase">Name (e.g. Monthly)</label>
-                                <Input
-                                    value={newVariant.name}
-                                    onChange={e => setNewVariant({ ...newVariant, name: e.target.value })}
-                                    className="bg-black/20 border-white/10 h-9 text-sm"
-                                    placeholder="Variant Name"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-white/40 uppercase">Price</label>
-                                    <Input
-                                        type="number"
-                                        value={newVariant.price}
-                                        onChange={e => setNewVariant({ ...newVariant, price: parseFloat(e.target.value) })}
-                                        className="bg-black/20 border-white/10 h-9 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">Stock (optional)</label>
-                                    <Input
-                                        type="number"
-                                        value={newVariant.stock_count}
-                                        onChange={e => setNewVariant({ ...newVariant, stock_count: parseInt(e.target.value) })}
-                                        className="bg-black/20 border-white/10 h-9 text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+            <div className={cn(
+                "space-y-4 border-t border-white/5",
+                (variants.length > 0) ? "pt-3" : ""
+            )}>
 
-                        {deliveryType === 'dynamic' && (
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-white/40 uppercase">Webhook URL (Optional Override)</label>
-                                <Input
-                                    value={newVariant.webhook_url}
-                                    onChange={e => setNewVariant({ ...newVariant, webhook_url: e.target.value })}
-                                    className="bg-black/20 border-white/10 h-9 text-sm"
-                                    placeholder="https://your-api.com/callback"
-                                />
-                                <p className="text-[10px] text-white/20">Overrides the product-level webhook URL if provided.</p>
-                            </div>
-                        )}
 
-                        <div className="flex justify-end gap-2">
-                            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAdding(false)} className="h-8 text-xs font-bold text-white/40 hover:text-white">CANCEL</Button>
-                            <Button type="button" size="sm" onClick={handleAdd} className="h-8 text-xs font-bold bg-brand-primary text-white">SAVE VARIANT</Button>
-                        </div>
-                    </div>
-                )}
-
-                {variants.length === 0 && !isAdding && (
-                    <div className="p-8 text-center bg-white/[0.02] border border-dashed border-white/5 rounded-xl">
-                        <p className="text-xs text-white/20">No variants created yet. Add options like "Monthly", "Yearly", or "Lifetime".</p>
-                    </div>
-                )}
-
-                {variants.map(variant => (
-                    <div key={variant.id} className={cn(
-                        "rounded-xl border transition-all overflow-hidden",
-                        editingId === variant.id ? "bg-white/[0.05] border-white/20" : "bg-white/[0.02] border-white/5 hover:border-white/10"
-                    )}>
-                        <div className="p-3">
-                            {editingId === variant.id ? (
-                                <div className="space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <Input
-                                            value={editData.name || variant.name}
-                                            onChange={e => setEditData({ ...editData, name: e.target.value })}
-                                            className="bg-black/20 border-white/10 h-8 text-xs font-bold text-white"
-                                        />
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Input
-                                                type="number"
-                                                value={editData.price !== undefined ? editData.price : variant.price}
-                                                onChange={e => setEditData({ ...editData, price: parseFloat(e.target.value) })}
-                                                className="bg-black/20 border-white/10 h-8 text-xs text-brand-primary"
-                                            />
-                                            <Input
-                                                type="number"
-                                                value={editData.stock_count !== undefined ? editData.stock_count : variant.stock_count}
-                                                onChange={e => setEditData({ ...editData, stock_count: parseInt(e.target.value) })}
-                                                className="bg-black/20 border-white/10 h-8 text-xs text-white/60"
-                                            />
-                                        </div>
-                                    </div>
-                                    {deliveryType === 'dynamic' && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-white/40 uppercase">Webhook URL Override</label>
-                                            <Input
-                                                value={editData.webhook_url !== undefined ? (editData.webhook_url ?? "") : (variant.webhook_url ?? "")}
-                                                onChange={e => setEditData({ ...editData, webhook_url: e.target.value })}
-                                                className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                                                placeholder="https://..."
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="flex justify-end gap-2">
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => setEditingId(null)} className="h-7 w-7 text-white/40 hover:text-white"><X className="w-3.5 h-3.5" /></Button>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleUpdate(variant.id)} className="h-7 w-7 text-brand-primary hover:bg-brand-primary/10"><Save className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="space-y-0.5">
-                                            <div className="text-sm font-bold text-white">{variant.name}</div>
-                                            <div className="text-[10px] text-white/20 uppercase font-bold tracking-widest">{variant.stock_count} in stock</div>
-                                        </div>
-                                        <div className="px-2 py-0.5 rounded bg-brand-primary/10 border border-brand-primary/20 text-[10px] font-bold text-brand-primary">
-                                            ${variant.price}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1 transition-opacity">
-                                        {(deliveryType === 'serials' || deliveryType === 'dynamic') && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setExpandedStockId(expandedStockId === variant.id ? null : variant.id)}
-                                                className={cn(
-                                                    "h-8 w-8 transition-colors",
-                                                    expandedStockId === variant.id ? "text-brand-primary bg-brand-primary/5" : "text-white/20 hover:text-white"
-                                                )}
-                                            >
-                                                <Layers className="w-3.5 h-3.5" />
-                                            </Button>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                setEditingId(variant.id)
-                                                setEditData(variant)
-                                            }}
-                                            className="h-8 w-8 text-white/20 hover:text-white"
-                                        >
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDeleteVariant(variant.id)}
-                                            className="h-8 w-8 text-white/20 hover:text-red-500 hover:bg-red-500/5"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {expandedStockId === variant.id && deliveryType === 'serials' && (
-                            <div className="border-t border-white/5 p-4 bg-black/20">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                                        <Layers className="w-3 h-3" />
-                                        Manage Stock for {variant.name}
-                                    </h4>
-                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStockId(null)} className="h-5 w-5 text-white/20 hover:text-white">
-                                        <X className="w-3 h-3" />
-                                    </Button>
-                                </div>
-                                <StockManager productId={productId} variantId={variant.id} />
-                            </div>
-                        )}
-
-                        {expandedStockId === variant.id && deliveryType === 'dynamic' && (
-                            <div className="border-t border-white/5 p-4 bg-black/20">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                                        <Layers className="w-3 h-3" />
-                                        Dynamic Delivery Details for {variant.name}
-                                    </h4>
-                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStockId(null)} className="h-5 w-5 text-white/20 hover:text-white">
-                                        <X className="w-3 h-3" />
-                                    </Button>
-                                </div>
-                                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                                    <p className="text-xs text-white/60 mb-2">This variant uses dynamic delivery via webhook.</p>
-                                    <div className="p-3 bg-black/40 rounded border border-white/5 flex items-center justify-between">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] uppercase font-bold text-white/20">Webhook URL</span>
-                                            <span className="text-xs font-mono text-brand-primary break-all">{variant.webhook_url || "Using product default"}</span>
-                                        </div>
-                                    </div>
-                                    {!variant.webhook_url && (
-                                        <p className="text-[10px] text-white/20 mt-2 italic">Note: If no webhook is set here, the global product webhook will be used.</p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                <Reorder.Group axis="y" values={variants} onReorder={handleReorder} className="space-y-4">
+                    {variants.map(variant => (
+                        <VariantItem
+                            key={variant.id}
+                            variant={variant}
+                            isExpanded={expandedId === variant.id}
+                            setExpandedId={setExpandedId}
+                            editData={editData}
+                            setEditData={setEditData}
+                            editingId={editingId}
+                            setEditingId={setEditingId}
+                            handleUpdate={handleUpdate}
+                            handleDeleteVariant={handleDeleteVariant}
+                            setStockDialogVariant={setStockDialogVariant}
+                        />
+                    ))}
+                </Reorder.Group>
             </div>
-            <p className="text-[10px] text-white/20 mt-2">
-                If variants are added, the customer will be prompted to choose an option before checkout.
-            </p>
+            {/* Stock Dialog */}
+            {stockDialogVariant && (
+                <StockDialog
+                    open={!!stockDialogVariant}
+                    onOpenChange={(open) => !open && setStockDialogVariant(null)}
+                    productId={productId}
+                    variantId={stockDialogVariant.id}
+                    variantName={stockDialogVariant.name}
+                    onStockChange={() => loadVariants(true)}
+                />
+            )}
         </div>
     )
 }

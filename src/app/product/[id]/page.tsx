@@ -72,19 +72,21 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     loadProduct()
   }, [id])
 
-  const minQty = product?.min_quantity || 1
-  const maxQty = product?.max_quantity || 1000000
+  const minQty = selectedVariant?.min_quantity || product?.min_quantity || 1
+  const maxQty = selectedVariant?.max_quantity || product?.max_quantity || 1000000
   const currentPrice = selectedVariant ? selectedVariant.price : product?.price
   const currentStock = selectedVariant ? selectedVariant.stock_count : product?.stock_count
   const isOutOfStock = currentStock <= 0
   const totalPrice = currentPrice * quantity
 
-  // Synchronize initial quantity with min_quantity
+  // Synchronize initial quantity with min_quantity and clamp when variant changes
   React.useEffect(() => {
-    if (product?.min_quantity) {
-      setQuantity(product.min_quantity)
-    }
-  }, [product?.id])
+    const currentMin = selectedVariant?.min_quantity || product?.min_quantity || 1
+    const currentMax = selectedVariant?.max_quantity || product?.max_quantity || 1000000
+    const stock = selectedVariant ? selectedVariant.stock_count : product?.stock_count || 0
+
+    setQuantity(prev => Math.min(Math.max(prev, currentMin), Math.min(currentMax, stock || 1)))
+  }, [selectedVariant?.id, product?.id])
 
   const handleAddToCart = () => {
     if (!product) return

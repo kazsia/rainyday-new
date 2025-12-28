@@ -191,7 +191,28 @@ export default function AdminInvoiceDetailsPage() {
               <RotateCcw className="w-4 h-4 mr-2" />
               Mark as Refunded
             </Button>
-            <Button className="h-11 bg-[#6366f1] hover:bg-[#6366f1]/90 text-white border-0 shadow-lg shadow-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.id}`, '_blank')}>
+            {/* Manually Process Invoice - Only for unpaid orders */}
+            {order.status !== 'paid' && order.status !== 'completed' && order.status !== 'delivered' && (
+              <Button
+                className="h-11 bg-[#0f172a] hover:bg-[#1e293b] text-white border border-[#1e293b] rounded-xl font-bold text-xs uppercase tracking-widest px-6 transition-colors"
+                onClick={async () => {
+                  if (!confirm('Are you sure you want to manually process this invoice? This will mark it as paid and trigger delivery.')) return
+
+                  toast.promise(updateOrderStatus(order.id, 'paid'), {
+                    loading: 'Processing invoice...',
+                    success: (data) => {
+                      loadOrder(order.id)
+                      return 'Invoice processed successfully! Delivery triggered.'
+                    },
+                    error: 'Failed to process invoice'
+                  })
+                }}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Manually Process Invoice
+              </Button>
+            )}
+            <Button className="h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.id}`, '_blank')}>
               <LinkIcon className="w-4 h-4 mr-2" />
               View Invoice
             </Button>
@@ -216,8 +237,8 @@ export default function AdminInvoiceDetailsPage() {
           {/* Order Information */}
           <div className="flex-1 bg-[#0b0f1a]/40 border border-white/5 rounded-[2rem] p-10 space-y-8">
             <div className="flex items-center gap-4 border-b border-white/5 pb-8">
-              <div className="w-12 h-12 rounded-2xl bg-[#6366f1]/10 flex items-center justify-center border border-[#6366f1]/20 shadow-lg shadow-indigo-500/10">
-                <div className="w-6 h-6 text-[#6366f1]">
+              <div className="w-12 h-12 rounded-2xl bg-[#a4f8ff]/10 flex items-center justify-center border border-[#a4f8ff]/20 shadow-lg shadow-[#a4f8ff]/10">
+                <div className="w-6 h-6 text-[#a4f8ff]">
                   <CreditCard className="w-full h-full" />
                 </div>
               </div>
@@ -281,8 +302,8 @@ export default function AdminInvoiceDetailsPage() {
           {/* Customer Information */}
           <div className="flex-1 bg-[#0b0f1a]/40 border border-white/5 rounded-[2rem] p-10 space-y-8">
             <div className="flex items-center gap-4 border-b border-white/5 pb-8">
-              <div className="w-12 h-12 rounded-2xl bg-[#6366f1]/10 flex items-center justify-center border border-[#6366f1]/20 shadow-lg shadow-indigo-500/10">
-                <div className="w-6 h-6 text-[#6366f1]">
+              <div className="w-12 h-12 rounded-2xl bg-[#a4f8ff]/10 flex items-center justify-center border border-[#a4f8ff]/20 shadow-lg shadow-[#a4f8ff]/10">
+                <div className="w-6 h-6 text-[#a4f8ff]">
                   <User className="w-full h-full" />
                 </div>
               </div>
@@ -496,22 +517,22 @@ export default function AdminInvoiceDetailsPage() {
         {/* Invoice Note */}
         <div className="bg-[#0b0f1a]/40 border border-white/5 rounded-[2rem] overflow-hidden mb-10">
           <div className="px-8 py-6 border-b border-white/5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 flex items-center justify-center border border-[#6366f1]/20">
-              <StickyNote className="w-5 h-5 text-[#6366f1]" />
+            <div className="w-10 h-10 rounded-xl bg-[#a4f8ff]/10 flex items-center justify-center border border-[#a4f8ff]/20">
+              <StickyNote className="w-5 h-5 text-[#a4f8ff]" />
             </div>
             <h3 className="text-lg font-black text-white tracking-tight uppercase">Invoice Note</h3>
           </div>
           <div className="p-8 space-y-6">
             <div className="space-y-2">
-              <p className="text-[10px] font-black text-[#6366f1] uppercase tracking-widest">Administrator Note</p>
+              <p className="text-[10px] font-black text-[#a4f8ff] uppercase tracking-widest">Administrator Note</p>
               <p className="text-xs font-medium text-white/20 leading-relaxed">This note will be visible to shop administrators only. You can use this to keep track of important information about the invoice.</p>
             </div>
             <Textarea
               placeholder="Add a note... (e.g., Refund processed manually)"
-              className="bg-white/[0.02] border-white/5 min-h-[120px] text-white focus:border-[#6366f1]/50 rounded-2xl p-4 text-sm font-medium transition-all"
+              className="bg-white/[0.02] border-white/5 min-h-[120px] text-white focus:border-[#a4f8ff]/50 rounded-2xl p-4 text-sm font-medium transition-all"
             />
             <div className="pt-2">
-              <Button className="w-full h-11 bg-[#6366f1] hover:bg-[#6366f1]/90 text-white border-0 shadow-lg shadow-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-widest gap-2">
+              <Button className="w-full h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest gap-2">
                 <SaveIcon className="w-4 h-4" />
                 Save
               </Button>

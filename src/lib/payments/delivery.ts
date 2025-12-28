@@ -64,7 +64,8 @@ export async function deliverProduct(orderId: string) {
                     p_product_id: item.product_id,
                     p_variant_id: item.variant_id || null,
                     p_quantity: item.quantity,
-                    p_order_id: orderId
+                    p_order_id: orderId,
+                    p_selection_method: product.deliverable_selection_method || 'last'
                 })
 
                 if (rpcError) throw rpcError

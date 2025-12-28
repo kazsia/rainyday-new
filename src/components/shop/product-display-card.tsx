@@ -19,6 +19,7 @@ interface ProductCardProps {
     price: number
     category: string
     image: string
+    slug?: string
     productCount?: number
     priceRange?: string
     badge_links?: any[]
@@ -26,10 +27,13 @@ interface ProductCardProps {
     status_color?: string
 }
 
-const ProductCard = React.memo(({ id, title, price, category, image, productCount = 1, priceRange, badge_links, status_label, status_color, description }: ProductCardProps & { description?: string }) => {
+const ProductCard = React.memo(({ id, title, price, category, image, slug, productCount = 1, priceRange, badge_links, status_label, status_color, description }: ProductCardProps & { description?: string }) => {
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
     const [imageLoaded, setImageLoaded] = React.useState(false)
+
+    // Use slug for URL if available, otherwise use id
+    const productUrl = slug ? `/product/${slug}` : `/product/${id}`
 
     const isNitro = title.toLowerCase().includes('nitro')
     const isBoost = title.toLowerCase().includes('boost')
@@ -65,7 +69,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
             toast.error("This product is out of stock")
             return
         }
-        router.push(`/product/${id}`)
+        router.push(productUrl)
     }
 
     // Extract features from description (bullets)
@@ -82,7 +86,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, productCoun
             transition={{ duration: 0.5 }}
             className="group relative"
         >
-            <Link href={`/product/${id}`} className="block h-full">
+            <Link href={productUrl} className="block h-full">
                 <div className="flex flex-col h-full bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
                     {/* Banner Section */}
                     <div className="relative aspect-[4/3] w-full overflow-hidden">

@@ -277,6 +277,7 @@ export default function StorePage() {
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
+                                slug={product.slug}
                                 title={product.name}
                                 price={product.price}
                                 category={product.category?.name || "General"}
@@ -341,6 +342,7 @@ export default function StorePage() {
                                 <ProductCard
                                     key={product.id}
                                     id={product.id}
+                                    slug={product.slug}
                                     title={product.name}
                                     price={product.price}
                                     category={product.category?.name || "General"}

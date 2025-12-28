@@ -239,7 +239,14 @@ export async function adminGetOrders() {
             console.error("[ADMIN_GET_ORDERS] Fetch error:", error)
             return []
         }
-        return data
+
+        // Filter to only show orders that reached step 2 (have at least one payment record)
+        // This excludes orders that were abandoned at step 1
+        const ordersWithPayments = data?.filter(order =>
+            order.payments && order.payments.length > 0
+        ) || []
+
+        return ordersWithPayments
     } catch (e) {
         console.error("[ADMIN_GET_ORDERS_CRITICAL]", e)
         return []

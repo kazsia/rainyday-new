@@ -99,13 +99,14 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
 
 import { revalidatePath, unstable_noStore } from "next/cache"
 
-export async function getProduct(id: string) {
+export async function getProduct(idOrSlug: string) {
     unstable_noStore()
     try {
         const supabase = await createServerClient()
-        revalidatePath(`/product/${id}`)
+        revalidatePath(`/product/${idOrSlug}`)
 
-        const { data, error } = await supabase
+        // First, try to get by ID
+        let { data, error } = await supabase
             .from("products")
             .select(`
                 *,
@@ -113,11 +114,29 @@ export async function getProduct(id: string) {
                 variants:product_variants (*),
                 badge_links:product_badge_links(badge:product_badges(*))
             `)
-            .eq("id", id)
+            .eq("id", idOrSlug)
             .single()
 
+        // If not found by ID, try by slug
+        if (error || !data) {
+            const slugResult = await supabase
+                .from("products")
+                .select(`
+                    *,
+                    category:product_categories (*),
+                    variants:product_variants (*),
+                    badge_links:product_badge_links(badge:product_badges(*))
+                `)
+                .eq("slug", idOrSlug)
+                .eq("is_active", true)
+                .single()
+
+            data = slugResult.data
+            error = slugResult.error
+        }
+
         if (error) throw error
-        console.error(`[DIAGNOSTIC] PRODUCT_ID: ${id}`, {
+        console.error(`[DIAGNOSTIC] PRODUCT_ID: ${idOrSlug}`, {
             name: data?.name,
             product_stock: data?.stock_count,
             badges_count: data?.badge_links?.length,
@@ -130,13 +149,32 @@ export async function getProduct(id: string) {
     }
 }
 
+// Helper function to generate a URL-safe slug from a name
+function generateSlug(name: string): string {
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')           // Replace spaces with hyphens
+        .replace(/[^a-z0-9-]/g, '')     // Remove special characters
+        .replace(/-+/g, '-')            // Replace multiple hyphens with single
+        .replace(/^-|-$/g, '')          // Remove leading/trailing hyphens
+}
+
 export async function createProduct(product: any) {
     const supabaseAdmin = await getAdminClient()
+
+    // Auto-generate slug from name if not provided
+    const slug = product.slug
+        ? generateSlug(product.slug)
+        : generateSlug(product.name)
+
     const insertData: any = {
         name: product.name,
+        slug: slug,
         price: Number(product.price) || 0,
         currency: product.currency || 'USD',
         is_active: product.is_active !== undefined ? product.is_active : true,
+        visibility: product.visibility || 'public',
         stock_count: Number(product.stock_count) || 0,
         description: product.description || null,
         image_url: product.image_url || null,
@@ -152,7 +190,9 @@ export async function createProduct(product: any) {
         max_quantity: Number(product.max_quantity) || 10,
         category_id: product.category_id && product.category_id !== "" ? product.category_id : null,
         webhook_url: product.webhook_url && product.webhook_url !== "" ? product.webhook_url : null,
-        custom_fields: product.custom_fields || null
+        custom_fields: product.custom_fields || null,
+        deliverable_selection_method: product.deliverable_selection_method || 'last',
+        disabled_payment_methods: product.disabled_payment_methods || []
     }
 
     const { data, error } = await supabaseAdmin
@@ -181,10 +221,30 @@ export async function updateProduct(id: string, updates: any) {
     if (cleanUpdates.max_quantity !== undefined) cleanUpdates.max_quantity = Number(cleanUpdates.max_quantity)
     if (cleanUpdates.hide_stock !== undefined) cleanUpdates.hide_stock = !!cleanUpdates.hide_stock
     if (cleanUpdates.is_active !== undefined) cleanUpdates.is_active = !!cleanUpdates.is_active
+    if (cleanUpdates.visibility !== undefined) cleanUpdates.visibility = cleanUpdates.visibility
     if (cleanUpdates.show_view_count !== undefined) cleanUpdates.show_view_count = !!cleanUpdates.show_view_count
     if (cleanUpdates.show_sales_count !== undefined) cleanUpdates.show_sales_count = !!cleanUpdates.show_sales_count
     if (cleanUpdates.show_sales_notifications !== undefined) cleanUpdates.show_sales_notifications = !!cleanUpdates.show_sales_notifications
     if (cleanUpdates.custom_fields !== undefined) cleanUpdates.custom_fields = cleanUpdates.custom_fields || null
+    if (cleanUpdates.disabled_payment_methods !== undefined) {
+        cleanUpdates.disabled_payment_methods = Array.isArray(cleanUpdates.disabled_payment_methods)
+            ? cleanUpdates.disabled_payment_methods
+            : []
+    }
+
+    // Handle slug - auto-generate from name if empty, otherwise sanitize
+    if (cleanUpdates.slug !== undefined || cleanUpdates.name !== undefined) {
+        if (!cleanUpdates.slug || cleanUpdates.slug === "") {
+            // Auto-generate slug from name
+            const name = cleanUpdates.name || updates.name
+            if (name) {
+                cleanUpdates.slug = generateSlug(name)
+            }
+        } else {
+            // Sanitize provided slug
+            cleanUpdates.slug = generateSlug(cleanUpdates.slug)
+        }
+    }
 
     const { data, error } = await supabaseAdmin
         .from("products")
@@ -416,13 +476,28 @@ export async function createVariant(productId: string, variant: any) {
             price: Number(variant.price),
             slashed_price: variant.slashed_price ? Number(variant.slashed_price) : null,
             stock_count: Number(variant.stock_count) || 0,
+            description: variant.description || null,
+            min_quantity: Number(variant.min_quantity) || 1,
+            max_quantity: Number(variant.max_quantity) || 10,
             webhook_url: variant.webhook_url || null,
             is_active: variant.is_active !== undefined ? variant.is_active : true,
-            sort_order: variant.sort_order || 0
+            sort_order: variant.sort_order || 0,
+            instructions: variant.instructions || null,
+            volume_discounts: variant.volume_discounts || [],
+            disable_volume_discounts_on_coupon: !!variant.disable_volume_discounts_on_coupon,
+            deliverable_selection_method: variant.deliverable_selection_method || 'last',
+            disabled_payment_methods: variant.disabled_payment_methods || [],
+            discord_group_id: variant.discord_group_id || null,
+            discord_role_id: variant.discord_role_id || null,
+            redirect_url: variant.redirect_url || null,
+            delivery_type: variant.delivery_type || 'serials'
         })
         .select()
 
-    if (error) throw error
+    if (error) {
+        console.error("CREATE VARIANT ERROR:", error)
+        throw new Error(error.message)
+    }
     return data?.[0]
 }
 
@@ -432,6 +507,20 @@ export async function updateVariant(id: string, updates: any) {
     // Cleanup updates
     const cleanUpdates = { ...updates }
     if (cleanUpdates.webhook_url === "") cleanUpdates.webhook_url = null
+    if (cleanUpdates.price !== undefined) cleanUpdates.price = Number(cleanUpdates.price)
+    if (cleanUpdates.slashed_price !== undefined) cleanUpdates.slashed_price = cleanUpdates.slashed_price ? Number(cleanUpdates.slashed_price) : null
+    if (cleanUpdates.stock_count !== undefined) cleanUpdates.stock_count = Number(cleanUpdates.stock_count)
+    if (cleanUpdates.min_quantity !== undefined) cleanUpdates.min_quantity = Number(cleanUpdates.min_quantity)
+    if (cleanUpdates.max_quantity !== undefined) cleanUpdates.max_quantity = Number(cleanUpdates.max_quantity)
+    if (cleanUpdates.instructions !== undefined) cleanUpdates.instructions = cleanUpdates.instructions || null
+    if (cleanUpdates.volume_discounts !== undefined) cleanUpdates.volume_discounts = cleanUpdates.volume_discounts || []
+    if (cleanUpdates.disable_volume_discounts_on_coupon !== undefined) cleanUpdates.disable_volume_discounts_on_coupon = !!cleanUpdates.disable_volume_discounts_on_coupon
+    if (cleanUpdates.deliverable_selection_method !== undefined) cleanUpdates.deliverable_selection_method = cleanUpdates.deliverable_selection_method || 'last'
+    if (cleanUpdates.disabled_payment_methods !== undefined) cleanUpdates.disabled_payment_methods = cleanUpdates.disabled_payment_methods || []
+    if (cleanUpdates.discord_group_id !== undefined) cleanUpdates.discord_group_id = cleanUpdates.discord_group_id || null
+    if (cleanUpdates.discord_role_id !== undefined) cleanUpdates.discord_role_id = cleanUpdates.discord_role_id || null
+    if (cleanUpdates.redirect_url !== undefined) cleanUpdates.redirect_url = cleanUpdates.redirect_url || null
+    if (cleanUpdates.delivery_type !== undefined) cleanUpdates.delivery_type = cleanUpdates.delivery_type || 'serials'
 
     const { data, error } = await supabaseAdmin
         .from('product_variants')
@@ -470,5 +559,25 @@ export async function updateCategoryProducts(categoryId: string, productIds: str
             .in('id', productIds)
 
         if (addError) throw addError
+    }
+}
+
+export async function reorderVariants(variantOrder: { id: string, sort_order: number }[]) {
+    const supabaseAdmin = await getAdminClient()
+
+    // Perform batch update using a series of promises for now, as Supabase doesn't have a built-in batch update for different IDs in one go easily without RPC
+    const updates = variantOrder.map(item =>
+        supabaseAdmin
+            .from('product_variants')
+            .update({ sort_order: item.sort_order })
+            .eq('id', item.id)
+    )
+
+    const results = await Promise.all(updates)
+    const errors = results.filter(r => r.error).map(r => r.error)
+
+    if (errors.length > 0) {
+        console.error("[REORDER_VARIANTS_ERROR]", errors)
+        throw new Error("Failed to reorder some variants")
     }
 }

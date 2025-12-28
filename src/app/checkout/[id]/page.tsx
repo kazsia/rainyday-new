@@ -26,7 +26,8 @@ import {
   Trash2,
   FileText,
   ExternalLink,
-  Lock
+  Lock,
+  CreditCard
 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
@@ -170,10 +171,23 @@ function CheckoutMainContent() {
   const [selectedMethod, setSelectedMethod] = React.useState("PayPal")
   const [isEthNetworkModalOpen, setIsEthNetworkModalOpen] = React.useState(false)
 
+  const disabledMethods = React.useMemo(() => {
+    if (!existingOrder?.order_items) return []
+    const disabled = new Set<string>()
+    existingOrder.order_items.forEach((item: any) => {
+      const productDisabled = item.product?.disabled_payment_methods || []
+      productDisabled.forEach((m: string) => disabled.add(m))
+    })
+    return Array.from(disabled)
+  }, [existingOrder])
+
   // Determine which crypto methods to show in the main list
   const displayCryptoItems = React.useMemo(() => {
-    const primaryItems = [...cryptoGroups[0].items]
     const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
+
+    // Filter primary items by disabled methods
+    const allPrimaryItems = [...cryptoGroups[0].items]
+    const primaryItems = allPrimaryItems.filter(m => !disabledMethods.includes(m.name) && !disabledMethods.includes(getMethodName(m)))
 
     // Check if the selected method is already in the primary group
     const isPrimary = primaryItems.some(m => getMethodName(m) === selectedMethod)
@@ -182,13 +196,13 @@ function CheckoutMainContent() {
       // Special case for ETH networks
       if (selectedMethod.startsWith("Ethereum")) {
         const found = ETH_NETWORKS.find(m => getMethodName(m) === selectedMethod)
-        if (found) return [found, ...primaryItems]
+        if (found && !disabledMethods.includes(found.name) && !disabledMethods.includes(getMethodName(found))) return [found, ...primaryItems]
       }
 
       // Find the selected method in ALL groups to be safe
       for (const group of cryptoGroups) {
         const found = group.items.find(m => getMethodName(m) === selectedMethod)
-        if (found) {
+        if (found && !disabledMethods.includes(found.name) && !disabledMethods.includes(getMethodName(found))) {
           // Add the selected method to the top of our display items
           return [found, ...primaryItems]
         }
@@ -196,7 +210,7 @@ function CheckoutMainContent() {
     }
 
     return primaryItems
-  }, [selectedMethod])
+  }, [selectedMethod, disabledMethods])
 
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [agreeToTerms, setAgreeToTerms] = React.useState(false)
@@ -217,14 +231,23 @@ function CheckoutMainContent() {
   // Remember last selected payment method
   React.useEffect(() => {
     const saved = localStorage.getItem('lastPaymentMethod')
-    if (saved) setSelectedMethod(saved)
-  }, [])
+    if (saved && !disabledMethods.includes(saved)) {
+      setSelectedMethod(saved)
+    } else if (disabledMethods.includes("PayPal")) {
+      // If PayPal is disabled, default to the first available crypto
+      const firstAvailable = displayCryptoItems[0]
+      if (firstAvailable) {
+        const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
+        setSelectedMethod(getMethodName(firstAvailable))
+      }
+    }
+  }, [disabledMethods, displayCryptoItems])
 
   React.useEffect(() => {
-    if (selectedMethod) {
+    if (selectedMethod && !disabledMethods.includes(selectedMethod)) {
       localStorage.setItem('lastPaymentMethod', selectedMethod)
     }
-  }, [selectedMethod])
+  }, [selectedMethod, disabledMethods])
 
   // Promo Code State
   const [couponCode, setCouponCode] = React.useState("")
@@ -254,7 +277,9 @@ function CheckoutMainContent() {
     setIsCheckingCoupon(true)
     try {
       const { validateCoupon } = await import("@/lib/actions/coupons")
-      const result = await validateCoupon(couponCode)
+      // Pass cart product IDs for product-specific coupon validation
+      const cartProductIds = cart.map(item => item.id)
+      const result = await validateCoupon(couponCode, cartProductIds)
 
       if (result.valid && result.discount) {
         setAppliedCoupon(result.discount)
@@ -360,7 +385,53 @@ function CheckoutMainContent() {
     setIsProcessing(true)
 
     try {
-      // Payment logic
+      // Handle $0.00 orders FIRST (100% discount from coupons or free products)
+      // Skip payment entirely and deliver directly
+      if (finalTotal === 0) {
+        const { completeFreeOrder } = await import("@/lib/actions/checkout")
+        const items = cart.filter(i => i.quantity > 0).map(item => ({
+          product_id: item.id,
+          variant_id: item.variantId || null,
+          quantity: item.quantity,
+          price: item.price
+        }))
+        const customFields = customFieldValues
+
+        let result;
+        if (existingOrder) {
+          result = await safeUpdateOrder(existingOrder.id, {
+            email,
+            total: 0,
+            items,
+            custom_fields: customFields
+          })
+        } else {
+          result = await safeCreateOrder({
+            email,
+            total: 0,
+            items,
+            custom_fields: customFields
+          })
+        }
+
+        if (!result.success) {
+          console.error("[CHECKOUT] Free order creation failed:", result.error, result.details)
+          throw new Error(result.error)
+        }
+
+        const order = result.data
+        const resolution = await completeFreeOrder(order.id, appliedCoupon?.code)
+        if (resolution.success) {
+          clearCart()
+          toast.success("Order completed! Your items are being delivered.")
+          router.push(`/invoice?id=${order.id}`)
+          return
+        } else {
+          throw new Error(resolution.error)
+        }
+      }
+
+      // Payment logic for non-zero amounts
       const isPayPal = selectedMethod === "PayPal"
       const isCrypto = !isPayPal && selectedMethod !== "Customer Balance"
 
@@ -417,43 +488,8 @@ function CheckoutMainContent() {
         }))
         const customFields = customFieldValues
 
-        // Handle $0.00 orders (100% discount)
-        if (total === 0) {
-          const { completeFreeOrder } = await import("@/lib/actions/checkout")
-
-          let result;
-          if (existingOrder) {
-            result = await safeUpdateOrder(existingOrder.id, {
-              email,
-              total,
-              items,
-              custom_fields: customFields
-            })
-          } else {
-            result = await safeCreateOrder({
-              email,
-              total,
-              items,
-              custom_fields: customFields
-            })
-          }
-
-          if (!result.success) {
-            console.error("[CHECKOUT] Free order creation failed:", result.error, result.details)
-            throw new Error(result.error)
-          }
-
-          const order = result.data
-          const resolution = await completeFreeOrder(order.id, appliedCoupon?.code)
-          if (resolution.success) {
-            clearCart()
-            toast.success("Order completed! Your items are being delivered.")
-            router.push(`/invoice?id=${order.id}`)
-            return
-          } else {
-            throw new Error(resolution.error)
-          }
-        }
+        // Note: $0 orders are handled at the start of handleProceedToPayment
+        // before minimum amount validation
 
         // Pass total directly.
         let result;
@@ -984,7 +1020,7 @@ function CheckoutMainContent() {
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                            placeholder="Have a coupon code? Enter it here."
+                            placeholder="Have a discount? Enter it here."
                             disabled={!!appliedCoupon || isCheckingCoupon}
                             className={cn(
                               "h-11 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5",
@@ -1056,93 +1092,98 @@ function CheckoutMainContent() {
                       </div>
                     )}
 
-                    <div className="space-y-4 pt-2">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between pb-2">
-                          <h3 className="text-sm font-medium text-white/90">Payment Method *</h3>
-                        </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between pb-1">
+                        <label className="text-sm font-medium text-white/90">Payment Method *</label>
+                      </div>
 
-                        <div className="space-y-3">
-                          {/* Primary Method - PayPal */}
+                      <div className="space-y-3">
+                        {/* Primary Method - PayPal */}
+                        {!disabledMethods.includes("PayPal") && (
                           <div
                             onClick={() => setSelectedMethod("PayPal")}
                             className={cn(
-                              "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                              "p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group h-[64px]",
                               selectedMethod === "PayPal"
-                                ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
-                                : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                                ? "bg-brand-primary/5 border-brand-primary"
+                                : "bg-white/[0.02] border-white/5 hover:border-white/10"
                             )}
                           >
-                            <div className="flex flex-col">
-                              <span className="text-[15px] font-bold text-white">PayPal</span>
-                              <span className="text-[10px] text-white/40 font-medium tracking-tight">Secure checkout</span>
+                            <div className="flex items-center gap-4">
+                              <div className={cn(
+                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                                selectedMethod === "PayPal" ? "bg-brand-primary/20" : "bg-white/5 group-hover:bg-white/10"
+                              )}>
+                                <CreditCard className={cn("w-5 h-5", selectedMethod === "PayPal" ? "text-brand-primary" : "text-white/40")} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[15px] font-bold text-white">PayPal</span>
+                                <span className="text-[11px] text-white/40">Secure instant payment</span>
+                              </div>
                             </div>
-                            <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg">
+                            <div className="h-4 w-12 grayscale opacity-50 contrast-125">
                               <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" alt="PayPal" className="w-full h-auto object-contain" />
                             </div>
                           </div>
+                        )}
 
-                          {/* Dynamic Crypto Section */}
-                          <div className="space-y-3">
-                            {displayCryptoItems.map((method) => {
-                              const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
-                              const isSelected = selectedMethod === methodName
+                        {/* Dynamic Crypto Section */}
+                        <div className="space-y-3">
+                          {displayCryptoItems.map((method) => {
+                            const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
+                            const isSelected = selectedMethod === methodName
 
-                              return (
-                                <div
-                                  key={method.id + method.network}
-                                  onClick={() => {
-                                    if (method.name === "Ethereum") {
-                                      setIsEthNetworkModalOpen(true)
-                                    } else {
-                                      setSelectedMethod(methodName)
-                                    }
-                                  }}
-                                  className={cn(
-                                    "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                                    isSelected
-                                      ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
-                                      : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
-                                  )}
-                                >
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[15px] font-bold text-white">{method.name}</span>
-                                      {method.id === "ltc" && (
-                                        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                          <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                          <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
+                            return (
+                              <div
+                                key={method.id + method.network}
+                                onClick={() => {
+                                  if (method.name === "Ethereum") {
+                                    setIsEthNetworkModalOpen(true)
+                                  } else {
+                                    setSelectedMethod(methodName)
+                                  }
+                                }}
+                                className={cn(
+                                  "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                                  isSelected
+                                    ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
+                                    : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                                )}
+                              >
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[15px] font-bold text-white">{method.name}</span>
+                                    {method.id === "ltc" && (
+                                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                        <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                        <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
+                                      </div>
+                                    )}
                                   </div>
-
-                                  <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
-                                    <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
-                                  </div>
-
-                                  {/* Checkmark for selected */}
-                                  {isSelected && (
-                                    <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
-                                  )}
+                                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
                                 </div>
-                              )
-                            })}
-                          </div>
 
-                          {/* Show More Button - Opens Modal */}
-                          <button
-                            onClick={() => setIsMethodModalOpen(true)}
-                            className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all flex items-center justify-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-widest group"
-                          >
-                            <span>Show more</span>
-                            <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                          </button>
+                                <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                                  <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                                </div>
+
+                                {isSelected && (
+                                  <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
+
+                        {/* Show More Button - Opens Modal */}
+                        <button
+                          onClick={() => setIsMethodModalOpen(true)}
+                          className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all flex items-center justify-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-widest group"
+                        >
+                          <span>Show more</span>
+                          <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                        </button>
                       </div>
-
-
 
                       <div className="pt-2 space-y-2">
                         {[
@@ -1389,7 +1430,7 @@ function CheckoutMainContent() {
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
-          </div>
+          </div >
         </div >
       </div >
 
@@ -1420,130 +1461,138 @@ function CheckoutMainContent() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                {cryptoGroups.slice(1).map((group) => (
-                  <div key={group.label} className="space-y-3">
-                    <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {group.items.map((method) => {
-                        const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
-                        const isSelected = selectedMethod === methodName
+                {cryptoGroups.map((group) => {
+                  const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
+                  const filteredItems = group.items.filter(m => !disabledMethods.includes(m.name) && !disabledMethods.includes(getMethodName(m)))
 
-                        return (
-                          <div
-                            key={method.id + method.network}
-                            onClick={() => {
-                              if (method.name === "Ethereum") {
-                                setIsMethodModalOpen(false)
-                                setIsEthNetworkModalOpen(true)
-                              } else {
-                                setSelectedMethod(methodName)
-                                setIsMethodModalOpen(false)
-                              }
-                            }}
-                            className={cn(
-                              "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                              isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
-                            )}
-                          >
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[14px] font-bold text-white">{method.name}</span>
-                                {method.id === "ltc" && (
-                                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                    <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                    <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
-                                  </div>
-                                )}
-                              </div>
-                              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
-                            </div>
-
-                            <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
-                              <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
-                            </div>
-
-                            {isSelected && (
-                              <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* ETH Network Selection Modal */}
-        {isEthNetworkModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsEthNetworkModalOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-[#090b0d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-            >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex items-center justify-center bg-[#a4f8ff]/10 rounded-xl">
-                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Select ETH Network</h3>
-                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Choose your preferred network</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsEthNetworkModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40 hover:text-white"
-                >
-                  <Plus className="w-5 h-5 rotate-45" />
-                </button>
-              </div>
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ETH_NETWORKS.map((method) => {
-                  const methodName = `${method.name} (${method.network})`
-                  const isSelected = selectedMethod === methodName
+                  if (filteredItems.length === 0) return null
 
                   return (
-                    <div
-                      key={method.id}
-                      onClick={() => {
-                        setSelectedMethod(methodName)
-                        setIsEthNetworkModalOpen(false)
-                      }}
-                      className={cn(
-                        "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                        isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
-                      )}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-[14px] font-bold text-white">{method.network}</span>
-                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Ethereum</span>
+                    <div key={group.label} className="space-y-3">
+                      <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {filteredItems.map((method) => {
+                          const methodName = getMethodName(method)
+                          const isSelected = selectedMethod === methodName
+                          return (
+                            <div
+                              key={method.id + method.network}
+                              onClick={() => {
+                                if (method.name === "Ethereum") {
+                                  setIsMethodModalOpen(false)
+                                  setIsEthNetworkModalOpen(true)
+                                } else {
+                                  setSelectedMethod(methodName)
+                                  setIsMethodModalOpen(false)
+                                }
+                              }}
+                              className={cn(
+                                "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                                isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                              )}
+                            >
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[14px] font-bold text-white">{method.name}</span>
+                                  {method.id === "ltc" && (
+                                    <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                      <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                      <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
+                              </div>
+
+                              <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                                <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                              </div>
+
+                              {isSelected && (
+                                <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
-                      <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
-                        <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
-                      )}
                     </div>
                   )
                 })}
-              </div>
-            </motion.div>
-          </div>
+              </div >
+            </motion.div >
+          </div >
         )}
-      </AnimatePresence>
+
+        {/* ETH Network Selection Modal */}
+        {
+          isEthNetworkModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsEthNetworkModalOpen(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-xl bg-[#090b0d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+              >
+                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center bg-[#a4f8ff]/10 rounded-xl">
+                      <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Select ETH Network</h3>
+                      <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Choose your preferred network</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsEthNetworkModalOpen(false)}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40 hover:text-white"
+                  >
+                    <Plus className="w-5 h-5 rotate-45" />
+                  </button>
+                </div>
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ETH_NETWORKS.map((method) => {
+                    const methodName = `${method.name} (${method.network})`
+                    const isSelected = selectedMethod === methodName
+
+                    return (
+                      <div
+                        key={method.id}
+                        onClick={() => {
+                          setSelectedMethod(methodName)
+                          setIsEthNetworkModalOpen(false)
+                        }}
+                        className={cn(
+                          "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                          isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                        )}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-bold text-white">{method.network}</span>
+                          <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Ethereum</span>
+                        </div>
+                        <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                          <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
+                        </div>
+                        {isSelected && (
+                          <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            </div>
+          )
+        }
+      </AnimatePresence >
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;

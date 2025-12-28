@@ -211,6 +211,51 @@ export default function AdminInvoicesPage() {
         return provider
     }
 
+    // Get display status for invoice
+    const getInvoiceStatus = (order: any) => {
+        const status = order.status
+        const paymentProvider = order.payment?.provider?.toLowerCase() || ''
+        const isManualProcess = paymentProvider.includes('manual') || paymentProvider.includes('admin') || paymentProvider.includes('coupon')
+
+        if (status === 'delivered' || status === 'completed') {
+            return isManualProcess ? 'manual_completed' : 'completed'
+        }
+        if (status === 'expired') return 'expired'
+        if (status === 'failed') return 'failed'
+        if (status === 'pending' || status === 'processing') return 'pending'
+        if (status === 'cancelled') return 'cancelled'
+        if (status === 'refunded') return 'refunded'
+        if (status === 'paid') return 'completed'
+        return 'pending'
+    }
+
+    const getInvoiceStatusBadge = (order: any) => {
+        const invoiceStatus = getInvoiceStatus(order)
+        const styles: Record<string, string> = {
+            completed: "bg-emerald-500/5 text-emerald-400 border-emerald-500/10",
+            manual_completed: "bg-indigo-500/5 text-indigo-400 border-indigo-500/10",
+            expired: "bg-white/5 text-[var(--sa-fg-dim)] border-white/5",
+            failed: "bg-rose-500/5 text-rose-400 border-rose-500/10",
+            pending: "bg-amber-500/5 text-amber-400 border-amber-500/10",
+            cancelled: "bg-white/5 text-[var(--sa-fg-dim)] border-white/5",
+            refunded: "bg-purple-500/5 text-purple-400 border-purple-500/10",
+        }
+        const labels: Record<string, string> = {
+            completed: "Completed",
+            manual_completed: "Manual Completed",
+            expired: "Expired",
+            failed: "Failed",
+            pending: "Pending",
+            cancelled: "Cancelled",
+            refunded: "Refunded",
+        }
+        return (
+            <span className={cn("px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border whitespace-nowrap", styles[invoiceStatus] || styles.pending)}>
+                {labels[invoiceStatus] || 'Pending'}
+            </span>
+        )
+    }
+
     return (
         <AdminLayout>
             <div className="space-y-4 max-w-[120rem] mx-auto">
@@ -277,6 +322,7 @@ export default function AdminInvoicesPage() {
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Price</th>
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Paid</th>
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Payment</th>
+                                    <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Email</th>
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Created</th>
                                     <th className="px-6 py-3 text-[10px] font-medium text-[var(--sa-fg-dim)] uppercase tracking-wider">Completed</th>
@@ -287,12 +333,12 @@ export default function AdminInvoicesPage() {
                                 {isLoading ? (
                                     [...Array(5)].map((_, i) => (
                                         <tr key={i} className="animate-pulse">
-                                            <td colSpan={8} className="px-5 py-5 bg-white/[0.005]" />
+                                            <td colSpan={9} className="px-5 py-5 bg-white/[0.005]" />
                                         </tr>
                                     ))
                                 ) : filteredOrders.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="px-5 py-12 text-center text-[var(--sa-fg-dim)] text-[10px] font-bold uppercase tracking-widest">
+                                        <td colSpan={9} className="px-5 py-12 text-center text-[var(--sa-fg-dim)] text-[10px] font-bold uppercase tracking-widest">
                                             No invoices found
                                         </td>
                                     </tr>
@@ -337,6 +383,9 @@ export default function AdminInvoicesPage() {
                                                 <span className="text-[11px] text-[var(--sa-fg-muted)]">{getPaymentName(ord.payment?.provider)}</span>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4">
+                                            {getInvoiceStatusBadge(ord)}
+                                        </td>
                                         <td className="px-6 py-4 text-[var(--sa-fg-dim)] text-[11px]">
                                             {ord.email}
                                         </td>
@@ -363,7 +412,7 @@ export default function AdminInvoicesPage() {
                                                     {ord.status !== 'paid' && ord.status !== 'completed' && ord.status !== 'delivered' && (
                                                         <DropdownMenuItem onClick={() => handleMarkAsPaid(ord.id)} className="text-[11px] cursor-pointer text-emerald-400 focus:bg-emerald-400/10">
                                                             <CheckCircle className="w-3.5 h-3.5 mr-2" />
-                                                            Mark as Paid
+                                                            Manually Process Invoice
                                                         </DropdownMenuItem>
                                                     )}
                                                     {(ord.status === 'paid' || ord.status === 'delivered' || ord.status === 'completed') && (
