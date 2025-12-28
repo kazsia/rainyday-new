@@ -569,7 +569,7 @@ function InvoiceContent() {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-white uppercase tracking-tight">{payment.provider}</p>
-                      <p className="text-[10px] text-white/40 font-mono">{payment.track_id || order.id}</p>
+                      <p className="text-[10px] text-white/40 font-mono">{payment.track_id || order.readable_id || order.id}</p>
                     </div>
                   </div>
                 )}
@@ -577,7 +577,7 @@ function InvoiceContent() {
                 {/* Metadata List - Precise Image Match Consistency */}
                 <div className="space-y-4 px-2">
                   {[
-                    { label: "Invoice ID", value: payment?.track_id || order.id, copy: true },
+                    { label: "Invoice ID", value: payment?.track_id || order.readable_id || order.id, copy: true },
                     { label: "E-mail Address", value: order.email },
                     { label: "Total Price", value: `$${Number(order.total).toFixed(2)}` },
                     ...(isPaid && paymentDetails?.amount ? [{ label: `Total Amount (${paymentDetails.payCurrency})`, value: `${paymentDetails.amount} ${paymentDetails.payCurrency}` }] : []),
