@@ -228,20 +228,53 @@ function CheckoutMainContent() {
   // Delete confirmation state
   const [pendingDelete, setPendingDelete] = React.useState<string | null>(null)
 
-  // Remember last selected payment method
+  // Track selected method in ref to avoid dependency loops in the effect below
+  const selectedMethodRef = React.useRef(selectedMethod)
+  React.useEffect(() => {
+    selectedMethodRef.current = selectedMethod
+  }, [selectedMethod])
+
+  // Remember last selected payment method & handle disabled methods
   React.useEffect(() => {
     const saved = localStorage.getItem('lastPaymentMethod')
+    const current = selectedMethodRef.current
+
+    // Helper to check if a method is disabled
+    const isMethodDisabled = (item: any) => {
+      const name = (item.name === "Tether" || item.name === "USD coin" || item.name === "Ethereum") ? `${item.name} (${item.network})` : item.name
+      return disabledMethods.includes(item.name) || disabledMethods.includes(name)
+    }
+
     if (saved && !disabledMethods.includes(saved)) {
-      setSelectedMethod(saved)
-    } else if (disabledMethods.includes("PayPal")) {
-      // If PayPal is disabled, default to the first available crypto
-      const firstAvailable = displayCryptoItems[0]
+      // Only restore saved if we haven't already selected it (and it's not the default PayPal if saved is something else)
+      if (current !== saved) {
+        // Careful: check if we are just on the default "PayPal" or if the user actively changed it.
+        // For now, we trust strictly restoring 'saved' if it's valid, 
+        // but we must prevent overriding a user's *new* selection if this effect runs late.
+        // Since this only runs on [disabledMethods], it mostly runs on load/order-load.
+        setSelectedMethod(saved)
+      }
+    } else if (disabledMethods.includes("PayPal") || (current && disabledMethods.includes(current))) {
+      // If PayPal is disabled OR our current selection is disabled, pick the first available crypto
+      let firstAvailable: any = null
+
+      for (const group of cryptoGroups) {
+        const found = group.items.find(m => !isMethodDisabled(m))
+        if (found) {
+          firstAvailable = found
+          break
+        }
+      }
+
       if (firstAvailable) {
         const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
-        setSelectedMethod(getMethodName(firstAvailable))
+        const newMethod = getMethodName(firstAvailable)
+        if (current !== newMethod) {
+          setSelectedMethod(newMethod)
+        }
       }
     }
-  }, [disabledMethods, displayCryptoItems])
+  }, [disabledMethods])
 
   React.useEffect(() => {
     if (selectedMethod && !disabledMethods.includes(selectedMethod)) {
@@ -1111,18 +1144,22 @@ function CheckoutMainContent() {
                           >
                             <div className="flex items-center gap-4">
                               <div className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                                selectedMethod === "PayPal" ? "bg-brand-primary/20" : "bg-white/5 group-hover:bg-white/10"
+                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors overflow-hidden p-2",
+                                selectedMethod === "PayPal" ? "bg-[#003087]/10" : "bg-white/5 group-hover:bg-white/10"
                               )}>
-                                <CreditCard className={cn("w-5 h-5", selectedMethod === "PayPal" ? "text-brand-primary" : "text-white/40")} />
+                                <img
+                                  src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg"
+                                  alt="PayPal"
+                                  className="w-full h-full object-contain"
+                                />
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-[15px] font-bold text-white">PayPal</span>
                                 <span className="text-[11px] text-white/40">Secure instant payment</span>
                               </div>
                             </div>
-                            <div className="h-4 w-12 grayscale opacity-50 contrast-125">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" alt="PayPal" className="w-full h-auto object-contain" />
+                            <div className="h-6 w-16 opacity-30">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal Text" className="w-full h-full object-contain brightness-0 invert" />
                             </div>
                           </div>
                         )}
