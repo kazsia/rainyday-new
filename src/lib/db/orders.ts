@@ -222,7 +222,7 @@ export async function getUserOrders() {
 
 export async function updateOrderStatus(
     id: string,
-    status: 'pending' | 'paid' | 'delivered' | 'completed' | 'cancelled' | 'refunded'
+    status: 'pending' | 'paid' | 'delivered' | 'completed' | 'cancelled' | 'refunded' | 'expired'
 ) {
     const supabase = await createClient()
 

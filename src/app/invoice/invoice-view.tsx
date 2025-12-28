@@ -125,7 +125,16 @@ function InvoiceContent() {
     if (showLoader) setIsLoading(true)
     try {
       const data = await getOrder(orderId!)
-      setOrder(data)
+      if (data) {
+        setOrder(data)
+
+        // Force redirection to readable ID if current URL uses UUID
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId!)
+        if (isUuid && data.readable_id) {
+          const newUrl = window.location.pathname + `?id=${data.readable_id}`
+          window.history.replaceState(null, '', newUrl)
+        }
+      }
     } catch (error) {
       console.error("Failed to load order:", error)
       toast.error("Failed to load order details")
@@ -308,6 +317,13 @@ function InvoiceContent() {
       if (remaining <= 0) {
         setTimeLeft("EXPIRED")
         setPaymentStatus('expired')
+
+        // Sync to DB if not already expired
+        if (order?.status === 'pending') {
+          import("@/lib/db/orders").then(({ updateOrderStatus }) => {
+            updateOrderStatus(order.id, 'expired').catch(console.error)
+          })
+        }
         return
       }
 
@@ -326,6 +342,7 @@ function InvoiceContent() {
     if (order?.status !== 'pending' || !paymentDetails?.trackId || payment?.provider === 'PayPal') return
 
     let hasShownDetectedToast = false
+    let consecutiveErrors = 0
 
     const pollInterval = setInterval(async () => {
       try {
@@ -390,8 +407,15 @@ function InvoiceContent() {
             clearInterval(pollInterval)
           }
         }
-      } catch (error) {
-        console.error("Error polling payment status:", error)
+      } catch (error: any) {
+        consecutiveErrors++
+        const errorMsg = error?.message || String(error)
+        const isNetworkError = errorMsg.includes('fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')
+
+        // Only log if it's not a transient network error OR if it has persisted for more than 5 attempts (15 seconds)
+        if (!isNetworkError || consecutiveErrors > 5) {
+          console.error("Error polling payment status:", error)
+        }
       }
     }, 3000) // Faster 3-second polling
 
@@ -507,9 +531,10 @@ function InvoiceContent() {
                 <span className="flex items-center gap-2 ">Status</span>
                 <span className={cn(
                   "tracking-normal uppercase",
-                  order.status === 'pending' ? "text-yellow-500" :
-                    isPaid ? "text-green-500" : "text-red-500"
-                )}>{order.status}</span>
+                  (order.status === 'pending' && paymentStatus !== 'expired') ? "text-yellow-500" :
+                    (order.status === 'paid' || order.status === 'delivered' || order.status === 'completed') ? "text-green-500" :
+                      "text-red-500"
+                )}>{(order.status === 'pending' && paymentStatus === 'expired') ? 'expired' : order.status}</span>
               </div>
               <div className="flex justify-between items-center pt-2">
                 <span className="text-xs font-black tracking-widest text-white uppercase opacity-40">Total Settled</span>
@@ -590,7 +615,7 @@ function InvoiceContent() {
                 {/* Metadata List - Precise Image Match Consistency */}
                 <div className="space-y-4 px-2">
                   {[
-                    { label: "Invoice ID", value: payment?.track_id || order.readable_id || order.id, copy: true },
+                    { label: "Invoice ID", value: order.readable_id || payment?.track_id || order.id, copy: true },
                     { label: "E-mail Address", value: order.email },
                     { label: "Total Price", value: `$${Number(order.total).toFixed(2)}` },
                     ...(isPaid && paymentDetails?.amount ? [{ label: `Total Amount (${paymentDetails.payCurrency})`, value: `${paymentDetails.amount} ${paymentDetails.payCurrency}` }] : []),
@@ -934,6 +959,7 @@ function InvoiceContent() {
                                 src={paymentDetails.qrCodeUrl || "/logo.png"}
                                 alt="QR Code"
                                 fill
+                                sizes="192px"
                                 className="object-contain p-2"
                               />
                               {/* Scan Line Animation */}

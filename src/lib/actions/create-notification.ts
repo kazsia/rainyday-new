@@ -24,6 +24,7 @@ export interface AdminNotification {
     title: string
     message: string
     related_order_id: string | null
+    order_readable_id?: string | null
     related_user_id: string | null
     metadata: Record<string, unknown>
     created_at: string
@@ -106,7 +107,10 @@ export async function getRecentNotifications(limit: number = 50): Promise<AdminN
 
         const { data, error } = await supabase
             .from('admin_notifications')
-            .select('*')
+            .select(`
+                *,
+                order:orders!related_order_id (readable_id)
+            `)
             .order('created_at', { ascending: false })
             .limit(limit)
 
@@ -116,7 +120,10 @@ export async function getRecentNotifications(limit: number = 50): Promise<AdminN
         }
 
         console.log('[Notification] Data fetched from DB:', data?.length || 0, 'items')
-        return (data || []) as AdminNotification[]
+        return (data || []).map(n => ({
+            ...n,
+            order_readable_id: (n as any).order?.readable_id
+        })) as AdminNotification[]
     } catch (error) {
         console.error('[Notification] Error fetching notifications:', error)
         return []

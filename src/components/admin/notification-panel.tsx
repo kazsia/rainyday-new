@@ -134,7 +134,7 @@ export function NotificationPanel({ open, onOpenChange, onNotificationsRead }: N
 
         if (notification.related_order_id) {
             onOpenChange(false)
-            router.push(`/admin/invoices/${notification.related_order_id}`)
+            router.push(`/admin/invoices/${notification.order_readable_id || notification.related_order_id}`)
         }
     }
 

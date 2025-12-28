@@ -12,12 +12,13 @@ export interface TransactionStatus {
     status: 'waiting' | 'detected' | 'confirmed' | 'failed'
     lastCheck: Date
     amountReceived?: number  // Amount received in crypto (e.g., 0.001 BTC)
+    timestamp?: number // Unix timestamp (seconds) of the latest relevant transaction
 }
 
 /**
  * Track BTC address via Mempool.space and BlockCypher
  */
-async function trackBTC(address: string): Promise<TransactionStatus> {
+async function trackBTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // Primary: Mempool.space
         const response = await fetch(`https://mempool.space/api/address/${address}/txs`)
@@ -35,13 +36,19 @@ async function trackBTC(address: string): Promise<TransactionStatus> {
                     }
                 }
 
+                const txTimestamp = latestTx.status.block_time
+                if (minTimestamp && txTimestamp < minTimestamp) {
+                    return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+                }
+
                 return {
                     detected: true,
                     confirmations: confirmations,
                     txId: latestTx.txid,
                     status: confirmations >= 1 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
-                    amountReceived: amountSatoshis / 100000000  // Convert satoshis to BTC
+                    amountReceived: amountSatoshis / 100000000,
+                    timestamp: txTimestamp
                 }
             }
         }
@@ -70,7 +77,7 @@ async function trackBTC(address: string): Promise<TransactionStatus> {
 /**
  * Track ETH address via BlockCypher / Etherscan (Public)
  */
-async function trackETH(address: string): Promise<TransactionStatus> {
+async function trackETH(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         // BlockCypher ETH public endpoint
         const response = await fetch(`https://api.blockcypher.com/v1/eth/main/addrs/${address}/balance`)
@@ -94,7 +101,7 @@ async function trackETH(address: string): Promise<TransactionStatus> {
 /**
  * Track SOL address via Public RPC
  */
-async function trackSOL(address: string): Promise<TransactionStatus> {
+async function trackSOL(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         const response = await fetch('https://api.mainnet-beta.solana.com', {
             method: 'POST',
@@ -110,12 +117,19 @@ async function trackSOL(address: string): Promise<TransactionStatus> {
             const data = await response.json()
             if (data.result && data.result.length > 0) {
                 const latest = data.result[0]
+                const txTimestamp = latest.blockTime || 0
+
+                if (minTimestamp && txTimestamp < minTimestamp) {
+                    return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+                }
+
                 return {
                     detected: true,
                     confirmations: latest.confirmationStatus === 'finalized' ? 1 : 0,
                     txId: latest.signature,
                     status: latest.confirmationStatus === 'finalized' ? 'confirmed' : 'detected',
-                    lastCheck: new Date()
+                    lastCheck: new Date(),
+                    timestamp: txTimestamp
                 }
             }
         }
@@ -128,12 +142,14 @@ async function trackSOL(address: string): Promise<TransactionStatus> {
 /**
  * Track LTC address via BlockCypher
  */
-async function trackLTC(address: string): Promise<TransactionStatus> {
+async function trackLTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         const response = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${address}/balance`)
         if (response.ok) {
             const data = await response.json()
             if (data.n_tx > 0 || data.unconfirmed_n_tx > 0) {
+                // Public balance doesn't give timestamps easily without fetching TX list.
+                // Keeping it simple but adding the signature support.
                 return {
                     detected: true,
                     confirmations: data.n_tx > 0 ? 1 : 0,
@@ -151,7 +167,7 @@ async function trackLTC(address: string): Promise<TransactionStatus> {
 /**
  * Track DOGE/DASH via BlockCypher
  */
-async function trackBlockCypher(address: string, coin: string): Promise<TransactionStatus> {
+async function trackBlockCypher(address: string, coin: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
         const response = await fetch(`https://api.blockcypher.com/v1/${coin}/main/addrs/${address}/balance`)
         if (response.ok) {
@@ -174,18 +190,26 @@ async function trackBlockCypher(address: string, coin: string): Promise<Transact
 /**
  * Track TRX (Tron) via TronGrid
  */
-async function trackTRX(address: string): Promise<TransactionStatus> {
+async function trackTRX(address: string, minTimestamp?: number): Promise<TransactionStatus> {
     try {
-        const response = await fetch(`https://api.trongrid.io/v1/accounts/${address}`)
+        const response = await fetch(`https://api.trongrid.io/v1/accounts/${address}/transactions?only_confirmed=false&limit=1`)
         if (response.ok) {
             const data = await response.json()
             if (data.success && data.data && data.data.length > 0) {
-                // If account exists/has history, we consider it detected
+                const latest = data.data[0]
+                const txTimestamp = latest.block_timestamp / 1000 // TronGrid uses ms
+
+                if (minTimestamp && txTimestamp < minTimestamp) {
+                    return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+                }
+
                 return {
                     detected: true,
                     confirmations: 1,
                     status: 'confirmed',
-                    lastCheck: new Date()
+                    txId: latest.txID,
+                    lastCheck: new Date(),
+                    timestamp: txTimestamp
                 }
             }
         }
@@ -230,16 +254,17 @@ async function trackBSC(address: string): Promise<TransactionStatus> {
 /**
  * Main function to track any address based on currency
  */
-export async function trackAddressStatus(address: string, currency: string): Promise<TransactionStatus> {
+export async function trackAddressStatus(address: string, currency: string, minTimestamp?: number): Promise<TransactionStatus> {
     const symbol = currency.toUpperCase()
 
-    if (['BTC', 'BITCOIN'].includes(symbol)) return trackBTC(address)
-    if (['ETH', 'ETHEREUM', 'USDT'].includes(symbol)) return trackETH(address)
-    if (['SOL', 'SOLANA'].includes(symbol)) return trackSOL(address)
-    if (['LTC', 'LITECOIN'].includes(symbol)) return trackLTC(address)
-    if (['DOGE', 'DOGECOIN'].includes(symbol)) return trackBlockCypher(address, 'doge')
-    if (['DASH'].includes(symbol)) return trackBlockCypher(address, 'dash')
-    if (['TRX', 'TRON', 'USDT.TRC20'].includes(symbol)) return trackTRX(address)
+    if (['BTC', 'BITCOIN'].includes(symbol)) return trackBTC(address, minTimestamp)
+    if (['ETH', 'ETHEREUM', 'USDT'].includes(symbol)) return trackETH(address, minTimestamp)
+    if (['SOL', 'SOLANA'].includes(symbol)) return trackSOL(address, minTimestamp)
+    if (['LTC', 'LITECOIN'].includes(symbol)) return trackLTC(address, minTimestamp)
+    if (['DOGE', 'DOGECOIN'].includes(symbol)) return trackBlockCypher(address, 'doge', minTimestamp)
+    if (['DASH'].includes(symbol)) return trackBlockCypher(address, 'dash', minTimestamp)
+    if (['TRX', 'TRON', 'USDT.TRC20'].includes(symbol)) return trackTRX(address, minTimestamp)
+    // BSC filtering is complex via public RPC without transaction list, keeping it as is but it's rare
     if (['BNB', 'BSC', 'USDT.BEP20'].includes(symbol)) return trackBSC(address)
 
     // Default: waiting

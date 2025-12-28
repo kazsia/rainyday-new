@@ -18,7 +18,7 @@ export function OrderActions({ order }: { order: any }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-background border-white/10 text-white">
                 <DropdownMenuItem className="gap-2 focus:bg-white/5 focus:text-white" asChild>
-                    <Link href={`/admin/invoices/${order.id}`}>
+                    <Link href={`/admin/invoices/${order.readable_id || order.id}`}>
                         <Eye className="w-4 h-4 text-muted-foreground" /> View Details
                     </Link>
                 </DropdownMenuItem>

@@ -68,6 +68,12 @@ export default function AdminInvoiceDetailsPage() {
     try {
       const data = await adminGetOrder(id)
       setOrder(data)
+
+      // Standardize URL to readable_id if current param is a UUID
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      if (isUuid && data?.readable_id) {
+        window.history.replaceState(null, '', `/admin/invoices/${data.readable_id}`)
+      }
     } catch (error) {
       toast.error("Failed to load invoice details")
     } finally {
@@ -244,7 +250,7 @@ export default function AdminInvoiceDetailsPage() {
                 Manually Process Invoice
               </Button>
             )}
-            <Button className="h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.payments?.[0]?.track_id || order.readable_id || order.id}`, '_blank')}>
+            <Button className="h-11 bg-[#a4f8ff] hover:bg-[#a4f8ff]/90 text-black border-0 shadow-lg shadow-[#a4f8ff]/20 rounded-xl font-bold text-xs uppercase tracking-widest px-6" onClick={() => window.open(`/invoice?id=${order.readable_id || order.payments?.[0]?.track_id || order.id}`, '_blank')}>
               <LinkIcon className="w-4 h-4 mr-2" />
               View Invoice
             </Button>
@@ -472,7 +478,7 @@ export default function AdminInvoiceDetailsPage() {
                     </td>
                     <td className="px-10 py-8">
                       {order.status === 'completed' || order.status === 'delivered' ? (
-                        <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white/5 bg-white/5 text-white/60 hover:text-white font-bold text-[10px] uppercase tracking-widest" onClick={() => window.open(`/invoice?id=${order.id}`, '_blank')}>
+                        <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white/5 bg-white/5 text-white/60 hover:text-white font-bold text-[10px] uppercase tracking-widest" onClick={() => window.open(`/invoice?id=${order.readable_id || order.id}`, '_blank')}>
                           <LinkIcon className="w-3 h-3 mr-2" />
                           View
                         </Button>

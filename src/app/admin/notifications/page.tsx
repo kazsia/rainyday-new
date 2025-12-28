@@ -95,7 +95,7 @@ export default function AdminNotificationsPage() {
         }
 
         if (notification.related_order_id) {
-            router.push(`/admin/invoices/${notification.related_order_id}`)
+            router.push(`/admin/invoices/${notification.order_readable_id || notification.related_order_id}`)
         }
     }
 

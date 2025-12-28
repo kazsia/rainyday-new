@@ -118,11 +118,19 @@ function CheckoutMainContent() {
       try {
         const order = await getOrder(urlOrderId)
         if (order) {
+          // 1. Force redirection to readable ID if current URL uses UUID
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(urlOrderId)
+          if (isUuid && order.readable_id) {
+            router.replace(`/checkout/${order.readable_id}`)
+            return
+          }
+
           if (['paid', 'delivered', 'completed'].includes(order.status)) {
-            router.push(`/invoice?id=${order.id}`)
+            router.push(`/invoice?id=${order.readable_id}`)
             return
           }
           setExistingOrder(order)
+          setOrderId(order.readable_id)
           setEmail(order.email || "")
 
           // Sync cart if empty or different
@@ -399,7 +407,9 @@ function CheckoutMainContent() {
   }, [cryptoDetails?.expiresAt, step])
 
   React.useEffect(() => {
-    if (isHydrated && cart.length === 0 && step === 1 && !isProcessing && !urlOrderId) {
+    // Only redirect to store if cart is truly empty AND we are NOT processing an order 
+    // AND we aren't already viewing an existing order (step 2 or existing order URL)
+    if (isHydrated && cart.length === 0 && step === 1 && !isProcessing && urlOrderId === 'new') {
       router.push("/store")
     }
   }, [cart, router, step, isProcessing, isHydrated, urlOrderId])
@@ -457,7 +467,7 @@ function CheckoutMainContent() {
         if (resolution.success) {
           clearCart()
           toast.success("Order completed! Your items are being delivered.")
-          router.push(`/invoice?id=${order.id}`)
+          router.push(`/invoice?id=${order.readable_id || order.id}`)
           return
         } else {
           throw new Error(resolution.error)
@@ -486,7 +496,49 @@ function CheckoutMainContent() {
         return
       }
 
-      if (isCrypto || isPayPal) {
+      // 1. Create or Update the Order in Supabase
+      const total = finalTotal
+      const items = cart.filter(i => i.quantity > 0).map(item => ({
+        product_id: item.id,
+        variant_id: item.variantId || null,
+        quantity: item.quantity,
+        price: item.price
+      }))
+      const customFields = customFieldValues
+
+      // Note: $0 orders are handled at the start of handleProceedToPayment
+      // before minimum amount validation
+
+      // Pass total directly.
+      let orderResult;
+      if (existingOrder) {
+        orderResult = await safeUpdateOrder(existingOrder.id, {
+          email,
+          total,
+          items,
+          custom_fields: customFields
+        })
+      } else {
+        orderResult = await safeCreateOrder({
+          email,
+          total,
+          items,
+          custom_fields: customFields
+        })
+      }
+
+      if (!orderResult.success) {
+        console.error("[CHECKOUT] Order creation failed:", orderResult.error, orderResult.details)
+        toast.error(`Order Failed: ${orderResult.error}`)
+        setIsProcessing(false)
+        return
+      }
+
+      const order = orderResult.data
+      setOrderId(order.readable_id)
+
+      // 2. Handle PayPal (Paylix) or Crypto (OxaPay)
+      if (isPayPal || isCrypto) {
         // Map payment method to OxaPay currency codes
         const payCurrencyMap: Record<string, string> = {
           "Bitcoin": "BTC",
@@ -510,49 +562,6 @@ function CheckoutMainContent() {
           "Toncoin": "TON",
           "USD coin": "USDC",
         }
-
-        // 1. Create or Update the Order in Supabase
-        const total = finalTotal
-        const items = cart.filter(i => i.quantity > 0).map(item => ({
-          product_id: item.id,
-          variant_id: item.variantId || null,
-          quantity: item.quantity,
-          price: item.price
-        }))
-        const customFields = customFieldValues
-
-        // Note: $0 orders are handled at the start of handleProceedToPayment
-        // before minimum amount validation
-
-        // Pass total directly.
-        let result;
-        if (existingOrder) {
-          result = await safeUpdateOrder(existingOrder.id, {
-            email,
-            total,
-            items,
-            custom_fields: customFields
-          })
-        } else {
-          result = await safeCreateOrder({
-            email,
-            total,
-            items,
-            custom_fields: customFields
-          })
-        }
-
-        if (!result.success) {
-          console.error("[CHECKOUT] Order creation failed:", result.error, result.details)
-          toast.error(`Order Failed: ${result.error}`)
-          setIsProcessing(false)
-          return
-        }
-
-        const order = result.data
-        setOrderId(order.id)
-
-        // 2. Handle PayPal (Paylix) or Crypto (OxaPay)
         if (isPayPal) {
           const { createPaylixPayment } = await import("@/lib/payments/paylix")
           const response = await createPaylixPayment({
@@ -561,9 +570,14 @@ function CheckoutMainContent() {
             currency: "USD",
             email: email,
             gateway: "PAYPAL",
-            return_url: `${window.location.origin}/invoice?id=${order.id}`,
+            return_url: `${window.location.origin}/invoice?id=${order.readable_id}`,
             webhook: `${window.location.origin}/api/webhooks/paylix`,
           })
+
+          // Sync URL so refresh doesn't lose the order
+          if (urlOrderId === 'new') {
+            window.history.replaceState(null, '', `/checkout/${order.readable_id}`)
+          }
 
           // 3. Create the Payment record
           const payResult = await safeCreatePayment({
@@ -608,11 +622,11 @@ function CheckoutMainContent() {
           currency: "USD",
           payCurrency: payCurrencyMap[baseMethodName] || "BTC",
           network: payNetwork,
-          orderId: order.id,
+          orderId: order.readable_id,
           description: `Order ${order.readable_id} from Rainyday`,
           email: email,
           callbackUrl: `${window.location.origin}/api/webhooks/oxapay`,
-          returnUrl: `${window.location.origin}/invoice?id=${order.id}`,
+          returnUrl: `${window.location.origin}/invoice?id=${order.readable_id}`,
         })
 
         console.log("[Checkout] OxaPay Response:", response)
@@ -672,6 +686,12 @@ function CheckoutMainContent() {
 
         setSavedTotal(total)
         setSavedItems(cart)
+
+        // Sync URL so refresh doesn't lose the order
+        if (urlOrderId === 'new') {
+          window.history.replaceState(null, '', `/checkout/${order.readable_id}`)
+        }
+
         setStep(2)
         clearCart()
         toast.success("Order created! Processing payment...")
@@ -679,10 +699,11 @@ function CheckoutMainContent() {
       }
 
       // Normal flow for other methods if any
+      const finalOrderId = order?.readable_id || orderId
       setSavedTotal(finalTotal)
       setSavedItems(cart)
       clearCart()
-      router.push(`/invoice?id=${orderId}`)
+      router.push(`/invoice?id=${finalOrderId}`)
     } catch (error: any) {
       console.error("Payment Error:", error)
       toast.error(error.message || "Failed to initialize payment. Please try again.")
@@ -705,6 +726,7 @@ function CheckoutMainContent() {
     if (step !== 2 || !orderId) return
 
     let hasShownDetectedToast = false
+    let consecutiveErrors = 0
 
     // Poll every 3 seconds for faster detection
     const pollInterval = setInterval(async () => {
@@ -716,7 +738,8 @@ function CheckoutMainContent() {
         // 2. PARALLEL: Check blockchain directly for instant detection
         if (cryptoDetails?.address && cryptoDetails.payCurrency) {
           const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
-          const bcStatus = await trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency)
+          const minTimestamp = existingOrder?.created_at ? Math.floor(new Date(existingOrder.created_at).getTime() / 1000) : undefined
+          const bcStatus = await trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency, minTimestamp)
           setBlockchainStatus(bcStatus)
 
           // If blockchain detected payment before OxaPay, show it!
@@ -726,14 +749,10 @@ function CheckoutMainContent() {
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
           }
 
+          // We use blockchain for detection, but keep waiting for the provider (OxaPay) 
+          // to confirm the "Paid" status to avoid premature redirection.
           if (bcStatus.status === 'confirmed' && bcStatus.txId) {
-            setPaymentStatus('completed')
-            toast.success("Payment Confirmed! Redirecting...")
-            clearInterval(pollInterval)
-            setTimeout(() => {
-              router.push(`/invoice?id=${orderId}`)
-            }, 2000)
-            return
+            setPaymentStatus('processing') // Still processing until provider confirms
           }
         }
 
@@ -760,8 +779,15 @@ function CheckoutMainContent() {
             clearInterval(pollInterval)
           }
         }
-      } catch (error) {
-        console.error("Error polling payment status:", error)
+      } catch (error: any) {
+        consecutiveErrors++
+        const errorMsg = error?.message || String(error)
+        const isNetworkError = errorMsg.includes('fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')
+
+        // Silent retry for network errors up to 5 times (15 seconds)
+        if (!isNetworkError || consecutiveErrors > 5) {
+          console.error("Error polling payment status:", error)
+        }
       }
     }, 3000) // Faster 3-second polling
 
@@ -1125,7 +1151,7 @@ function CheckoutMainContent() {
                       </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 px-1 pb-1">
                       <div className="flex items-center justify-between pb-1">
                         <label className="text-sm font-medium text-white/90">Payment Method *</label>
                       </div>
@@ -1257,7 +1283,7 @@ function CheckoutMainContent() {
                   {/* Simple CTA Button */}
                   <Button
                     onClick={handleProceedToPayment}
-                    disabled={isProcessing}
+                    disabled={isProcessing || isLoadingOrder}
                     className="w-full h-11 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#70d4db] text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isProcessing ? (
@@ -1362,6 +1388,7 @@ function CheckoutMainContent() {
                           src={cryptoDetails?.qrCodeUrl || "/logo.png"}
                           alt="QR Code"
                           fill
+                          sizes="192px"
                           className="object-contain p-2"
                         />
                         {/* Subtle Scan Line */}
@@ -1630,43 +1657,6 @@ function CheckoutMainContent() {
           )
         }
       </AnimatePresence >
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(38, 188, 196, 0.2);
-        }
-        @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: 0 0 40px rgba(38, 188, 196, 0.3), 0 20px 40px -15px rgba(38, 188, 196, 0.4);
-          }
-          50% {
-            box-shadow: 0 0 60px rgba(38, 188, 196, 0.45), 0 25px 50px -15px rgba(38, 188, 196, 0.5);
-          }
-        }
-        @keyframes cta-breathe {
-          0%, 100% {
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 24px rgba(164,248,255,0.25), 0 12px 40px rgba(0,0,0,0.55);
-          }
-          50% {
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 32px rgba(164,248,255,0.4), 0 12px 40px rgba(0,0,0,0.55);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .animate-\\[pulse-glow_4s_ease-in-out_infinite\\],
-          .animate-\\[cta-breathe_3\\.5s_ease-in-out_infinite\\] {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </div >
   )
 }
