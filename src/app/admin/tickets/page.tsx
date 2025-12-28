@@ -69,6 +69,7 @@ export default function AdminTicketsPage() {
         if (!selectedTicketId) return
 
         async function loadDetails() {
+            if (!selectedTicketId) return // TypeScript guard
             setDetailsLoading(true)
             try {
                 const details = await getTicketDetails(selectedTicketId)
