@@ -174,7 +174,7 @@ function InvoiceContent() {
             address: '',
             amount: String(order.total),
             qrCodeUrl: '',
-            expiresAt: Date.now() + 3600000,
+            expiresAt: new Date(order.created_at).getTime() + 3600000,
             payCurrency: 'USD',
             payLink: payment.pay_url || '',
             trackId: payment.track_id || ''
@@ -220,7 +220,7 @@ function InvoiceContent() {
               address: info.address,
               amount: finalAmount,
               qrCodeUrl: info.qrCodeUrl || '',
-              expiresAt: info.expiredAt ? new Date(info.expiredAt).getTime() : Date.now() + 3600000,
+              expiresAt: info.expiredAt ? new Date(info.expiredAt).getTime() : new Date(order.created_at).getTime() + 3600000,
               payCurrency: payCurrency,
               payLink: info?.payLink || storedPayUrl || fallbackPayLink,
               trackId: payment.track_id
@@ -243,7 +243,7 @@ function InvoiceContent() {
               address: staticAddress.address,
               amount: calculatedCryptoAmount, // Use calculated amount here
               qrCodeUrl: staticAddress.qrCodeUrl || '',
-              expiresAt: Date.now() + 3600000,
+              expiresAt: new Date(order.created_at).getTime() + 3600000,
               payCurrency: payCurrency,
               payLink: storedPayUrl || fallbackPayLink,
               trackId: payment.track_id
@@ -256,7 +256,7 @@ function InvoiceContent() {
             address: '',
             amount: calculatedCryptoAmount, // Use calculated amount
             qrCodeUrl: '',
-            expiresAt: Date.now() + 3600000,
+            expiresAt: new Date(order.created_at).getTime() + 3600000,
             payCurrency: payCurrency,
             payLink: info?.payLink || storedPayUrl,
             trackId: payment.track_id
@@ -267,7 +267,7 @@ function InvoiceContent() {
             address: '',
             amount: calculatedCryptoAmount,
             qrCodeUrl: '',
-            expiresAt: Date.now() + 3600000,
+            expiresAt: new Date(order.created_at).getTime() + 3600000,
             payCurrency: payCurrency,
             payLink: '',
             trackId: ''
