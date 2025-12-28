@@ -348,7 +348,7 @@ export default function AdminInvoicesPage() {
                                         className="hover:bg-white/[0.02] transition-colors cursor-pointer"
                                         onClick={(e) => {
                                             if ((e.target as HTMLElement).closest('button, a, .copy-btn')) return;
-                                            window.location.href = `/admin/invoices/${ord.id}`
+                                            window.location.href = `/admin/invoices/${ord.payment?.track_id || ord.readable_id || ord.id}`
                                         }}
                                     >
                                         <td className="px-6 py-4">

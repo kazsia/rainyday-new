@@ -257,6 +257,8 @@ export async function adminGetOrder(id: string) {
     try {
         const supabase = await createAdminClient()
 
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+
         const { data, error } = await supabase
             .from("orders")
             .select(`
@@ -271,14 +273,25 @@ export async function adminGetOrder(id: string) {
                 deliveries (*),
                 invoices (*)
             `)
-            .eq("id", id)
-            .single()
+            .eq(isUuid ? "id" : "readable_id", id)
+            .maybeSingle() // Use maybeSingle to not throw on 0 rows
 
-        if (error) {
-            console.error("[ADMIN_GET_ORDER] Fetch error:", error)
-            return null
+        if (data) return data;
+
+        // Fallback: Try to find by Payment Track ID
+        if (!isUuid) {
+            const { data: payment } = await supabase
+                .from("payments")
+                .select("order_id")
+                .eq("track_id", id)
+                .maybeSingle()
+
+            if (payment?.order_id) {
+                return adminGetOrder(payment.order_id)
+            }
         }
-        return data
+
+        return null
     } catch (e) {
         console.error("[ADMIN_GET_ORDER_CRITICAL]", e)
         return null
