@@ -239,7 +239,10 @@ async function deliverDynamic(product: any, item: any, order: any, secret: strin
         .digest("hex")
 
     try {
-        const response = await fetch(item.variant?.webhook_url || product.webhook_url, {
+        const url = item.variant?.webhook_url || product.webhook_url
+        console.log(`[DYNAMIC_DELIVERY] Sending webhook to: ${url}`)
+
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
