@@ -45,7 +45,6 @@ import {
     Ban,
     Layers,
     Share2,
-    Activity,
     RotateCcw,
     GripHorizontal
 } from "lucide-react"
@@ -660,7 +659,7 @@ export default function EditProductPage() {
                                             {[
                                                 { id: "serials", title: "Serials", desc: "Delivers serial keys, codes, or text content.", icon: Layers },
                                                 { id: "service", title: "Service", desc: "Manual fulfillment with instructions.", icon: Share2 },
-                                                { id: "dynamic", title: "Dynamic", desc: "Delivers content from webhook.", icon: Activity }
+                                                { id: "dynamic", title: "Dynamic", desc: "Delivers content from webhook.", icon: Waveform }
                                             ].map((type) => (
                                                 <div
                                                     key={type.id}
