@@ -13,6 +13,8 @@ export interface CartItem {
     min_quantity?: number
     max_quantity?: number
     custom_fields?: any[]
+    is_unlimited?: boolean
+    delivery_type?: string
 }
 
 interface CartContextType {

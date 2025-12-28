@@ -39,7 +39,8 @@ import {
     Shuffle,
     Timer,
     CreditCard,
-    Ban
+    Ban,
+    Package
 } from "lucide-react"
 import { createProduct, getCategories } from "@/lib/db/products"
 import { uploadAsset } from "@/lib/db/settings"
@@ -71,6 +72,8 @@ export default function CreateProductPage() {
     const [isCustomFieldDialogOpen, setIsCustomFieldDialogOpen] = useState(false)
     const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null)
     const [fieldData, setFieldData] = useState({ name: "", placeholder: "", required: false })
+
+
     const [formData, setFormData] = useState({
         name: "",
         slug: "",
@@ -95,6 +98,7 @@ export default function CreateProductPage() {
 
         custom_fields: [] as any[],
         deliverable_selection_method: 'last', // 'last', 'first', 'random'
+        is_unlimited: false,
     })
 
     useEffect(() => {
@@ -146,18 +150,21 @@ export default function CreateProductPage() {
                 return
             }
 
-            await createProduct({
+            // 1. Create the product first
+            const product = await createProduct({
                 ...formData,
                 price: Number(formData.price),
                 slashed_price: formData.slashed_price ? Number(formData.slashed_price) : undefined,
-                stock_count: Number(formData.stock_count),
-
+                stock_count: Number(formData.stock_count) || 0,
+                is_unlimited: !!formData.is_unlimited,
                 category_id: (formData.category_id === "none" || formData.category_id === "") ? null : formData.category_id,
             })
+
             toast.success("Product created successfully")
             if (exitAfter) {
                 router.push("/admin/products")
             } else {
+                // Reset form
                 setFormData({
                     name: "",
                     slug: "",
@@ -179,12 +186,13 @@ export default function CreateProductPage() {
                     show_view_count: false,
                     show_sales_count: true,
                     show_sales_notifications: true,
-
                     custom_fields: [],
                     deliverable_selection_method: 'last',
+                    is_unlimited: false,
                 })
             }
         } catch (error) {
+            console.error("Create product error:", error)
             toast.error("Failed to create product")
         } finally {
             setIsSubmitting(false)
@@ -569,10 +577,97 @@ export default function CreateProductPage() {
 
 
 
+                            {/* Variants & Stock Section - Managed After Save */}
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                                <div className="p-6 border-b border-white/5 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                                        <Layers className="w-5 h-5 text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-white uppercase tracking-widest">Variants & Stock</h2>
+                                        <p className="text-[10px] text-white/30 mt-0.5">Create product options and manage stock</p>
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <div className="p-8 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                                        <Layers className="w-10 h-10 text-white/10 mx-auto mb-4" />
+                                        <h3 className="text-sm font-bold text-white/60 mb-2">Manage After Saving</h3>
+                                        <p className="text-xs text-white/40 max-w-sm mx-auto">
+                                            Save your product first, then you can add variants, configure options, and manage stock from the Edit page.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+
                         </div>
 
                         {/* Sidebar */}
                         <div className="space-y-8">
+                            {/* Stock & Delivery Section */}
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                                <div className="p-6 border-b border-white/5 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                        <Package className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                    <h2 className="text-sm font-bold text-white uppercase tracking-widest">Stock & Delivery</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    {/* Product-level stock */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Stock Status</label>
+                                                <p className="text-[10px] text-white/20 font-bold leading-relaxed">
+                                                    {formData.delivery_type === 'serials'
+                                                        ? "Add your serial keys or licenses below (one per line)"
+                                                        : "Choose if this product has unlimited stock."}
+                                                </p>
+                                            </div>
+                                            {formData.delivery_type !== 'serials' && (
+                                                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2">
+                                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Unlimited</span>
+                                                    <Switch
+                                                        checked={formData.is_unlimited}
+                                                        onCheckedChange={(checked) => setFormData({ ...formData, is_unlimited: checked })}
+                                                        className="data-[state=checked]:bg-brand-primary"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Serials: Stock managed after save */}
+                                        {formData.delivery_type === 'serials' && (
+                                            <div className="p-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                                                <Package className="w-4 h-4 text-white/40" />
+                                                <span className="text-sm text-white/60">Stock keys are managed via the Edit page after saving the product.</span>
+                                            </div>
+                                        )}
+
+                                        {/* Dynamic/Service: Stock count */}
+                                        {formData.delivery_type !== 'serials' && !formData.is_unlimited && (
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Stock Count</label>
+                                                <Input
+                                                    type="number"
+                                                    className="bg-background/40 border-white/10 h-11 text-sm font-medium focus-visible:border-brand-primary/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                    value={formData.stock_count}
+                                                    onChange={e => setFormData({ ...formData, stock_count: parseInt(e.target.value) || 0 })}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {formData.is_unlimited && formData.delivery_type !== 'serials' && (
+                                            <div className="p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-xl flex items-center gap-3">
+                                                <Zap className="w-4 h-4 text-brand-primary animate-pulse" />
+                                                <span className="text-sm font-bold text-brand-primary">Unlimited Stock Enabled</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Currency & Tax Section */}
                             <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                                 <div className="p-6 border-b border-white/5 flex items-center gap-3">

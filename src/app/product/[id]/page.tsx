@@ -75,8 +75,9 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
   const minQty = selectedVariant?.min_quantity || product?.min_quantity || 1
   const maxQty = selectedVariant?.max_quantity || product?.max_quantity || 1000000
   const currentPrice = selectedVariant ? selectedVariant.price : product?.price
-  const currentStock = selectedVariant ? selectedVariant.stock_count : product?.stock_count
-  const isOutOfStock = currentStock <= 0
+  const currentStock = selectedVariant ? selectedVariant.stock_count : (product?.stock_count || 0)
+  const isUnlimited = selectedVariant ? selectedVariant.is_unlimited : (product?.is_unlimited || false)
+  const isOutOfStock = !isUnlimited && (currentStock <= 0)
   const totalPrice = currentPrice * quantity
 
   // Synchronize initial quantity with min_quantity and clamp when variant changes
@@ -84,9 +85,12 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     const currentMin = selectedVariant?.min_quantity || product?.min_quantity || 1
     const currentMax = selectedVariant?.max_quantity || product?.max_quantity || 1000000
     const stock = selectedVariant ? selectedVariant.stock_count : product?.stock_count || 0
+    const unlimited = selectedVariant ? selectedVariant.is_unlimited : product?.is_unlimited || false
 
-    setQuantity(prev => Math.min(Math.max(prev, currentMin), Math.min(currentMax, stock || 1)))
-  }, [selectedVariant?.id, product?.id])
+    const maxQtyToClamp = unlimited ? currentMax : Math.min(currentMax, stock || 1)
+
+    setQuantity(prev => Math.min(Math.max(prev, currentMin), maxQtyToClamp))
+  }, [selectedVariant?.id, product?.id, isUnlimited, currentStock])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -98,7 +102,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       toast.error(`Minimum order quantity is ${minQty}`)
       return
     }
-    if (quantity > Math.min(maxQty, currentStock)) {
+    if (!isUnlimited && quantity > Math.min(maxQty, currentStock)) {
       if (quantity > currentStock) {
         toast.error(`Only ${currentStock} items available in stock`)
       } else {
@@ -115,9 +119,11 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       image: product.image_url,
       variantId: selectedVariant?.id,
       variantName: selectedVariant?.name,
-      min_quantity: product.min_quantity,
-      max_quantity: product.max_quantity,
-      custom_fields: product.custom_fields
+      min_quantity: minQty,
+      max_quantity: maxQty,
+      custom_fields: product.custom_fields,
+      is_unlimited: isUnlimited,
+      delivery_type: selectedVariant?.delivery_type || product.delivery_type
     })
     toast.success(`Added ${quantity}x ${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''} to cart`)
     setTimeout(() => setIsAddingToCart(false), 600)
@@ -133,7 +139,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       toast.error(`Minimum order quantity is ${minQty}`)
       return
     }
-    if (quantity > Math.min(maxQty, currentStock)) {
+    if (!isUnlimited && quantity > Math.min(maxQty, currentStock)) {
       if (quantity > currentStock) {
         toast.error(`Only ${currentStock} items available in stock`)
       } else {
@@ -233,7 +239,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         product.status_color === 'yellow' ? "text-yellow-400" :
                           product.status_color === 'green' ? "text-green-400" :
                             "text-brand-primary"
-                  )}>{product.status_label || (currentStock > 0 ? "In Stock!" : "Out of Stock")}</span>
+                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited" : "In Stock"))}</span>
                 </div>
               </div>
 
@@ -287,12 +293,20 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
 
                 <div className="space-y-3">
                   {activeTab === "description" ? (
-                    descriptionPoints.map((item: string, i: number) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand-primary/40" />
-                        <span className="text-sm font-bold text-white/80">{item}</span>
+                    <>
+                      {descriptionPoints.map((item: string, i: number) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-brand-primary/40" />
+                          <span className="text-sm font-bold text-white/80">{item}</span>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2 pt-4">
+                        <div className={cn("w-1.5 h-1.5 rounded-full", isOutOfStock ? "bg-red-500" : "bg-emerald-500")} />
+                        <span className={cn("text-[13px] font-bold", isOutOfStock ? "text-red-400" : "text-emerald-400")}>
+                          {isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited Available" : `${currentStock} In Stock`)}
+                        </span>
                       </div>
-                    ))
+                    </>
                   ) : (
                     <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
                       <p className="text-sm text-white/40 leading-relaxed ">
@@ -344,7 +358,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                           product.status_color === 'yellow' ? "text-yellow-400" :
                             product.status_color === 'green' ? "text-green-400" :
                               "text-brand-primary"
-                    )}>{product.status_label || (currentStock > 0 ? "In Stock" : "Out of Stock")}</span>
+                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "Unlimited" : "In Stock"))}</span>
                   </div>
                 </div>
 
@@ -403,13 +417,17 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                   "text-xs font-black uppercase tracking-wider",
                                   selectedVariant?.id === variant.id ? "text-brand-primary" : "text-white/60"
                                 )}>{variant.name}</p>
-                                <p className="text-[10px] text-white/20 font-bold">{variant.stock_count} in stock</p>
-                              </div>
-                              <div className="text-right">
-                                <p className={cn(
-                                  "text-sm font-black",
-                                  selectedVariant?.id === variant.id ? "text-white" : "text-white/40"
-                                )}>${variant.price.toFixed(2)}</p>
+                                <div className="flex items-center justify-between gap-1 mt-1">
+                                  <span className="text-[14px] font-bold text-white tracking-tight">${variant.price.toFixed(2)}</span>
+                                  <span className={cn(
+                                    "text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md",
+                                    variant.is_unlimited
+                                      ? "bg-[#a4f8ff]/10 text-[#a4f8ff]"
+                                      : variant.stock_count <= 0 ? "bg-red-500/10 text-red-400" : "text-white/40"
+                                  )}>
+                                    {variant.is_unlimited ? "Unlimited" : (variant.stock_count <= 0 ? "Out of Stock" : `${variant.stock_count} in stock`)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             {selectedVariant?.id === variant.id && (
@@ -430,7 +448,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-[10px] font-black text-white/20 ml-1 uppercase tracking-[0.3em]">Quantity</p>
                       <p className="text-[10px] font-bold text-white/30">
-                        <span className="text-brand-primary">{currentStock}</span> available
+                        {isUnlimited ? <span className="text-brand-primary">Unlimited</span> : <><span className="text-brand-primary">{currentStock}</span> available</>}
                       </p>
                     </div>
                     <div className="relative group">
@@ -455,18 +473,22 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             value={quantity}
                             onChange={(e) => {
                               const val = parseInt(e.target.value) || minQty
-                              setQuantity(Math.min(Math.max(minQty, val), Math.min(maxQty, currentStock)))
+                              const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
+                              setQuantity(Math.min(Math.max(minQty, val), maxQtyToClamp))
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
                           />
                         </div>
                         <motion.button
-                          onClick={() => setQuantity(Math.min(quantity + 1, Math.min(maxQty, currentStock)))}
+                          onClick={() => {
+                            const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
+                            setQuantity(Math.min(quantity + 1, maxQtyToClamp))
+                          }}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity >= Math.min(maxQty, currentStock)}
+                          disabled={quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))}
                           className={cn(
                             "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity >= Math.min(maxQty, currentStock)
+                            quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))
                               ? "text-white/10 cursor-not-allowed"
                               : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                           )}

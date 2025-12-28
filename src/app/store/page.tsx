@@ -283,6 +283,8 @@ export default function StorePage() {
                                 category={product.category?.name || "General"}
                                 image={product.image_url || "/logo.png"}
                                 productCount={product.stock_count}
+                                delivery_type={product.delivery_type}
+                                is_unlimited={product.is_unlimited}
                                 badge_links={product.badge_links}
                                 status_label={product.status_label}
                                 status_color={product.status_color}
@@ -348,6 +350,8 @@ export default function StorePage() {
                                     category={product.category?.name || "General"}
                                     image={product.image_url || "/logo.png"}
                                     productCount={product.stock_count}
+                                    delivery_type={product.delivery_type}
+                                    is_unlimited={product.is_unlimited}
                                     badge_links={product.badge_links}
                                     status_label={product.status_label}
                                     status_color={product.status_color}

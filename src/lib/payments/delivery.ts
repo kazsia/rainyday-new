@@ -76,15 +76,34 @@ export async function deliverProduct(orderId: string) {
                 console.error(`Failed to claim stock for item ${item.product_id}:`, e)
                 throw e
             }
-        } else if (product.delivery_type === 'dynamic' && product.webhook_url) {
+        } else if (product.delivery_type === 'dynamic' && (variant?.webhook_url || product.webhook_url)) {
             try {
                 const dynamicAssets = await deliverDynamic(product, item, order, webhookSecret)
                 if (dynamicAssets) {
                     dynamicAssets.forEach(a => deliveredAssets.push(a))
                 }
+
+                // Decrement stock for dynamic if not unlimited
+                const isUnlimited = variant ? variant.is_unlimited : product.is_unlimited
+                if (!isUnlimited) {
+                    if (item.variant_id) {
+                        await supabase.rpc('increment_variant_stock', { p_variant_id: item.variant_id, p_amount: -item.quantity })
+                    } else {
+                        await supabase.rpc('increment_stock', { p_product_id: item.product_id, p_amount: -item.quantity })
+                    }
+                }
             } catch (e) {
                 console.error(`Dynamic delivery failed for product ${product.id}:`, e)
-                // We might want to mark this item for manual retry or notify admin
+            }
+        } else if (product.delivery_type === 'service') {
+            // Decrement stock for service if not unlimited
+            const isUnlimited = variant ? variant.is_unlimited : product.is_unlimited
+            if (!isUnlimited) {
+                if (item.variant_id) {
+                    await supabase.rpc('increment_variant_stock', { p_variant_id: item.variant_id, p_amount: -item.quantity })
+                } else {
+                    await supabase.rpc('increment_stock', { p_product_id: item.product_id, p_amount: -item.quantity })
+                }
             }
         }
     }

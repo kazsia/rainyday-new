@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/select"
 import { VariantManager } from "@/components/admin/products/variant-manager"
 import { BadgeManager } from "@/components/admin/products/badge-manager"
+import { StockDialog } from "@/components/admin/products/stock-dialog"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
     Dialog,
@@ -77,6 +78,8 @@ export default function EditProductPage() {
     const [isCustomFieldDialogOpen, setIsCustomFieldDialogOpen] = useState(false)
     const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null)
     const [fieldData, setFieldData] = useState({ name: "", placeholder: "", required: false })
+    const [isStockDialogOpen, setIsStockDialogOpen] = useState(false)
+    const [variantCount, setVariantCount] = useState(0)
     const [formData, setFormData] = useState({
         name: "",
         slug: "",
@@ -103,6 +106,7 @@ export default function EditProductPage() {
         custom_fields: [] as any[],
         sales_timespan: "all_time",
         deliverable_selection_method: 'last',
+        is_unlimited: false,
     })
 
     useEffect(() => {
@@ -139,6 +143,7 @@ export default function EditProductPage() {
                     custom_fields: productData.custom_fields || [],
                     sales_timespan: productData.sales_timespan || "all_time",
                     deliverable_selection_method: productData.deliverable_selection_method || 'last',
+                    is_unlimited: !!productData.is_unlimited,
                 })
             } catch (error) {
                 toast.error("Failed to load product data")
@@ -163,7 +168,8 @@ export default function EditProductPage() {
                 price: Number(formData.price),
                 slashed_price: formData.slashed_price ? Number(formData.slashed_price) : undefined,
                 stock_count: Number(formData.stock_count),
-                custom_fields: formData.custom_fields
+                custom_fields: formData.custom_fields,
+                is_unlimited: !!formData.is_unlimited
             })
             toast.success("Product updated successfully")
             if (exitAfter) {
@@ -512,8 +518,6 @@ export default function EditProductPage() {
                                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
                                         </div>
                                     </div>
-
-
                                 </div>
                             </div>
 
@@ -563,6 +567,97 @@ export default function EditProductPage() {
                                     </div>
 
 
+                                </div>
+                            </div>
+
+                            {/* Stock & Delivery Section */}
+                            <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                                <div className="px-5 py-4 border-b border-white/5 flex items-center gap-4 bg-[#0a0c14]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
+                                        <Package className="w-5 h-5 text-white/40" />
+                                    </div>
+                                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Stock & Delivery</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="space-y-1">
+                                                <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Stock Status</label>
+                                                <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
+                                                    {formData.delivery_type === 'serials'
+                                                        ? "Stock is managed via deliverables for serials."
+                                                        : "Choose if this product has unlimited stock."}
+                                                </p>
+                                            </div>
+                                            {formData.delivery_type !== 'serials' && (
+                                                <div className="flex items-center gap-3 bg-[#0f111a] border border-white/5 rounded-xl px-4 py-2">
+                                                    <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest">Unlimited</span>
+                                                    <Switch
+                                                        checked={formData.is_unlimited}
+                                                        onCheckedChange={(checked) => setFormData({ ...formData, is_unlimited: checked })}
+                                                        className="data-[state=checked]:bg-[#a4f8ff]"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {formData.delivery_type !== 'serials' && !formData.is_unlimited && (
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Stock Count</label>
+                                                <Input
+                                                    type="number"
+                                                    className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
+                                                    value={formData.stock_count}
+                                                    onChange={e => setFormData({ ...formData, stock_count: parseInt(e.target.value) })}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {formData.delivery_type === 'serials' && (
+                                            <div className="space-y-3">
+                                                <div className="p-4 bg-[#0f111a] border border-white/5 rounded-xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <Package className="w-4 h-4 text-white/20" />
+                                                        <span className="text-sm font-medium text-white/60">Current Stock Assets:</span>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-[#a4f8ff]">{formData.stock_count}</span>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => setIsStockDialogOpen(true)}
+                                                    className="w-full h-12 border-[#a4f8ff]/30 bg-[#a4f8ff]/5 hover:bg-[#a4f8ff]/10 text-[#a4f8ff] hover:text-[#8aefff] font-bold text-[11px] uppercase tracking-[0.1em] rounded-xl transition-all gap-2"
+                                                >
+                                                    <Layers className="w-4 h-4" />
+                                                    Manage Stock Assets
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        {formData.is_unlimited && formData.delivery_type !== 'serials' && (
+                                            <div className="p-4 bg-[#a4f8ff]/5 border border-[#a4f8ff]/20 rounded-xl flex items-center gap-3">
+                                                <Zap className="w-4 h-4 text-[#a4f8ff] animate-pulse" />
+                                                <span className="text-sm font-bold text-[#a4f8ff]">Unlimited Stock Enabled</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Delivery Method</label>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full h-14 px-4 pr-12 rounded-xl bg-[#0f111a] border border-white/5 text-sm font-bold text-white appearance-none focus:outline-none focus:border-[#a4f8ff]/50 transition-all cursor-pointer"
+                                                value={formData.delivery_type}
+                                                onChange={e => setFormData({ ...formData, delivery_type: e.target.value })}
+                                            >
+                                                <option value="serials">Serials (Manual/Bulk)</option>
+                                                <option value="dynamic">Dynamic (Webhook)</option>
+                                                <option value="service">Service (Manual fulfillment)</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -810,6 +905,17 @@ export default function EditProductPage() {
                         </div>
                     </DialogContent>
                 </Dialog>
+
+                {/* Stock Dialog for product-level stock management */}
+                <StockDialog
+                    productId={id as string}
+                    variantId={undefined}
+                    open={isStockDialogOpen}
+                    onOpenChange={(open) => setIsStockDialogOpen(open)}
+                    onStockChange={async (newCount) => {
+                        setFormData(prev => ({ ...prev, stock_count: newCount }))
+                    }}
+                />
             </>
         </AdminLayout >
     )

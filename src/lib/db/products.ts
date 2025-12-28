@@ -139,8 +139,9 @@ export async function getProduct(idOrSlug: string) {
         console.error(`[DIAGNOSTIC] PRODUCT_ID: ${idOrSlug}`, {
             name: data?.name,
             product_stock: data?.stock_count,
+            is_unlimited: data?.is_unlimited,
             badges_count: data?.badge_links?.length,
-            variants: data?.variants?.map((v: any) => ({ name: v.name, stock: v.stock_count }))
+            variants: data?.variants?.map((v: any) => ({ name: v.name, stock: v.stock_count, unlimited: v.is_unlimited }))
         })
         return data
     } catch (e) {
@@ -192,7 +193,8 @@ export async function createProduct(product: any) {
         webhook_url: product.webhook_url && product.webhook_url !== "" ? product.webhook_url : null,
         custom_fields: product.custom_fields || null,
         deliverable_selection_method: product.deliverable_selection_method || 'last',
-        disabled_payment_methods: product.disabled_payment_methods || []
+        disabled_payment_methods: product.disabled_payment_methods || [],
+        is_unlimited: !!product.is_unlimited
     }
 
     const { data, error } = await supabaseAdmin
@@ -228,6 +230,7 @@ export async function updateProduct(id: string, updates: any) {
     if (cleanUpdates.show_sales_count !== undefined) cleanUpdates.show_sales_count = !!cleanUpdates.show_sales_count
     if (cleanUpdates.show_sales_notifications !== undefined) cleanUpdates.show_sales_notifications = !!cleanUpdates.show_sales_notifications
     if (cleanUpdates.custom_fields !== undefined) cleanUpdates.custom_fields = cleanUpdates.custom_fields || null
+    if (cleanUpdates.is_unlimited !== undefined) cleanUpdates.is_unlimited = !!cleanUpdates.is_unlimited
     if (cleanUpdates.disabled_payment_methods !== undefined) {
         cleanUpdates.disabled_payment_methods = Array.isArray(cleanUpdates.disabled_payment_methods)
             ? cleanUpdates.disabled_payment_methods
@@ -492,7 +495,8 @@ export async function createVariant(productId: string, variant: any) {
             discord_group_id: variant.discord_group_id || null,
             discord_role_id: variant.discord_role_id || null,
             redirect_url: variant.redirect_url || null,
-            delivery_type: variant.delivery_type || 'serials'
+            delivery_type: variant.delivery_type || 'serials',
+            is_unlimited: !!variant.is_unlimited
         })
         .select()
 
@@ -523,6 +527,7 @@ export async function updateVariant(id: string, updates: any) {
     if (cleanUpdates.discord_role_id !== undefined) cleanUpdates.discord_role_id = cleanUpdates.discord_role_id || null
     if (cleanUpdates.redirect_url !== undefined) cleanUpdates.redirect_url = cleanUpdates.redirect_url || null
     if (cleanUpdates.delivery_type !== undefined) cleanUpdates.delivery_type = cleanUpdates.delivery_type || 'serials'
+    if (cleanUpdates.is_unlimited !== undefined) cleanUpdates.is_unlimited = !!cleanUpdates.is_unlimited
 
     const { data, error } = await supabaseAdmin
         .from('product_variants')

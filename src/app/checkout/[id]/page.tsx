@@ -125,7 +125,7 @@ function CheckoutMainContent() {
             return
           }
 
-          if (['paid', 'delivered', 'completed'].includes(order.status)) {
+          if (['paid', 'delivered', 'completed', 'expired'].includes(order.status)) {
             router.push(`/invoice?id=${order.readable_id}`)
             return
           }

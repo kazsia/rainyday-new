@@ -32,6 +32,7 @@ interface Variant {
     deliverable_selection_method: 'last' | 'first' | 'random'
     disabled_payment_methods: string[]
     delivery_type: 'serials' | 'service' | 'dynamic'
+    is_unlimited: boolean
 }
 
 interface VariantManagerProps {
@@ -159,30 +160,65 @@ function VariantItem({
                         </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="space-y-1">
-                            <label className="text-[14px] font-medium text-white ml-1 block">Stock</label>
-                            {(editData.delivery_type || variant.delivery_type || 'serials') === 'serials' ? (
-                                <p className="text-[12px] text-white/40 font-normal ml-1">Click on the button to set the stock for this variant.</p>
-                            ) : (
-                                <p className="text-[12px] text-white/40 font-normal ml-1">This variant has unlimited stock.</p>
-                            )}
+                            <label className="text-[14px] font-medium text-white ml-1 block">Stock Status</label>
+                            <p className="text-[12px] text-white/40 font-normal ml-1">
+                                {(editData.delivery_type || variant.delivery_type) === 'serials'
+                                    ? "Stock is managed via deliverables for serials."
+                                    : "Choose if this variant has unlimited stock or a fixed number."}
+                            </p>
                         </div>
+                        {(editData.delivery_type || variant.delivery_type) !== 'serials' && (
+                            <div className="flex items-center gap-3 bg-[#0b0d16] border border-[#1e202e] rounded-xl px-4 py-2 hover:border-white/10 transition-all">
+                                <span className="text-[12px] font-bold text-white/60">Unlimited Stock</span>
+                                <Switch
+                                    checked={editData.is_unlimited !== undefined ? editData.is_unlimited : variant.is_unlimited}
+                                    onCheckedChange={(checked) => {
+                                        setEditingId(variant.id)
+                                        setEditData({ ...editData, is_unlimited: checked })
+                                    }}
+                                    className="data-[state=checked]:bg-[#a4f8ff] data-[state=unchecked]:bg-white/10"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4">
                         {(editData.delivery_type || variant.delivery_type || 'serials') === 'serials' ? (
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setStockDialogVariant(variant)}
-                                className="h-12 px-4 border-[#a4f8ff] bg-transparent hover:bg-[#a4f8ff]/10 text-[#a4f8ff] hover:text-[#8aefff] font-medium text-[13px] gap-2 rounded-lg transition-all"
+                                className="h-12 px-6 border-[#a4f8ff] bg-transparent hover:bg-[#a4f8ff]/10 text-[#a4f8ff] hover:text-[#8aefff] font-medium text-[13px] gap-3 rounded-lg transition-all"
                             >
                                 <Box className="w-4 h-4" />
-                                Set Stock <span className="opacity-60 text-[12px]">({variant.stock_count})</span>
+                                Manage Stock Assets <span className="opacity-60 text-[12px]">({variant.stock_count} items)</span>
                             </Button>
                         ) : (
-                            <div className="h-12 px-4 border border-[#a4f8ff]/20 bg-[#a4f8ff]/5 text-[#a4f8ff] font-medium text-[13px] gap-2 rounded-lg flex items-center w-full md:w-auto">
-                                <Zap className="w-4 h-4" />
-                                Unlimited Stock
-                            </div>
+                            (editData.is_unlimited !== undefined ? editData.is_unlimited : variant.is_unlimited) ? (
+                                <div className="h-12 px-6 border border-[#a4f8ff]/20 bg-[#a4f8ff]/5 text-[#a4f8ff] font-medium text-[13px] gap-3 rounded-lg flex items-center shadow-lg shadow-[#a4f8ff]/5 transition-all">
+                                    <Zap className="w-4 h-4 animate-pulse" />
+                                    Unlimited Stock Enabled
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2 w-full md:w-auto">
+                                    <div className="relative group">
+                                        <Box className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-hover:text-[#a4f8ff] transition-colors" />
+                                        <Input
+                                            type="number"
+                                            value={editData.stock_count !== undefined ? editData.stock_count : variant.stock_count}
+                                            onChange={e => {
+                                                setEditingId(variant.id)
+                                                setEditData({ ...editData, stock_count: parseInt(e.target.value) })
+                                            }}
+                                            className="bg-[#0b0d16] border-[#1e202e] h-12 w-full md:w-[180px] text-sm font-medium rounded-lg pl-12 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all"
+                                            placeholder="0"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 uppercase tracking-widest">Qty</div>
+                                    </div>
+                                </div>
+                            )
                         )}
                     </div>
 
@@ -215,109 +251,7 @@ function VariantItem({
                         </div>
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Volume Discounts <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
 
-                        <div className="grid grid-cols-[1fr,1fr,auto] gap-3 items-start">
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    placeholder="Quantity..."
-                                    className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20 pr-10"
-                                    id={`vd-qty-${variant.id}`}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 uppercase">pcs</div>
-                            </div>
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    placeholder="Percentage..."
-                                    className="bg-[#0b0d16] border-[#1e202e] h-12 text-sm font-medium rounded-lg px-3 focus-visible:border-[#a4f8ff] focus-visible:ring-0 transition-all placeholder:text-white/20 pr-10"
-                                    id={`vd-pct-${variant.id}`}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 uppercase">% off</div>
-                            </div>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    const qtyEl = document.getElementById(`vd-qty-${variant.id}`) as HTMLInputElement
-                                    const pctEl = document.getElementById(`vd-pct-${variant.id}`) as HTMLInputElement
-                                    if (!qtyEl?.value || !pctEl?.value) return
-
-                                    const currentDiscounts = (editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []
-                                    const newDiscounts = [...currentDiscounts, { quantity: parseInt(qtyEl.value), percentage: parseFloat(pctEl.value) }]
-
-                                    setEditingId(variant.id)
-                                    setEditData({ ...editData, volume_discounts: newDiscounts })
-
-                                    qtyEl.value = ""
-                                    pctEl.value = ""
-                                }}
-                                className="h-12 w-10 p-0 rounded-lg bg-[#a4f8ff]/10 hover:bg-[#a4f8ff]/20 border border-[#a4f8ff]/20 text-[#a4f8ff]"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </Button>
-                        </div>
-
-                        {/* List of active discounts */}
-                        {((editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []).length > 0 && (
-                            <div className="space-y-2 mt-3">
-                                {((editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []).map((discount, idx) => (
-                                    <div key={idx} className="flex items-center justify-between bg-[#0b0d16] border border-[#1e202e] rounded-lg px-3 py-2">
-                                        <div className="flex items-center gap-4 text-xs font-medium text-white/80">
-                                            <span>{discount.quantity} pcs</span>
-                                            <span className="text-white/20">•</span>
-                                            <span>{discount.percentage}% off</span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const currentDiscounts = (editData.volume_discounts !== undefined ? editData.volume_discounts : variant.volume_discounts) || []
-                                                const newDiscounts = currentDiscounts.filter((_, i) => i !== idx)
-                                                setEditingId(variant.id)
-                                                setEditData({ ...editData, volume_discounts: newDiscounts })
-                                            }}
-                                            className="text-white/20 hover:text-red-400 transition-colors"
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-2 pt-2">
-                            <Checkbox
-                                id={`vd-disable-${variant.id}`}
-                                checked={editData.disable_volume_discounts_on_coupon !== undefined ? editData.disable_volume_discounts_on_coupon : variant.disable_volume_discounts_on_coupon}
-                                onCheckedChange={(checked) => {
-                                    setEditingId(variant.id)
-                                    setEditData({ ...editData, disable_volume_discounts_on_coupon: !!checked })
-                                }}
-                                className="border-white/10 data-[state=checked]:bg-[#a4f8ff] data-[state=checked]:border-[#a4f8ff]"
-                            />
-                            <label
-                                htmlFor={`vd-disable-${variant.id}`}
-                                className="text-[13px] font-medium text-white/80 select-none cursor-pointer"
-                            >
-                                Disable Volume Discounts when a Coupon is applied
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3 pt-2">
-                        <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Override Instructions <span className="text-[12px] text-white/40 font-normal ml-1">(optional)</span></label>
-                        <p className="text-[12px] text-white/40 font-normal ml-1 mb-2">Override the default instructions for this variant.</p>
-                        <RichTextEditor
-                            value={editData.instructions !== undefined ? editData.instructions || "" : variant.instructions || ""}
-                            onChange={(val) => {
-                                setEditingId(variant.id)
-                                setEditData({ ...editData, instructions: val })
-                            }}
-                            className="min-h-[150px]"
-                            placeholder="To use this product variant, follow these instructions..."
-                        />
-                    </div>
 
                     <div className="space-y-4 pt-4 border-t border-white/5">
                         <label className="text-[14px] font-medium text-white mb-2 ml-1 block">Deliverables Type</label>
@@ -526,6 +460,7 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                 price: 0,
                 slashed_price: null,
                 stock_count: 0,
+                is_unlimited: (deliveryType as 'serials' | 'service' | 'dynamic') !== 'serials',
                 min_quantity: 1,
                 max_quantity: 10,
                 webhook_url: null,
@@ -567,7 +502,8 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                 disable_volume_discounts_on_coupon: editData.disable_volume_discounts_on_coupon !== undefined ? editData.disable_volume_discounts_on_coupon : undefined,
                 deliverable_selection_method: editData.deliverable_selection_method !== undefined ? editData.deliverable_selection_method : undefined,
                 disabled_payment_methods: editData.disabled_payment_methods !== undefined ? editData.disabled_payment_methods : undefined,
-                delivery_type: editData.delivery_type !== undefined ? editData.delivery_type : undefined
+                delivery_type: editData.delivery_type !== undefined ? editData.delivery_type : undefined,
+                is_unlimited: editData.is_unlimited !== undefined ? editData.is_unlimited : undefined
             })
             toast.success("Variant updated")
             setEditingId(null)

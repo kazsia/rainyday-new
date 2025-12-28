@@ -176,6 +176,25 @@ export async function getOrder(id: string) {
 
     if (error) console.error("Error fetching order:", error)
 
+    // Auto-expire pending orders older than 1 hour
+    if (data && data.status === 'pending') {
+        const createdAt = new Date(data.created_at)
+        const now = new Date()
+        const hourInMs = 60 * 60 * 1000
+
+        if (now.getTime() - createdAt.getTime() > hourInMs) {
+            // Mark order as expired
+            const adminSupabase = await createAdminClient()
+            await adminSupabase
+                .from("orders")
+                .update({ status: 'expired' })
+                .eq("id", data.id)
+
+            data.status = 'expired'
+            console.log(`[AUTO_EXPIRE] Order ${data.readable_id} expired (older than 1 hour)`)
+        }
+    }
+
     if (data) return data
 
     // Fallback: Try to find by Payment Track ID (if not UUID)

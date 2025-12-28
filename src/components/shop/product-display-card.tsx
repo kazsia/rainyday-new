@@ -25,9 +25,11 @@ interface ProductCardProps {
     badge_links?: any[]
     status_label?: string
     status_color?: string
+    delivery_type?: string
+    is_unlimited?: boolean
 }
 
-const ProductCard = React.memo(({ id, title, price, category, image, slug, productCount = 1, priceRange, badge_links, status_label, status_color, description }: ProductCardProps & { description?: string }) => {
+const ProductCard = React.memo(({ id, title, price, category, image, slug, productCount = 1, priceRange, badge_links, status_label, status_color, delivery_type, is_unlimited, description }: ProductCardProps & { description?: string }) => {
     const { addToCart } = useCart()
     const { formatPrice } = useCurrency()
     const [imageLoaded, setImageLoaded] = React.useState(false)
@@ -40,7 +42,8 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
     const isToken = title.toLowerCase().includes('token')
     const hasDefaultImage = image === '/logo.png' || !image
 
-    const isOutOfStock = productCount <= 0
+    const effectiveIsUnlimited = is_unlimited || (delivery_type !== 'serials' && is_unlimited === undefined) // Fallback for transition
+    const isOutOfStock = !effectiveIsUnlimited && (productCount <= 0)
 
     const [isBuyingNow, setIsBuyingNow] = React.useState(false)
     const router = useRouter()
@@ -133,7 +136,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
                                     ? "bg-red-500/10 border-red-500/20 text-red-400"
                                     : "bg-brand-primary/10 border-brand-primary/20 text-brand-primary"
                             )}>
-                                {isOutOfStock ? "Out of Stock" : (status_label || "In Stock")}
+                                {isOutOfStock ? "Out of Stock" : (effectiveIsUnlimited ? "Unlimited" : (status_label || "In Stock"))}
                             </div>
                         </div>
 
