@@ -1371,6 +1371,42 @@ function CheckoutMainContent() {
                     </p>
                   </div>
 
+                  {/* Payment Timer */}
+                  <div className={cn(
+                    "p-4 rounded-xl flex items-center justify-between relative overflow-hidden transition-all",
+                    timeLeft === "EXPIRED"
+                      ? "bg-red-500/10 border border-red-500/20"
+                      : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                        ? "bg-orange-500/10 border border-orange-500/20"
+                        : "bg-white/[0.02] border border-white/5"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                        timeLeft === "EXPIRED"
+                          ? "bg-red-500/20"
+                          : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                            ? "bg-orange-500/20"
+                            : "bg-brand-primary/10"
+                      )}>
+                        <Clock className={cn(
+                          "w-4 h-4",
+                          timeLeft === "EXPIRED" ? "text-red-500" :
+                            parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400 animate-pulse" : "text-brand-primary"
+                        )} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Time Remaining</p>
+                        <p className={cn(
+                          "text-sm font-black tracking-tight",
+                          timeLeft === "EXPIRED" ? "text-red-500" :
+                            parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400" : "text-white"
+                        )}>{timeLeft}</p>
+                      </div>
+                    </div>
+                    <p className="text-[8px] font-bold text-white/20 uppercase tracking-wider">Invoice auto-expires</p>
+                  </div>
+
                   {/* Order Info Summary */}
                   <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
                     {/* Crypto Header */}
