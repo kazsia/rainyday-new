@@ -165,10 +165,21 @@ function InvoiceContent() {
     }
   }, [order?.id])
 
-  async function initializeData(showLoader = true) {
+  async function initializeData(showLoader = true, specificId?: string) {
+    // Determine the best ID to use:
+    // 1. A specifically provided ID
+    // 2. The UUID from the current order state (best for refreshes)
+    // 3. The ID from the search parameters
+    const targetId = specificId || order?.id || orderId
+
+    if (!targetId) {
+      console.warn("[Invoice] No order ID available for initialization")
+      return
+    }
+
     if (showLoader) setIsLoading(true)
     try {
-      const data = await getOrder(orderId!)
+      const data = await getOrder(targetId)
       if (data) {
         setOrder(data)
 
@@ -178,6 +189,7 @@ function InvoiceContent() {
         }
 
         // Force redirection to readable ID if current URL uses UUID
+        // Only do this if we haven't already loaded the order to avoid redundant history states
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId!)
         if (isUuid && data.readable_id) {
           const newUrl = window.location.pathname + `?id=${data.readable_id}`
@@ -186,13 +198,16 @@ function InvoiceContent() {
       }
     } catch (error) {
       console.error("Failed to initialize order:", error)
-      toast.error("Failed to load order details")
+      // Only show error toast if we don't already have order data
+      if (!order) {
+        toast.error("Failed to load order details")
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loadOrder = (showLoader = false) => initializeData(showLoader)
+  const loadOrder = (showLoader = false, specificId?: string) => initializeData(showLoader, specificId)
 
   const fetchPaymentDetails = async (targetOrder: any = order) => {
     if (!targetOrder?.id || targetOrder.status !== 'pending') return

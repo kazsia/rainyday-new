@@ -174,7 +174,8 @@ export async function getOrder(id: string) {
 
     const { data, error } = await query.maybeSingle()
 
-    if (error) console.error("Error fetching order:", error)
+    if (error) console.error(`[GET_ORDER] Error fetching order (ID: ${id}):`, error)
+    if (!data && !error) console.warn(`[GET_ORDER] No order found for ID: ${id} (isUuid: ${isUuid})`)
 
     // Auto-expire pending orders older than 1 hour
     if (data && data.status === 'pending') {

@@ -44,6 +44,7 @@ import { getOrder, updateOrderStatus } from "@/lib/db/orders"
 import { safeCreateOrder, safeUpdateOrder, safeCreatePayment } from "@/lib/actions/safe-checkout"
 import { createOxaPayWhiteLabel, getOxaPayPaymentInfo } from "@/lib/payments/oxapay" // Static import for reliability
 import { createClient } from "@/lib/supabase/client"
+import { TransactionStatus } from "@/lib/payments/blockchain-tracking"
 import { Suspense } from "react"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
@@ -788,12 +789,7 @@ function CheckoutMainContent() {
 
   // Poll for payment status
   const [paymentStatus, setPaymentStatus] = React.useState<'pending' | 'processing' | 'completed' | 'expired'>('pending')
-  const [blockchainStatus, setBlockchainStatus] = React.useState<{
-    detected: boolean
-    confirmations: number
-    txId?: string
-    status: 'waiting' | 'detected' | 'confirmed' | 'failed'
-  } | null>(null)
+  const [blockchainStatus, setBlockchainStatus] = React.useState<TransactionStatus | null>(null)
 
   // Effect to handle Realtime status updates
   React.useEffect(() => {
