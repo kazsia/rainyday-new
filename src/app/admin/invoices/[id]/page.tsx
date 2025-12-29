@@ -64,12 +64,51 @@ export default function AdminInvoiceDetailsPage() {
     }
   }, [params.id])
 
+  // Poll for missing TXIDs
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    let isPolling = false
+
+    // Check if we need to poll
+    const shouldPoll = order && !['paid', 'completed', 'delivered'].includes(order.status) &&
+      order.payments?.some((p: any) => p.track_id && !p.tx_id)
+
+    if (shouldPoll) {
+      interval = setInterval(async () => {
+        if (isPolling) return
+        isPolling = true
+
+        try {
+          // Find payments that need syncing
+          const paymentsToSync = order.payments.filter((p: any) => p.track_id && !p.tx_id)
+          if (paymentsToSync.length > 0) {
+            // Sync them silently
+            const results = await Promise.all(paymentsToSync.map((p: any) => syncPaymentTxId(p.id)))
+
+            // If any succeeded, reload the order to show new TXID
+            if (results.some(r => r.success)) {
+              await loadOrder(order.id)
+              toast.success("Transaction detected! Updating...")
+            }
+          }
+        } catch (error) {
+          console.error(error)
+        } finally {
+          isPolling = false
+        }
+      }, 1000) // Poll every 1s (Realtime)
+    }
+
+    return () => clearInterval(interval)
+  }, [order])
+
   async function loadOrder(id: string) {
     try {
       let data = await adminGetOrder(id)
 
       // Auto-sync missing TXIDs
       if (data?.payments) {
+        // Initial sync
         const paymentsToSync = data.payments.filter((p: any) => p.track_id && !p.tx_id)
         if (paymentsToSync.length > 0) {
           const results = await Promise.all(paymentsToSync.map((p: any) => syncPaymentTxId(p.id)))
@@ -82,6 +121,7 @@ export default function AdminInvoiceDetailsPage() {
       }
 
       setOrder(data)
+
 
       // Standardize URL to readable_id if current param is a UUID
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -580,14 +620,22 @@ export default function AdminInvoiceDetailsPage() {
                         {!pay.tx_id && pay.track_id && (
                           <div className="flex flex-col gap-1">
                             <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Track ID</span>
-                            <button
-                              onClick={() => handleSyncPayment(pay.id)}
-                              disabled={isSyncing === pay.id}
-                              className="w-fit text-[8px] font-black text-brand hover:text-brand/80 uppercase tracking-widest flex items-center gap-1 transition-colors"
-                            >
-                              <RefreshCw className={cn("w-2.5 h-2.5", isSyncing === pay.id && "animate-spin")} />
-                              Sync TXID
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleSyncPayment(pay.id)}
+                                disabled={isSyncing === pay.id}
+                                className="w-fit text-[8px] font-black text-brand hover:text-brand/80 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                              >
+                                <RefreshCw className={cn("w-2.5 h-2.5", isSyncing === pay.id && "animate-spin")} />
+                                Manual Sync
+                              </button>
+                              {(!pay.tx_id && !['paid', 'completed'].includes(order.status)) && (
+                                <span className="flex items-center gap-1.5 text-[8px] font-black text-emerald-500 animate-pulse border border-emerald-500/20 px-1.5 py-0.5 rounded bg-emerald-500/5">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                                  REALTIME SYNC
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
