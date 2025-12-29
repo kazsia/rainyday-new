@@ -46,7 +46,7 @@ const getPaymentIcon = (provider: string) => {
 
 // Get blockchain explorer URL for either a transaction ID or address
 const getExplorerUrl = (idOrAddress: string, provider: string, isAddress = false) => {
-  if (!idOrAddress) return null
+  if (!idOrAddress) return undefined
   const p = provider.toLowerCase()
 
   // Detect if input is an address (not a tx hash) - addresses are shorter and have specific formats
