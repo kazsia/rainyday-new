@@ -383,7 +383,7 @@ function CheckoutMainContent() {
 
       if (result.valid && result.discount) {
         setAppliedCoupon(result.discount)
-        toast.success(result.message)
+        toast.success(result.message || "Coupon applied!")
       } else {
         setAppliedCoupon(null)
         toast.error(result.message || "Invalid coupon")
