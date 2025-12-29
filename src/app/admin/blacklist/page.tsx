@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { getBlacklist, createBlacklistEntry, deleteBlacklistEntry, type BlacklistEntry, type BlacklistType, type MatchType } from "@/lib/db/blacklist"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import {
   Dialog,
   DialogContent,

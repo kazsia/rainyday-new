@@ -22,7 +22,7 @@ import { useState } from "react"
 import { adminGetOrders } from "@/lib/db/orders"
 import { getCustomers } from "@/lib/actions/admin-customers"
 import { getProducts } from "@/lib/db/products"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 

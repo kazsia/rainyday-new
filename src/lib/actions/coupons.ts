@@ -118,7 +118,8 @@ export async function validateCoupon(
 }
 
 export async function incrementCouponUsage(code: string) {
-    const supabase = await createClient()
+    const { createAdminClient } = await import("@/lib/supabase/server")
+    const supabase = await createAdminClient()
     const { data: coupon, error: fetchError } = await supabase
         .from("coupons")
         .select("id, used_count")

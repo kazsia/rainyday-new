@@ -35,7 +35,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import { getCustomers, updateCustomerStatus, updateCustomerRole, forceUserLogout } from "@/lib/actions/admin-customers"
 import { CustomerDetailDrawer } from "@/components/admin/customers/customer-detail-drawer"

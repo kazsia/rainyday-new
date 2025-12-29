@@ -24,9 +24,21 @@ export async function deliverProduct(orderId: string) {
         .single()
 
     if (orderError) throw orderError
-    if (order.status !== 'paid') {
-        console.warn(`Order ${orderId} is not in 'paid' status. Current: ${order.status}`)
+    if (!['paid', 'delivered', 'completed'].includes(order.status)) {
+        console.warn(`Order ${orderId} is not in a deliverable status. Current: ${order.status}`)
         return
+    }
+
+    // 1b. Idempotency Check: Don't create duplicate deliveries
+    const { data: existingDelivery } = await supabase
+        .from("deliveries")
+        .select("id")
+        .eq("order_id", orderId)
+        .maybeSingle()
+
+    if (existingDelivery) {
+        console.log(`[DELIVERY] Delivery already exists for order ${orderId}, skipping.`)
+        return { success: true, alreadyProcessed: true }
     }
 
     const deliveredAssets: any[] = []
@@ -62,9 +74,13 @@ export async function deliverProduct(orderId: string) {
 
         if (product.delivery_type === 'serials') {
             try {
+                // IMPORTANT: If Stock & Delivery is enabled (payment_restrictions_enabled), 
+                // we use product-level stock (variant_id = null), not variant stock.
+                const effectiveVariantId = product.payment_restrictions_enabled ? null : (item.variant_id || null)
+
                 const { data: assets, error: rpcError } = await supabase.rpc('claim_stock', {
                     p_product_id: item.product_id,
-                    p_variant_id: item.variant_id || null,
+                    p_variant_id: effectiveVariantId,
                     p_quantity: item.quantity,
                     p_order_id: orderId,
                     p_selection_method: product.deliverable_selection_method || 'last'
@@ -78,6 +94,7 @@ export async function deliverProduct(orderId: string) {
                 console.error(`Failed to claim stock for item ${item.product_id}:`, e)
                 throw e
             }
+
         } else if (product.delivery_type === 'dynamic' && (variant?.webhook_url || product.webhook_url)) {
             try {
                 const dynamicAssets = await deliverDynamic(product, item, order, webhookSecret)

@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getCustomerDetails, updateCustomerStatus, updateCustomerRole, forceUserLogout, updateCustomerBalance } from "@/lib/actions/admin-customers"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 
 interface CustomerDetailDrawerProps {

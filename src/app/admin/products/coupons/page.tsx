@@ -22,7 +22,7 @@ import {
     toggleCouponStatus
 } from "@/lib/db/coupons"
 import { getProducts } from "@/lib/db/products"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import {
     Dialog,

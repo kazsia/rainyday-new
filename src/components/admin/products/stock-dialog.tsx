@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { Loader2, X, Save, Trash2, Copy, RefreshCcw } from "lucide-react"
 import { addStock, getStock, deleteStock, replaceStock, StockItem } from "@/lib/db/stock"
 import {

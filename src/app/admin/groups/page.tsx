@@ -21,7 +21,7 @@ import {
     deleteCategory,
     updateCategory
 } from "@/lib/db/products"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 // Use relative imports for UI components to avoid circular dependencies if any
 import {

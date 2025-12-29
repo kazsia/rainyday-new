@@ -17,7 +17,7 @@ import {
   createCategory,
   deleteCategory
 } from "@/lib/db/products"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import {
   GripVertical,
   Plus,

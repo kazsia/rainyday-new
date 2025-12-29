@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Filter, Loader2, MessageSquare, ExternalLink, Send, User, ShieldCheck } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 
 export default function AdminTicketsPage() {

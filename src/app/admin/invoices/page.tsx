@@ -23,7 +23,7 @@ import { adminGetOrders, updateOrderStatus, markOrderAsPaid, retriggerDelivery }
 import { Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import {
     DropdownMenu,
     DropdownMenuContent,

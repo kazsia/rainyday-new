@@ -244,7 +244,7 @@ export async function updateOrderStatus(
     id: string,
     status: 'pending' | 'paid' | 'delivered' | 'completed' | 'cancelled' | 'refunded' | 'expired'
 ) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     const { data, error } = await supabase
         .from("orders")

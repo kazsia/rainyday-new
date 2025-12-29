@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Star, MessageSquareQuote, Send, CheckCircle2, Loader2 } from "lucide-react"
+import { Star, Send, Loader2, Rocket } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { submitFeedback } from "@/lib/db/feedbacks"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface FeedbackFormProps {
   invoiceId: string
@@ -17,7 +17,6 @@ interface FeedbackFormProps {
 export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProps) {
   const [rating, setRating] = React.useState(0)
   const [hoverRating, setHoverRating] = React.useState(0)
-  const [title, setTitle] = React.useState("")
   const [message, setMessage] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isSubmitted, setIsSubmitted] = React.useState(false)
@@ -28,10 +27,6 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
       toast.error("Please select a rating")
       return
     }
-    if (!message.trim()) {
-      toast.error("Please enter your feedback message")
-      return
-    }
 
     setIsSubmitting(true)
     try {
@@ -39,8 +34,7 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
         invoice_id: invoiceId,
         order_id: orderId,
         rating,
-        title: title.trim() || undefined,
-        message: message.trim()
+        message: message.trim() || undefined
       })
       setIsSubmitted(true)
       toast.success("Thank you for your feedback!")
@@ -52,92 +46,153 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
     }
   }
 
-  if (isSubmitted) {
-    return (
-      <Card className="bg-brand-primary/5 border-brand-primary/20 p-8 rounded-[2rem] text-center space-y-4 animate-in fade-in zoom-in duration-500">
-        <div className="w-16 h-16 bg-brand-primary/20 rounded-full flex items-center justify-center mx-auto text-brand-primary">
-          <CheckCircle2 size={32} />
-        </div>
-        <h3 className="text-xl font-black text-white uppercase tracking-tight">Feedback Submitted</h3>
-        <p className="text-white/60 font-medium">Thank you for helping us improve!</p>
-      </Card>
-    )
+  const getRatingText = () => {
+    if (hoverRating || rating) {
+      const texts = ["", "Poor", "Fair", "Good", "Great", "Excellent"]
+      return texts[hoverRating || rating]
+    }
+    return "Tap to rate"
   }
 
   return (
-    <Card className="bg-white/[0.02] border border-white/5 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden group">
-      <div className="absolute -top-6 -right-6 p-8 text-white/[0.02] group-hover:text-white/[0.04] transition-colors duration-500">
-        <MessageSquareQuote size={120} />
-      </div>
+    <div className="w-full max-w-md mx-auto">
+      <AnimatePresence mode="wait">
+        {isSubmitted ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="text-center py-12 px-6 space-y-6"
+          >
+            {/* Success Illustration */}
+            <motion.div
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="relative w-32 h-32 mx-auto"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#a4f8ff]/20 to-emerald-500/20 rounded-full blur-2xl" />
+              <div className="relative w-full h-full bg-gradient-to-br from-[#a4f8ff]/10 to-[#5bc4d0]/10 rounded-full flex items-center justify-center border border-[#a4f8ff]/20">
+                <Rocket className="w-14 h-14 text-[#a4f8ff]" />
+              </div>
+            </motion.div>
 
-      <form onSubmit={handleSubmit} className="relative z-10 space-y-8">
-        <div className="space-y-4">
-          <h3 className="text-xl font-black text-white uppercase tracking-tight">Rate your experience</h3>
-          <div className="flex gap-3">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setRating(star)}
-                onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(0)}
-                className="transition-all duration-300 transform hover:scale-125"
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-2"
+            >
+              <h3 className="text-2xl font-bold text-white">Thank you!</h3>
+              <p className="text-white/50 text-sm leading-relaxed">
+                By making your voice heard, you help us<br />
+                improve our service.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Button
+                variant="outline"
+                className="px-6 py-2 rounded-full border-[#a4f8ff]/30 text-[#a4f8ff] hover:bg-[#a4f8ff]/10"
+                onClick={() => setIsSubmitted(false)}
               >
-                <Star
-                  className={cn(
-                    "w-8 h-8 transition-colors",
-                    star <= (hoverRating || rating)
-                      ? "fill-[#FFD700] text-[#FFD700]"
-                      : "text-white/10 hover:text-white/30"
-                  )}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-2">Headline (Optional)</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Great experience! or Amazing delivery speed"
-              className="w-full bg-white/[0.02] border border-white/5 rounded-xl px-6 py-4 text-white placeholder:text-white/10 focus:outline-none focus:border-brand-primary/30 transition-all font-medium"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-2">Your Thoughts</label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Share your experience with the community..."
-              required
-              className="w-full min-h-[120px] bg-white/[0.02] border border-white/5 rounded-xl px-6 py-4 text-white placeholder:text-white/10 focus:outline-none focus:border-brand-primary/30 transition-all font-medium resize-none"
-            />
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={isSubmitting || rating === 0}
-          className="w-full h-14 bg-[#a4f8ff] hover:bg-[#8ae6ed] text-black font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:scale-100"
-        >
-          {isSubmitting ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Submitting...</span>
+                Submit Another
+              </Button>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onSubmit={handleSubmit}
+            className="space-y-8 py-6"
+          >
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold text-white">Give feedback</h3>
+              <p className="text-sm text-white/40">How did we do?</p>
             </div>
-          ) : (
-            <>
-              Submit Review
-              <Send size={18} />
-            </>
-          )}
-        </Button>
-      </form>
-    </Card>
+
+            {/* Star Rating */}
+            <div className="space-y-3">
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 transition-transform duration-200 hover:scale-110 active:scale-95"
+                  >
+                    <Star
+                      className={cn(
+                        "w-10 h-10 transition-all duration-200",
+                        star <= (hoverRating || rating)
+                          ? "fill-[#a4f8ff] text-[#a4f8ff] drop-shadow-[0_0_8px_rgba(164,248,255,0.5)]"
+                          : "text-white/20 hover:text-white/40"
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-center text-sm font-medium text-[#a4f8ff]/70">
+                {getRatingText()}
+              </p>
+            </div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-white/40 ml-1">
+                Care to share more about it? (Optional)
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Tell us about your experience..."
+                rows={4}
+                className="w-full bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#a4f8ff]/30 focus:ring-1 focus:ring-[#a4f8ff]/20 transition-all resize-none"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isSubmitting || rating === 0}
+              className={cn(
+                "w-full h-12 rounded-full font-semibold text-sm uppercase tracking-wider transition-all",
+                rating > 0
+                  ? "bg-[#a4f8ff] hover:bg-[#8ae6ed] text-black"
+                  : "bg-white/5 text-white/30 cursor-not-allowed"
+              )}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Submitting...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>Publish Feedback</span>
+                  <Send className="w-4 h-4" />
+                </div>
+              )}
+            </Button>
+
+            {/* Footer Note */}
+            <p className="text-center text-[10px] text-white/30">
+              Your review helps other customers make informed decisions.
+            </p>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }

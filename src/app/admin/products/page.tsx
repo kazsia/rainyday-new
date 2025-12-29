@@ -33,7 +33,7 @@ import {
     cloneProduct,
     archiveProduct
 } from "@/lib/db/products"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import Link from "next/link"

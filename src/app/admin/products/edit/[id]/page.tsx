@@ -48,7 +48,7 @@ import {
 } from "lucide-react"
 import { getProduct, updateProduct, deleteProduct, getCategories } from "@/lib/db/products"
 import { uploadAsset } from "@/lib/db/settings"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import {
     Select,

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Mail, Send, ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { createTicket } from "@/lib/db/tickets"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { useRouter } from "next/navigation"
 
 export default function CreateTicketPage() {

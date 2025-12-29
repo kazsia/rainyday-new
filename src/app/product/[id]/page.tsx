@@ -25,7 +25,7 @@ import { Button as ThreeDButton } from "@/components/ui/3d-button"
 
 import { useCart } from "@/context/cart-context"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 
 import { getProduct } from "@/lib/db/products"
 
@@ -144,15 +144,15 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
       price: currentPrice,
       quantity: quantity,
       image: product.image_url,
-      variantId: selectedVariant?.id,
-      variantName: selectedVariant?.name,
+      variantId: effectiveVariant?.id,
+      variantName: effectiveVariant?.name,
       min_quantity: minQty,
       max_quantity: maxQty,
       custom_fields: product.custom_fields,
       is_unlimited: isUnlimited,
-      delivery_type: selectedVariant?.delivery_type || product.delivery_type
+      delivery_type: effectiveVariant?.delivery_type || product.delivery_type
     })
-    toast.success(`Added ${quantity}x ${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''} to cart`)
+    toast.success(`Added ${quantity}x ${product.name}${effectiveVariant ? ` (${effectiveVariant.name})` : ''} to cart`)
     setTimeout(() => setIsAddingToCart(false), 600)
   }
 
@@ -181,7 +181,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
         total: currentPrice * quantity,
         items: [{
           product_id: product.id,
-          variant_id: selectedVariant?.id || null,
+          variant_id: effectiveVariant?.id || null,
           quantity: quantity,
           price: currentPrice
         }],

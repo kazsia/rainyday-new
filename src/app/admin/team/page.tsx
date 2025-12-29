@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { getTeamMembers, inviteMember, removeMember, transferOwnership, updateMemberPermissions, type TeamMember } from "@/lib/db/team"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import {
     Dialog,
     DialogContent,

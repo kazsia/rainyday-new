@@ -34,7 +34,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/context/cart-context"
 import { useCurrency } from "@/context/currency-context"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/layout/logo"
 import { SparklesText } from "@/components/ui/sparkles-text"
@@ -541,7 +541,7 @@ function CheckoutMainContent() {
         const resolution = await completeFreeOrder(order.id, appliedCoupon?.code)
         if (resolution.success) {
           clearCart()
-          toast.success("Order completed! Your items are being delivered.")
+          toast.delivery("🎉 Order completed! Your items are being delivered.")
           router.push(`/invoice?id=${order.readable_id || order.id}`)
           return
         } else {
@@ -769,7 +769,7 @@ function CheckoutMainContent() {
 
         setStep(2)
         clearCart()
-        toast.success("Order created! Processing payment...")
+        toast.info("🚀 Order created! Awaiting your payment...")
         return
       }
 
@@ -810,7 +810,7 @@ function CheckoutMainContent() {
           const newStatus = payload.new.status
           if (['paid', 'delivered', 'completed'].includes(newStatus)) {
             setPaymentStatus('completed')
-            toast.success("Payment confirmed via Realtime!")
+            toast.payment("🎉 Payment confirmed!")
             setTimeout(() => {
               router.push(`/invoice?id=${orderId || existingOrder.readable_id}`)
             }, 1000)
@@ -841,7 +841,7 @@ function CheckoutMainContent() {
             })
             if (paymentStatus === 'pending') {
               setPaymentStatus('processing')
-              toast.success("Payment detected via Realtime!")
+              toast.info("📡 Payment detected! Confirming...")
             }
           }
         }
@@ -895,7 +895,7 @@ function CheckoutMainContent() {
           if (['paid', 'delivered', 'completed'].includes(currentOrder.status)) {
             hasCompleted = true
             setPaymentStatus('completed')
-            toast.success("Order confirmed!")
+            toast.payment("✅ Order confirmed! Processing your delivery...")
             clearInterval(pollInterval)
             setTimeout(() => {
               router.push(`/invoice?id=${orderId}`)
@@ -917,7 +917,7 @@ function CheckoutMainContent() {
           if (bcStatus.detected && !hasShownDetectedToast) {
             hasShownDetectedToast = true
             setPaymentStatus('processing')
-            toast.success("Payment detected on blockchain! Waiting for confirmations...")
+            toast.info("📡 Payment detected on blockchain! Waiting for confirmations...")
 
             // ACTIVE SYNC: Trigger server update immediately on detection
             try {
@@ -945,7 +945,7 @@ function CheckoutMainContent() {
                 if (result.success && result.status === 'confirmed') {
                   hasCompleted = true
                   setPaymentStatus('completed')
-                  toast.success("Blockchain confirmed! Finalizing...")
+                  toast.payment("✅ Blockchain confirmed! Processing delivery...")
                   clearInterval(pollInterval)
                   setTimeout(() => {
                     router.push(`/invoice?id=${orderId}`)
@@ -964,7 +964,7 @@ function CheckoutMainContent() {
           if (info.status === 'Paid' || info.status === 'Confirming') {
             if (!hasShownDetectedToast && !hasCompleted) {
               hasShownDetectedToast = true
-              toast.success("Payment detected! Confirming on blockchain...")
+              toast.info("📡 Payment detected! Confirming on blockchain...")
             }
             setPaymentStatus('processing')
           }
@@ -983,7 +983,7 @@ function CheckoutMainContent() {
             }
 
             setPaymentStatus('completed')
-            toast.success("Payment Confirmed! Redirecting...")
+            toast.payment("🎉 Payment Confirmed! Redirecting...")
             clearInterval(pollInterval)
             setTimeout(() => {
               router.push(`/invoice?id=${orderId}`)
@@ -1020,11 +1020,11 @@ function CheckoutMainContent() {
       if (info) {
         if (info.status === 'Paid' || info.status === 'Confirming') {
           setPaymentStatus('processing')
-          toast.success("Payment detected! Confirming on blockchain...")
+          toast.info("📡 Payment detected! Confirming on blockchain...")
         }
         if (info.status === 'Paid' && info.txID) {
           setPaymentStatus('completed')
-          toast.success("Payment Confirmed! Redirecting...")
+          toast.payment("🎉 Payment Confirmed! Redirecting...")
           setTimeout(() => {
             router.push(`/invoice?id=${orderId}`)
           }, 500)
@@ -1190,40 +1190,40 @@ function CheckoutMainContent() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/5 space-y-2 bg-gradient-to-t from-black/20 to-transparent">
-            <div className="space-y-3">
-              {/* Subtotal - quieter */}
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/15">
-                <span className="flex items-center gap-2">Subtotal</span>
-                <span className="text-white/30 tracking-normal">{formatPrice(subtotal)}</span>
-              </div>
+          <div className="pt-6 border-t border-white/5 space-y-4">
+            {/* Subtotal Row */}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-white/40">Subtotal</span>
+              <span className="text-sm text-white/60">{formatPrice(subtotal)}</span>
+            </div>
 
-              {appliedCoupon && (
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary/80">
-                  <span className="flex items-center gap-2">Discount <span className="text-white/30">({appliedCoupon.code})</span></span>
-                  <span className="tracking-normal">-{formatPrice(discountAmount)}</span>
-                </div>
-              )}
-
-              {/* Processing fee - very quiet */}
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/10">
-                <span className="flex items-center gap-2">Processing Fee</span>
-                <span className="tracking-normal">$0.00</span>
+            {appliedCoupon && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-emerald-400">Discount <span className="text-white/30">({appliedCoupon.code})</span></span>
+                <span className="text-sm text-emerald-400">-{formatPrice(discountAmount)}</span>
               </div>
+            )}
 
-              {/* TOTAL - Most dominant */}
-              <div className="flex justify-between items-center pt-2 mt-1 border-t border-white/5">
-                <span className="text-sm font-black tracking-widest text-white uppercase">Total</span>
-                <div className="text-right">
-                  <SparklesText
-                    text={formatPrice(finalTotal)}
-                    className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_25px_rgba(164,248,255,0.3)]"
-                    sparklesCount={10}
-                  />
-                </div>
-              </div>
+            {/* Processing Fee Row */}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-white/30">Processing Fee</span>
+              <span className="text-sm text-white/40">$0.00</span>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/5" />
+
+            {/* Total Row */}
+            <div className="flex justify-between items-center">
+              <span className="text-base font-bold text-white">Total</span>
+              <SparklesText
+                text={formatPrice(finalTotal)}
+                className="text-2xl font-bold text-white"
+                sparklesCount={8}
+              />
             </div>
           </div>
+
         </div>
 
         {/* Right Panel - Steps & Payment */}

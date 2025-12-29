@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { Loader2, Trash2, Plus, Edit2, Save, X, Layers, ChevronDown, ChevronUp, GripVertical, Box, Zap, Share2, Activity } from "lucide-react"
 import { getVariants, createVariant, updateVariant, deleteVariant, reorderVariants, updateProduct } from "@/lib/db/products"
 import { cn } from "@/lib/utils"

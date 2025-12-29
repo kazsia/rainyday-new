@@ -110,29 +110,42 @@ export async function markOrderAsPaid(
 }
 
 export async function completeFreeOrder(orderId: string, couponCode?: string) {
+    console.log(`[FREE_ORDER] Starting completion for order ${orderId}, coupon: ${couponCode}`)
     try {
         // 1. Create a payment record marked as completed
+        console.log("[FREE_ORDER] Step 1: Creating zero-amount payment record")
         const payment = await createPayment({
             order_id: orderId,
             provider: "Coupon",
             amount: 0,
             currency: "USD",
         })
+        console.log(`[FREE_ORDER] Payment record created: ${payment.id}`)
 
         // 2. Update payment status to completed, which triggers delivery and notifications
+        console.log("[FREE_ORDER] Step 2: Updating payment status to 'completed'")
         await updatePaymentStatus(payment.id, "completed", {
             provider: "Coupon",
             payload: { type: "free_order_via_coupon", couponCode }
         })
+        console.log("[FREE_ORDER] Payment status updated")
 
         // 3. Increment coupon usage if provided
         if (couponCode) {
-            await incrementCouponUsage(couponCode)
+            console.log(`[FREE_ORDER] Step 3: Incrementing usage for coupon ${couponCode}`)
+            try {
+                await incrementCouponUsage(couponCode)
+                console.log("[FREE_ORDER] Coupon usage incremented")
+            } catch (couponError) {
+                console.error("[FREE_ORDER] Failed to increment coupon usage (non-fatal):", couponError)
+                // We don't fail the whole order if just the coupon count fails
+            }
         }
 
+        console.log("[FREE_ORDER] Completed successfully")
         return { success: true }
     } catch (error) {
-        console.error("Failed to complete free order:", error)
+        console.error("[FREE_ORDER] FATAL ERROR:", error)
         return { success: false, error: "Failed to complete order" }
     }
 }

@@ -36,7 +36,7 @@ import { getPaymentMethodsSettings, updatePaymentMethodsSettings, type PaymentMe
 import { DEFAULT_GATEWAY_CONFIGS } from "@/lib/gateway-constants"
 import { uploadAsset } from "@/lib/db/settings"
 import { DEFAULT_CRYPTO_LIST } from "@/lib/crypto-constants"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { Label } from "@/components/ui/label"
 import { Upload } from "lucide-react"

@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 
 import { Star, MessageSquareQuote, CheckCircle2, Copy, Download, ChevronDown, ExternalLink, Clock, User, Mail, CreditCard, Search, ShieldCheck, ArrowRight, Lock, QrCode, Wallet, Loader2, LockKeyhole, Ban } from "lucide-react"
 import { getOrder } from "@/lib/db/orders"
@@ -402,7 +402,7 @@ function InvoiceContent() {
           if (['paid', 'delivered', 'completed'].includes(currentOrder.status)) {
             hasCompleted = true
             setPaymentStatus('completed')
-            toast.success("Order confirmed! Finalizing...")
+            toast.payment("💳 Order confirmed! Processing your delivery...")
             clearInterval(pollInterval)
             loadOrder(false)
             return
@@ -437,7 +437,7 @@ function InvoiceContent() {
           if (bcStatus.detected && !hasShownDetectedToast && !hasCompleted) {
             hasShownDetectedToast = true
             setPaymentStatus('processing')
-            toast.success("Payment detected on blockchain! Waiting for confirmations...")
+            toast.info("📡 Payment detected on blockchain! Waiting for confirmations...")
 
             // ACTIVE SYNC: Trigger server update immediately on detection
             try {
@@ -457,7 +457,7 @@ function InvoiceContent() {
 
               if (result.success && result.status === 'confirmed') {
                 hasCompleted = true
-                toast.success("Blockchain confirmed! Finalizing...")
+                toast.payment("✅ Blockchain confirmed! Processing your delivery...")
                 setPaymentStatus('completed')
                 clearInterval(pollInterval)
                 loadOrder(false)
@@ -483,7 +483,7 @@ function InvoiceContent() {
           if (info.status === 'Paid' || info.status === 'Confirming') {
             if (!hasShownDetectedToast && !hasCompleted) {
               hasShownDetectedToast = true
-              toast.success("Payment detected! Confirming on blockchain...")
+              toast.info("📡 Payment detected! Confirming on blockchain...")
             }
             setPaymentStatus('processing')
           }
@@ -500,7 +500,7 @@ function InvoiceContent() {
             if (!hasCompleted) {
               hasCompleted = true
               setPaymentStatus('completed')
-              toast.success("Payment Confirmed!")
+              toast.payment("🎉 Payment Confirmed! Your order is complete!")
               clearInterval(pollInterval)
               loadOrder(false)
             }
@@ -628,30 +628,32 @@ function InvoiceContent() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-white/5 space-y-4 bg-gradient-to-t from-black/20 to-transparent">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/20">
-                <span className="flex items-center gap-2 ">Status</span>
-                <span className={cn(
-                  "tracking-normal uppercase",
-                  (order.status === 'pending' && paymentStatus !== 'expired') ? "text-yellow-500" :
-                    (order.status === 'paid' || order.status === 'delivered' || order.status === 'completed') ? "text-green-500" :
-                      "text-red-500"
-                )}>{(order.status === 'pending' && paymentStatus === 'expired') ? 'expired' : order.status}</span>
-              </div>
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-xs font-black tracking-widest text-white uppercase opacity-40">Total Settled</span>
-                <div className="text-right">
-                  <SparklesText
-                    text={`$${order.total.toFixed(2)}`}
-                    className="block text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_15px_rgba(164,248,255,0.2)]"
-                    sparklesCount={8}
-                  />
-                  <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.2em]">Transaction Reference: {order.id.slice(0, 8)}</span>
-                </div>
-              </div>
+          <div className="pt-6 border-t border-white/5 space-y-4">
+            {/* Status Row */}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-white/40">Status</span>
+              <span className={cn(
+                "text-sm font-semibold uppercase",
+                (order.status === 'pending' && paymentStatus !== 'expired') ? "text-yellow-400" :
+                  (order.status === 'paid' || order.status === 'delivered' || order.status === 'completed') ? "text-emerald-400" :
+                    "text-red-400"
+              )}>{(order.status === 'pending' && paymentStatus === 'expired') ? 'Expired' : order.status}</span>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/5" />
+
+            {/* Total Settled Row */}
+            <div className="flex justify-between items-center">
+              <span className="text-base font-bold text-white">Total Settled</span>
+              <SparklesText
+                text={`$${order.total.toFixed(2)}`}
+                className="text-2xl font-bold text-white"
+                sparklesCount={8}
+              />
             </div>
           </div>
+
         </div>
 
         <div className="flex-1 p-8 lg:p-12 lg:px-20 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
@@ -698,25 +700,25 @@ function InvoiceContent() {
             >
 
               <div className="space-y-6">
-                {/* Crypto currency badge for paid orders */}
+                {/* Payment Method Header - Clean Card Style */}
                 {isPaid && payment?.provider && (
-                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center p-2 overflow-hidden">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0d1117] border border-white/5">
+                    <div className="w-12 h-12 rounded-xl bg-[#1a1f36] flex items-center justify-center p-2.5 overflow-hidden">
                       {getPaymentIcon(payment.provider) ? (
                         <img src={getPaymentIcon(payment.provider)!} alt={payment.provider} className="w-full h-full object-contain" />
                       ) : (
-                        <CreditCard className="w-5 h-5 text-white/20" />
+                        <CreditCard className="w-6 h-6 text-white/40" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white uppercase tracking-tight">{payment.provider}</p>
-                      <p className="text-[10px] text-white/40 font-mono">{payment.track_id || order.readable_id || order.id}</p>
+                      <p className="text-base font-bold text-white">{payment.provider}</p>
+                      <p className="text-xs text-white/40 font-mono">{payment.track_id || order.readable_id || order.id}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Metadata List - Precise Image Match Consistency */}
-                <div className="space-y-4 px-2">
+                {/* Order Information - Clean List */}
+                <div className="space-y-0">
                   {[
                     { label: "Invoice ID", value: order.readable_id || payment?.track_id || order.id, copy: true },
                     { label: "E-mail Address", value: order.email },
@@ -731,15 +733,15 @@ function InvoiceContent() {
                     }] : []),
                     ...(isPaid ? [{ label: "Completed At", value: new Date(order.updated_at || order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) }] : []),
                   ].map((item: any, i) => (
-                    <div key={i} className="flex items-start justify-between py-1.5 group/item">
-                      <span className="text-sm font-medium text-white/40">{item.label}</span>
-                      <div className="flex items-center gap-3">
+                    <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-b-0">
+                      <span className="text-sm text-white/50">{item.label}</span>
+                      <div className="flex items-center gap-2">
                         {item.copy && (
                           <button
                             onClick={() => copyToClipboard(item.value)}
-                            className="text-[#a4f8ff] hover:text-[#8ae6ed] transition-colors"
+                            className="p-1.5 rounded-md hover:bg-white/5 transition-colors"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3.5 h-3.5 text-white/30 hover:text-white/60" />
                           </button>
                         )}
                         {item.link ? (
@@ -747,12 +749,12 @@ function InvoiceContent() {
                             href={item.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-[#a4f8ff] hover:underline text-right truncate max-w-[200px]"
+                            className="text-sm font-medium text-[#a4f8ff] hover:underline"
                           >
-                            {item.value}
+                            {String(item.value).slice(0, 16)}...
                           </a>
                         ) : (
-                          <span className="text-sm font-medium text-white/90 text-right truncate max-w-[200px]">{item.value}</span>
+                          <span className="text-sm font-medium text-white">{item.value}</span>
                         )}
                       </div>
                     </div>
@@ -762,136 +764,168 @@ function InvoiceContent() {
 
                 {isPaid ? (
                   <div className="space-y-8">
-                    {/* SUCCESS MESSAGE - Dominant Visual Anchor */}
-                    {/* SUCCESS MESSAGE - Simplified */}
+                    {/* SUCCESS BANNER - Simple Clean Design */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-6 rounded-xl border border-[#a4f8ff]/30 bg-[#a4f8ff]/5 flex items-center justify-center text-center"
+                      className="rounded-2xl overflow-hidden border border-white/10"
                     >
-                      <p className="text-sm font-bold text-[#a4f8ff]">Your order has been completed successfully!</p>
+                      {/* Green Header with Breathing Check Icon */}
+                      <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 py-10 flex items-center justify-center">
+                        <motion.div
+                          className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                          <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </motion.div>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="bg-[#0a0f14] px-6 py-8 text-center space-y-4">
+                        <h3 className="text-xl font-black text-white">Order Confirmed</h3>
+                        <p className="text-sm text-white/50 leading-relaxed">
+                          Thank you for your order. Your digital items<br />
+                          have been delivered successfully.
+                        </p>
+                        <p className="text-xs text-white/40">
+                          Check the status of your order in the{" "}
+                          <span className="text-emerald-400 font-semibold">Delivered Items</span> section below.
+                        </p>
+                      </div>
                     </motion.div>
 
-                    {/* Delivered Items - shown right after success */}
-                    <div className="space-y-4">
+
+                    {/* Delivered Items - Enhanced Section */}
+                    <div className="space-y-6">
                       {(deliverables.length > 0 || hasDeliveryRecord) ? (
                         <>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h2 className="text-xl font-black text-[#a4f8ff] tracking-tight">Delivered Items</h2>
+                          {/* Section Header */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#a4f8ff] to-[#5bc4d0]" />
+                            <h2 className="text-lg font-bold text-white">Delivered Items</h2>
                           </div>
 
                           {order.order_items?.map((item: any, idx: number) => {
                             // Filter assets specifically for this product/variant
                             const itemAssets = order.deliveries?.flatMap((d: any) =>
                               (d.delivery_assets || d.data || []).filter((asset: any) => {
-                                // Handle legacy string assets (assign to all or none? let's assign to first item if unknown)
                                 if (typeof asset === 'string') return idx === 0;
-
-                                // Match product ID
                                 if (asset.product_id && asset.product_id !== item.product_id) return false;
-
-                                // Match variant ID if present
                                 if (asset.variant_id && asset.variant_id !== item.variant_id) return false;
-
-                                // If asset has no product_id (old data), maybe show it for first item?
                                 if (!asset.product_id) return idx === 0;
-
                                 return true;
                               }).map((asset: any) => typeof asset === 'string' ? asset : (asset.content || asset))
                             ) || [];
 
                             return (
-                              <Card key={idx} className="bg-[#0b0f1a]/40 border border-white/5 overflow-hidden rounded-2xl group/card transition-all duration-500">
+                              <div key={idx} className="rounded-xl overflow-hidden bg-[#0d1117] border border-white/5">
+                                {/* Product Header */}
                                 <button
                                   onClick={() => setIsDeliveredItemsOpen(!isDeliveredItemsOpen)}
-                                  className="w-full p-6 flex items-center justify-between text-left bg-[#030607]/20"
+                                  className="w-full p-5 flex items-center justify-between text-left bg-[#161b22] hover:bg-[#1c2128] transition-colors"
                                 >
                                   <div className="space-y-1">
-                                    <h3 className="text-base font-black text-white/90">
+                                    <h3 className="text-sm font-bold text-[#a4f8ff]">
                                       {item.product?.name || item.product_name || 'Product'}
                                     </h3>
                                     {!item.product?.payment_restrictions_enabled && (
-                                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{item.variant?.name || 'Default'}</p>
+                                      <p className="text-xs text-white/40">{item.variant?.name || 'Default'}</p>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
-                                      <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Delivered</span>
+                                  <div className="flex items-center gap-3">
+                                    <div className="px-2.5 py-1 rounded border border-green-500/50 bg-green-500/10">
+                                      <span className="text-[11px] font-semibold text-green-400">Delivered</span>
                                     </div>
-                                    <ChevronDown className={cn("w-5 h-5 text-white/20 transition-transform duration-500", isDeliveredItemsOpen && "rotate-180")} />
+                                    <ChevronDown className={cn("w-4 h-4 text-white/30 transition-transform duration-300", isDeliveredItemsOpen && "rotate-180")} />
                                   </div>
                                 </button>
 
+                                {/* Expandable Content */}
                                 <AnimatePresence>
                                   {isDeliveredItemsOpen && (
                                     <motion.div
                                       initial={{ height: 0, opacity: 0 }}
                                       animate={{ height: "auto", opacity: 1 }}
                                       exit={{ height: 0, opacity: 0 }}
-                                      className="overflow-hidden"
+                                      transition={{ duration: 0.2 }}
+                                      className="overflow-hidden border-t border-white/5"
                                     >
-                                      <div className="p-6 space-y-6">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-xs font-black text-[#a4f8ff] uppercase tracking-widest">Deliverables</span>
-                                        </div>
-                                        <div className="space-y-3">
+                                      <div className="p-5 space-y-5">
+                                        {/* Deliverables Label */}
+                                        <p className="text-xs font-medium text-[#a4f8ff]/70 uppercase tracking-wider">Deliverables</p>
+
+                                        {/* Deliverables List */}
+                                        <div className="space-y-2">
                                           {itemAssets.length > 0 ? (
                                             itemAssets.map((d: any, i: number) => (
-                                              <div key={i} className="flex items-start justify-between py-3 border-b border-white/5 last:border-b-0 group/code">
-                                                <p className="text-sm font-medium text-white/70 break-words whitespace-pre-wrap pr-4 leading-relaxed flex-1">{d}</p>
-                                                <Copy className="w-4 h-4 text-white/20 group-hover/code:text-[#a4f8ff] cursor-pointer transition-colors shrink-0 mt-0.5" onClick={() => copyToClipboard(d)} />
+                                              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-[#0d1117] border border-white/5 group/code">
+                                                <code className="text-sm font-mono text-white/80 break-all pr-3">{d}</code>
+                                                <button
+                                                  onClick={() => copyToClipboard(d)}
+                                                  className="p-2 rounded-md hover:bg-white/5 transition-colors"
+                                                >
+                                                  <Copy className="w-4 h-4 text-white/30 group-hover/code:text-[#a4f8ff]" />
+                                                </button>
                                               </div>
                                             ))
                                           ) : (
-                                            <div className="py-3 flex items-center gap-3 text-white/60">
-                                              <CheckCircle2 className="w-4 h-4 text-green-400" />
-                                              <span className="text-sm">{item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                              <span className="text-sm text-white/60">{item.product?.delivery_type === 'service' ? "Service active." : (deliveryContent || "Processed.")}</span>
                                             </div>
                                           )}
                                         </div>
-                                        <div className="flex flex-wrap gap-3">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                              const content = itemAssets.join('\n')
-                                              const blob = new Blob([content], { type: 'text/plain' })
-                                              const url = URL.createObjectURL(blob)
-                                              const a = document.createElement('a')
-                                              a.href = url
-                                              a.download = `deliverables-${order.id.slice(0, 8)}.txt`
-                                              document.body.appendChild(a)
-                                              a.click()
-                                              document.body.removeChild(a)
-                                              URL.revokeObjectURL(url)
-                                              toast.success("Deliverables downloaded as .txt")
-                                            }}
-                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#a4f8ff]/30 text-white/90 hover:bg-[#a4f8ff]/10 gap-2 rounded-xl"
-                                          >
-                                            Download Deliverables
-                                            <Download className="w-3 h-3" />
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                              copyToClipboard(itemAssets.join('\n'))
-                                              toast.success("All deliverables copied to clipboard")
-                                            }}
-                                            className="h-10 px-4 text-[11px] font-black uppercase tracking-widest border-[#a4f8ff]/30 text-white/90 hover:bg-[#a4f8ff]/10 gap-2 rounded-xl"
-                                          >
-                                            Copy Deliverables
-                                            <Copy className="w-3 h-3" />
-                                          </Button>
-                                        </div>
+
+                                        {/* Action Buttons */}
+                                        {itemAssets.length > 0 && (
+                                          <div className="flex flex-wrap gap-2 pt-2">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                const content = itemAssets.join('\n')
+                                                const blob = new Blob([content], { type: 'text/plain' })
+                                                const url = URL.createObjectURL(blob)
+                                                const a = document.createElement('a')
+                                                a.href = url
+                                                a.download = `deliverables-${order.id.slice(0, 8)}.txt`
+                                                document.body.appendChild(a)
+                                                a.click()
+                                                document.body.removeChild(a)
+                                                URL.revokeObjectURL(url)
+                                                toast.success("Deliverables downloaded as .txt")
+                                              }}
+                                              className="h-8 px-3 text-xs font-medium border-white/10 text-white/70 bg-transparent hover:bg-white/5 hover:text-white gap-2 rounded-lg"
+                                            >
+                                              <Download className="w-3.5 h-3.5" />
+                                              Download
+                                            </Button>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                copyToClipboard(itemAssets.join('\n'))
+                                                toast.success("All deliverables copied to clipboard")
+                                              }}
+                                              className="h-8 px-3 text-xs font-medium border-white/10 text-white/70 bg-transparent hover:bg-white/5 hover:text-white gap-2 rounded-lg"
+                                            >
+                                              <Copy className="w-3.5 h-3.5" />
+                                              Copy All
+                                            </Button>
+                                          </div>
+                                        )}
                                       </div>
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
-                              </Card>
+                              </div>
                             )
                           })}
                         </>
+
                       ) : (
                         /* Fallback when NO delivery record exists yet (Processing) */
                         <motion.div
@@ -1262,7 +1296,7 @@ function InvoiceContent() {
             </motion.div>
           </div>
         </div>
-      </div>
+      </div >
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -1288,7 +1322,7 @@ function InvoiceContent() {
           }
         }
       `}</style>
-    </div>
+    </div >
   )
 }
 

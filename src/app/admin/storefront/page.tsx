@@ -43,7 +43,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { getSiteSettings, updateSiteSettings, uploadAsset, type SiteSettings } from "@/lib/db/settings"
-import { toast } from "sonner"
+import { toast } from "@/components/ui/sonner"
 import Image from "next/image"
 import dynamic from "next/dynamic"
 
