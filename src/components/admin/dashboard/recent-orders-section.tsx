@@ -80,7 +80,8 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                     <tbody className="divide-y divide-[var(--sa-border)]">
                         {recentOrders.map((order) => {
                             const isPaid = order.paid.startsWith('+')
-                            const customerInitial = order.email.charAt(0).toUpperCase()
+                            const displayEmail = order.email || "Guest"
+                            const customerInitial = displayEmail.charAt(0).toUpperCase()
                             const invoiceUrl = `/admin/invoices/${order.readable_id || order.id}`
 
                             return (
@@ -120,7 +121,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                                             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/[0.05] to-white/[0.01] border border-white/10 flex items-center justify-center text-[10px] font-bold text-[var(--sa-fg-muted)]">
                                                 {customerInitial}
                                             </div>
-                                            <span className="text-[11px] text-[var(--sa-fg-muted)] truncate group-hover:text-white transition-colors">{order.email}</span>
+                                            <span className="text-[11px] text-[var(--sa-fg-muted)] truncate group-hover:text-white transition-colors">{displayEmail}</span>
                                         </div>
                                     </td>
                                     <td className="px-5 py-3.5 text-right">
@@ -174,9 +175,9 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                                     <span className="text-[9px] text-[var(--sa-fg-dim)] uppercase font-bold tracking-widest block">Customer</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-5 h-5 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-[8px] font-bold text-[var(--sa-fg-muted)]">
-                                            {order.email.charAt(0).toUpperCase()}
+                                            {(order.email || "G").charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="text-[11px] text-[var(--sa-fg-muted)] truncate max-w-[100px]">{order.email}</span>
+                                        <span className="text-[11px] text-[var(--sa-fg-muted)] truncate max-w-[100px]">{order.email || "Guest"}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1 text-right">

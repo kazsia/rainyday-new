@@ -1130,9 +1130,10 @@ function InvoiceContent() {
                             </div>
                             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
                               <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Confirmations</p>
-                              <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
+                              <span className="flex items-center gap-1.5">
                                 {blockchainStatus?.confirmations || 0} Block{blockchainStatus?.confirmations === 1 ? '' : 's'}
-                              </p>
+                                <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                              </span>
                             </div>
                           </div>
                         )}

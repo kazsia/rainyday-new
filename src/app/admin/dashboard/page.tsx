@@ -194,10 +194,10 @@ export default async function AdminDashboardPage(props: {
                                                         "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shadow-sm bg-gradient-to-br",
                                                         avatarColors[i % avatarColors.length]
                                                     )}>
-                                                        {cust.email.charAt(0).toUpperCase()}
+                                                        {(cust.email || "G").charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1">
-                                                        <span className="text-[13px] font-semibold text-white truncate">{cust.email}</span>
+                                                        <span className="text-[13px] font-semibold text-white truncate">{cust.email || "Guest"}</span>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-[10px] text-[var(--sa-fg-dim)]">{cust.orders} order{cust.orders !== 1 ? 's' : ''}</span>
                                                             <div className="hidden sm:flex items-center gap-1.5 flex-1 max-w-[100px]">

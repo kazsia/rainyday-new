@@ -1581,7 +1581,10 @@ function CheckoutMainContent() {
                               {paymentStatus === 'completed'
                                 ? 'Confirmed'
                                 : blockchainStatus
-                                  ? `${blockchainStatus.confirmations || 0}/2 Confirmations`
+                                  ? <span className="flex items-center gap-2">
+                                    {blockchainStatus.confirmations || 0}/2 Confirmations
+                                    <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                                  </span>
                                   : 'Confirming...'}
                             </p>
                           </div>
