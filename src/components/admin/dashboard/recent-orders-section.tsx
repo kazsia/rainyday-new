@@ -60,7 +60,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                     <div className="px-1.5 py-0.5 rounded-full bg-[var(--sa-accent-muted)] border border-[var(--sa-accent-glow)] text-[9px] font-bold text-[var(--sa-accent)] uppercase">Live</div>
                 </div>
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-[var(--sa-fg-muted)] hover:text-white uppercase font-bold tracking-wider" asChild>
-                    <Link href="/admin/orders">View All</Link>
+                    <Link href="/admin/invoices">View All</Link>
                 </Button>
             </div>
 
