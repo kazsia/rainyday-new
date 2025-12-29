@@ -68,6 +68,7 @@ export default function EditGroupPage() {
     const [formData, setFormData] = useState({
         name: "",
         slug: "",
+        description: "",
         image_url: "",
         is_active: true,
         badge_text: "",
@@ -108,6 +109,7 @@ export default function EditGroupPage() {
             setFormData({
                 name: catData.name || "",
                 slug: catData.slug || "",
+                description: catData.description || "",
                 image_url: catData.image_url || "",
                 is_active: catData.is_active !== false, // Default to true if undefined
                 badge_text: catData.badge_text || "",
@@ -149,6 +151,7 @@ export default function EditGroupPage() {
             await updateCategory(id, {
                 name: formData.name,
                 slug: formData.name.toLowerCase().replace(/ /g, '-'),
+                description: formData.description || null,
                 image_url: formData.image_url || null,
                 is_active: formData.is_active,
                 badge_text: formData.badge_text || null,
@@ -244,6 +247,17 @@ export default function EditGroupPage() {
                                     className="bg-black/20 border-white/10 h-11 text-white"
                                     placeholder="Group Name"
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Description</label>
+                                <Textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="bg-black/20 border-white/10 text-white min-h-[80px] resize-none"
+                                    placeholder="Brief description of this category (shown on category cards)"
+                                />
+                                <p className="text-[10px] text-[var(--sa-fg-dim)]">This text will appear on the category card in the store.</p>
                             </div>
 
                             <div className="space-y-4">

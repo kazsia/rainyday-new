@@ -268,6 +268,8 @@ export default function StorePage() {
                                 productCount={cat.count}
                                 minPrice={cat.minPrice}
                                 maxPrice={cat.maxPrice}
+                                description={cat.description}
+                                image_url={cat.image_url}
                                 onClick={() => setActiveGroup(cat)}
                             />
                         ))}

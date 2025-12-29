@@ -134,7 +134,7 @@ export default function EditProductPage() {
                     category_id: productData.category_id || "none",
                     stock_count: productData.stock_count || 0,
                     is_active: productData.is_active,
-                    visibility: productData.visibility || (productData.is_active ? "public" : "hidden"),
+                    visibility: productData.visibility || "public",
                     image_url: productData.image_url || "",
                     hide_stock: !!productData.hide_stock,
                     delivery_type: productData.delivery_type || "serials",
@@ -549,7 +549,7 @@ export default function EditProductPage() {
                                         <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Visibility</label>
                                         <Select
                                             value={formData.visibility}
-                                            onValueChange={(val) => setFormData({ ...formData, visibility: val, is_active: val === "public" })}
+                                            onValueChange={(val) => setFormData({ ...formData, visibility: val })}
                                         >
                                             <SelectTrigger className="w-full h-10 bg-background/40 border-white/10 rounded-xl px-4 text-sm text-white focus:ring-0 focus:ring-offset-0">
                                                 <SelectValue placeholder="Select visibility" />
@@ -812,73 +812,6 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
-                            {/* Live Stats */}
-                            <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-                                <div className="px-5 py-4 border-b border-white/5 flex items-center gap-4 bg-[#0a0c14]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
-                                        <BarChart3 className="w-5 h-5 text-white/40" />
-                                    </div>
-                                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Live Stats</h2>
-                                </div>
-                                <div className="p-6 space-y-6">
-                                    {[
-                                        { id: "show_view_count", label: "Live Product Views Count", desc: "If enabled, the live views count will be displayed on the product page." },
-                                        { id: "show_sales_count", label: "Live Product Sales Count", desc: "If enabled, the live sales count will be displayed on the product page." }
-                                    ].map(toggle => (
-                                        <div key={toggle.id} className="space-y-3">
-                                            <label className="text-[11px] font-black text-white uppercase tracking-[0.2em] ml-1">{toggle.label}</label>
-                                            <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">{toggle.desc}</p>
-                                            <div
-                                                className="h-14 px-4 bg-[#0f111a] border border-white/5 rounded-xl flex items-center gap-3 cursor-pointer group hover:border-white/10 transition-all"
-                                                onClick={() => setFormData({ ...formData, [toggle.id]: !formData[toggle.id as keyof typeof formData] })}
-                                            >
-                                                <div className={cn(
-                                                    "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                                    formData[toggle.id as keyof typeof formData] ? "bg-[#a4f8ff] border-[#a4f8ff]" : "border-white/10 group-hover:border-white/20"
-                                                )}>
-                                                    {formData[toggle.id as keyof typeof formData] && <Check className="w-3.5 h-3.5 text-white" />}
-                                                </div>
-                                                <span className="text-[12px] font-black text-white/60 tracking-tight">Show {toggle.id.includes('view') ? 'Views' : 'Sales'} Count</span>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black text-white uppercase tracking-[0.2em] ml-1">Live Sales Count Timespan</label>
-                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">The timespan for which the live sales count will be displayed.</p>
-                                        <div className="relative">
-                                            <select
-                                                className="w-full h-14 px-4 pr-12 rounded-xl bg-[#0f111a] border border-white/5 text-sm font-bold text-white appearance-none focus:outline-none focus:border-[#a4f8ff]/50 transition-all cursor-pointer"
-                                                value={formData.sales_timespan || 'all_time'}
-                                                onChange={e => setFormData({ ...formData, sales_timespan: e.target.value })}
-                                            >
-                                                <option value="all_time">All Time</option>
-                                                <option value="24h">Last 24 Hours</option>
-                                                <option value="7d">Last 7 Days</option>
-                                                <option value="30d">Last 30 Days</option>
-                                            </select>
-                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black text-white uppercase tracking-[0.2em] ml-1">Live Sales Notifications</label>
-                                        <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">If enabled, the latest orders will be displayed as live notifications on the bottom left of the product page.</p>
-                                        <div
-                                            className="h-14 px-4 bg-[#0f111a] border border-white/5 rounded-xl flex items-center gap-3 cursor-pointer group hover:border-white/10 transition-all"
-                                            onClick={() => setFormData({ ...formData, show_sales_notifications: !formData.show_sales_notifications })}
-                                        >
-                                            <div className={cn(
-                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                                formData.show_sales_notifications ? "bg-[#a4f8ff] border-[#a4f8ff]" : "border-white/10 group-hover:border-white/20"
-                                            )}>
-                                                {formData.show_sales_notifications && <Check className="w-3.5 h-3.5 text-white" />}
-                                            </div>
-                                            <span className="text-[12px] font-black text-white/60 tracking-tight">Show Sales Notifications</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* Badges */}
                             <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
@@ -907,75 +840,6 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
-                            {/* Status */}
-                            <div className="bg-[#0a0c14] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-                                <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-[#0a0c14]">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-[#0f111a] border border-white/5 flex items-center justify-center">
-                                            <Waveform className="w-5 h-5 text-white/40" />
-                                        </div>
-                                        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Status</h2>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const next = formData.visibility === 'public' ? 'hidden' : formData.visibility === 'hidden' ? 'on_hold' : 'public'
-                                            setFormData({ ...formData, visibility: next, is_active: next === 'public' })
-                                        }}
-                                        className={cn(
-                                            "w-10 h-6 rounded-full transition-colors relative flex items-center px-1",
-                                            formData.visibility === 'public' ? "bg-brand-primary" : formData.visibility === 'on_hold' ? "bg-orange-500" : "bg-white/10"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "w-4 h-4 bg-white rounded-full transition-all",
-                                            formData.visibility === 'public' ? "translate-x-4" : formData.visibility === 'on_hold' ? "translate-x-2" : "translate-x-0"
-                                        )} />
-                                    </button>
-                                </div>
-                                <div className="p-6 space-y-6">
-                                    <p className="text-[10px] text-white/20 font-bold leading-relaxed px-1">
-                                        Let your customers know about the current product status before buying. Unlike the Badge, the Status of all products is also visible on a separate status page.
-                                    </p>
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Status Color</label>
-                                        <div className="flex items-center gap-3 px-1">
-                                            {['red', 'orange', 'yellow', 'green', 'blue'].map(color => (
-                                                <button
-                                                    key={color}
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, status_color: color })}
-                                                    className={cn(
-                                                        "w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center",
-                                                        formData.status_color === color ? "border-[#a4f8ff] bg-[#a4f8ff]/10" : "border-white/5 hover:border-white/10",
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "w-4 h-4 rounded-full",
-                                                        color === 'red' ? 'bg-[#ff4b4b]' :
-                                                            color === 'orange' ? 'bg-[#ff8c00]' :
-                                                                color === 'yellow' ? 'bg-[#ffcc00]' :
-                                                                    color === 'green' ? 'bg-[#00e676]' :
-                                                                        'bg-[#00e5ff]'
-                                                    )} />
-                                                </button>
-                                            ))}
-                                            <button className="w-8 h-8 rounded-full border-2 border-white/5 flex items-center justify-center text-white/20" onClick={() => setFormData({ ...formData, status_color: "" })}>
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Status Label</label>
-                                        <Input
-                                            className="bg-[#0f111a] border-white/5 h-14 text-sm font-medium focus-visible:border-[#a4f8ff]/50 focus-visible:ring-0 transition-all rounded-xl px-4"
-                                            value={formData.status_label}
-                                            onChange={e => setFormData({ ...formData, status_label: e.target.value })}
-                                            placeholder="In Stock!"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
 
                             <div className="pt-8 flex flex-col gap-3">
                                 <div className="flex flex-col gap-1 px-1">

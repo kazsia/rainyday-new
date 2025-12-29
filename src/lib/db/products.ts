@@ -30,7 +30,7 @@ export async function getProducts(options?: { categoryId?: string; activeOnly?: 
             .neq("is_deleted", true)
 
         if (options?.activeOnly !== false) {
-            query = query.eq("is_active", true)
+            query = query.or("visibility.eq.public,visibility.is.null")
         }
 
         if (options?.categoryId) {
@@ -128,7 +128,7 @@ export async function getProduct(idOrSlug: string) {
                     badge_links:product_badge_links(badge:product_badges(*))
                 `)
                 .eq("slug", idOrSlug)
-                .eq("is_active", true)
+                .or("visibility.eq.public,visibility.is.null")
                 .single()
 
             data = slugResult.data

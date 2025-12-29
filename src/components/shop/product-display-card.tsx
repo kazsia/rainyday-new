@@ -78,7 +78,26 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
     // Extract features from description (bullets)
     const features = React.useMemo(() => {
         if (!description) return ["Instant Delivery", "Secure Transaction", "24/7 Support"]
-        return description.split('\n').filter(f => f.trim().length > 0).slice(0, 3)
+
+        // Strip HTML tags first
+        const strippedDescription = description.replace(/<[^>]*>/g, '')
+
+        // Split by newlines and clean up
+        const lines = strippedDescription
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => {
+                // Remove common bullet point characters
+                return line.replace(/^[-•*]\s*/, '').trim()
+            })
+            .filter(line => line.length > 0)
+            .slice(0, 3)
+
+        // If no valid lines, return defaults
+        if (lines.length === 0) return ["Instant Delivery", "Secure Transaction", "24/7 Support"]
+
+        return lines
     }, [description])
 
     return (
@@ -90,7 +109,7 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
             className="group relative"
         >
             <Link href={productUrl} className="block h-full">
-                <div className="flex flex-col h-full bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
+                <div className="flex flex-col h-[520px] bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
                     {/* Banner Section */}
                     <div className="relative aspect-[4/3] w-full overflow-hidden">
                         {!imageLoaded && (
@@ -146,20 +165,21 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
 
                     {/* Content Section */}
                     <div className="flex flex-col flex-1 p-6 -mt-4 relative z-10">
-                        <div className="flex items-start justify-between gap-4 mb-4">
+                        {/* Fixed height title container */}
+                        <div className="flex items-start justify-between gap-4 mb-4 h-14">
                             <h3 className="text-xl font-bold text-white leading-tight group-hover:text-brand-primary transition-colors line-clamp-2">
                                 {title}
                             </h3>
                         </div>
 
-                        {/* Feature List */}
-                        <div className="flex flex-col gap-2.5 mb-8">
-                            {features.map((feature, idx) => (
+                        {/* Feature List - Fixed height container */}
+                        <div className="flex flex-col gap-2.5 mb-6 h-[72px]">
+                            {features.slice(0, 3).map((feature, idx) => (
                                 <div key={idx} className="flex items-center gap-2.5 text-xs text-white/60 font-medium">
                                     <div className="w-4 h-4 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center flex-shrink-0">
                                         <Check className="w-2.5 h-2.5 text-green-500" />
                                     </div>
-                                    {feature}
+                                    <span className="line-clamp-1">{feature}</span>
                                 </div>
                             ))}
                         </div>

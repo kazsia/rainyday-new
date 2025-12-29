@@ -705,7 +705,7 @@ export default function CreateProductPage() {
                                         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Visibility</label>
                                         <Select
                                             value={formData.visibility}
-                                            onValueChange={(val) => setFormData({ ...formData, visibility: val, is_active: val === "public" })}
+                                            onValueChange={(val) => setFormData({ ...formData, visibility: val })}
                                         >
                                             <SelectTrigger className="w-full h-10 bg-background/40 border-white/10 rounded-xl px-4 text-sm text-white focus:ring-0 focus:ring-offset-0">
                                                 <SelectValue placeholder="Select visibility" />
@@ -738,40 +738,6 @@ export default function CreateProductPage() {
                                 </div>
                             </div>
 
-                            {/* Live Stats */}
-                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                                <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                                    <Activity className="w-5 h-5 text-white/40" />
-                                    <h2 className="text-sm font-bold text-white uppercase tracking-widest">Live Stats</h2>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    {[
-                                        { id: "show_view_count", label: "Show Views Count", icon: Eye },
-                                        { id: "show_sales_count", label: "Show Sales Count", icon: Monitor },
-                                        { id: "show_sales_notifications", label: "Sales Notifications", icon: BellRing }
-                                    ].map(toggle => (
-                                        <div key={toggle.id} className="flex items-center justify-between p-3 bg-background/20 border border-white/5 rounded-xl">
-                                            <div className="flex items-center gap-3">
-                                                <toggle.icon className="w-4 h-4 text-white/40" />
-                                                <span className="text-[11px] text-white/60 font-bold uppercase tracking-wider">{toggle.label}</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, [toggle.id]: !(formData as any)[toggle.id] })}
-                                                className={cn(
-                                                    "w-10 h-6 rounded-full transition-colors relative flex items-center px-1",
-                                                    (formData as any)[toggle.id] ? "bg-brand-primary" : "bg-white/10"
-                                                )}
-                                            >
-                                                <div className={cn(
-                                                    "w-4 h-4 bg-white rounded-full transition-all",
-                                                    (formData as any)[toggle.id] ? "translate-x-4" : "translate-x-0"
-                                                )} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
 
                             {/* Badges */}
                             <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
@@ -786,79 +752,17 @@ export default function CreateProductPage() {
                                     </Button>
                                 </div>
                                 <div className="p-6 space-y-3">
-                                    {[
-                                        { label: "BEST SELLER", icon: Zap },
-                                        { label: "ULTRA HQ", icon: ShieldCheck },
-                                        { label: "VERIFIED", icon: Award },
-                                        { label: "TRENDING NOW", icon: Activity }
-                                    ].map((badge, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl group hover:bg-white/10 transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3">
-                                                <badge.icon className="w-4 h-4 text-white/20 group-hover:text-white/40" />
-                                                <span className="text-[11px] text-white/60 font-black uppercase tracking-widest">{badge.label}</span>
-                                            </div>
-                                            <ChevronDown className="w-4 h-4 text-white/20 group-hover:text-white/40" />
-                                        </div>
-                                    ))}
+                                    <div className="p-8 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
+                                        <Award className="w-10 h-10 text-white/10 mx-auto mb-4" />
+                                        <h3 className="text-sm font-bold text-white/60 mb-2">Manage After Saving</h3>
+                                        <p className="text-xs text-white/40 max-w-sm mx-auto">
+                                            Save your product first, then you can add badges from the Edit page.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Status */}
-                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Activity className="w-5 h-5 text-white/40" />
-                                        <h2 className="text-sm font-bold text-white uppercase tracking-widest">Status</h2>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const next = formData.visibility === 'public' ? 'hidden' : formData.visibility === 'hidden' ? 'on_hold' : 'public'
-                                            setFormData({ ...formData, visibility: next, is_active: next === 'public' })
-                                        }}
-                                        className={cn(
-                                            "w-10 h-6 rounded-full transition-colors relative flex items-center px-1",
-                                            formData.visibility === 'public' ? "bg-brand-primary" : formData.visibility === 'on_hold' ? "bg-orange-500" : "bg-white/10"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "w-4 h-4 bg-white rounded-full transition-all",
-                                            formData.visibility === 'public' ? "translate-x-4" : formData.visibility === 'on_hold' ? "translate-x-2" : "translate-x-0"
-                                        )} />
-                                    </button>
-                                </div>
-                                <div className="p-6 space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Status Color</label>
-                                        <div className="flex items-center gap-2">
-                                            {['red', 'orange', 'yellow', 'green', 'blue'].map(color => (
-                                                <button
-                                                    key={color}
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, status_color: color })}
-                                                    className={cn(
-                                                        "w-7 h-7 rounded-full border-2 transition-all",
-                                                        formData.status_color === color ? "border-white scale-110 shadow-lg shadow-white/10" : "border-transparent opacity-40 hover:opacity-100",
-                                                        color === 'red' ? 'bg-[#ff4b4b]' :
-                                                            color === 'orange' ? 'bg-[#ff8c00]' :
-                                                                color === 'yellow' ? 'bg-[#ffcc00]' :
-                                                                    color === 'green' ? 'bg-[#00e676]' :
-                                                                        'bg-[#00e5ff]'
-                                                    )}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Status Label</label>
-                                        <Input
-                                            className="bg-background/40 border-white/10 h-10"
-                                            value={formData.status_label}
-                                            onChange={e => setFormData({ ...formData, status_label: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </form>

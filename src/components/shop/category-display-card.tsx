@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Layers, ChevronRight, FolderTree } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -11,11 +12,14 @@ interface CategoryDisplayCardProps {
     productCount: number
     minPrice: number
     maxPrice: number
+    description?: string
+    image_url?: string
     onClick: () => void
 }
 
-export function CategoryDisplayCard({ name, productCount, minPrice, maxPrice, onClick }: CategoryDisplayCardProps) {
+export function CategoryDisplayCard({ name, productCount, minPrice, maxPrice, description, image_url, onClick }: CategoryDisplayCardProps) {
     const { formatPrice } = useCurrency()
+    const [imageLoaded, setImageLoaded] = React.useState(false)
 
     return (
         <motion.div
@@ -26,13 +30,37 @@ export function CategoryDisplayCard({ name, productCount, minPrice, maxPrice, on
             className="group relative cursor-pointer"
             onClick={onClick}
         >
-            <div className="flex flex-col h-full bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl min-h-[300px]">
-                {/* Visual Header */}
-                <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-brand-primary/20 via-brand-primary/5 to-transparent flex items-center justify-center">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-brand-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                        <FolderTree className="w-12 h-12 text-brand-primary relative z-10 opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
-                    </div>
+            <div className="flex flex-col h-[520px] bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/[0.05] hover:border-brand-primary/20 rounded-md overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-2xl">
+                {/* Visual Header - Bigger banner like product cards */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                    {image_url ? (
+                        <>
+                            {!imageLoaded && (
+                                <div className="absolute inset-0 bg-white/5 animate-pulse" />
+                            )}
+                            <Image
+                                src={image_url}
+                                alt={name}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className={cn(
+                                    "object-cover transition-transform duration-700 group-hover:scale-110",
+                                    !imageLoaded && "opacity-0"
+                                )}
+                                onLoad={() => setImageLoaded(true)}
+                            />
+                        </>
+                    ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/20 via-brand-primary/5 to-transparent flex items-center justify-center">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-brand-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                                <FolderTree className="w-16 h-16 text-brand-primary relative z-10 opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bottom Gradient Fade */}
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/40 to-transparent" />
                 </div>
 
                 {/* Content */}
@@ -46,6 +74,15 @@ export function CategoryDisplayCard({ name, productCount, minPrice, maxPrice, on
                     <h3 className="text-2xl font-black text-white leading-tight group-hover:text-brand-primary transition-colors line-clamp-2 mb-4">
                         {name}
                     </h3>
+
+                    {/* Description - fixed height container for consistent sizing */}
+                    <div className="h-[60px] mb-4">
+                        {description && (
+                            <p className="text-sm text-white/50 leading-relaxed line-clamp-3">
+                                {description}
+                            </p>
+                        )}
+                    </div>
 
                     <div className="mt-auto space-y-4">
                         <div className="flex items-end justify-between">

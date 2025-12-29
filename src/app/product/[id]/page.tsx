@@ -201,12 +201,18 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     )
   }
 
-  const descriptionPoints = product.description?.split('\n') || [
-    "Instant Delivery",
-    "Lifetime Warranty",
-    "24/7 Support",
-    "High Quality"
-  ]
+  const descriptionPoints = product.description
+    ? product.description
+      .replace(/<[^>]*>/g, '') // Strip HTML tags
+      .split('\n')
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0)
+    : [
+      "Instant Delivery",
+      "Lifetime Warranty",
+      "24/7 Support",
+      "High Quality"
+    ]
 
   return (
     <MainLayout>
