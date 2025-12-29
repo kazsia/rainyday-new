@@ -148,16 +148,18 @@ const ProductCard = React.memo(({ id, title, price, category, image, slug, produ
                         )}
 
                         {/* Status Badge */}
-                        <div className="absolute top-4 right-4 z-10">
-                            <div className={cn(
-                                "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border",
-                                isOutOfStock
-                                    ? "bg-red-500/10 border-red-500/20 text-red-400"
-                                    : "bg-brand-primary/10 border-brand-primary/20 text-brand-primary"
-                            )}>
-                                {isOutOfStock ? "Out of Stock" : (status_label || (effectiveIsUnlimited ? "In Stock" : `${productCount} In Stock`))}
+                        {(isOutOfStock || status_label || !effectiveIsUnlimited) && (
+                            <div className="absolute top-4 right-4 z-10">
+                                <div className={cn(
+                                    "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border",
+                                    isOutOfStock
+                                        ? "bg-red-500/10 border-red-500/20 text-red-400"
+                                        : "bg-brand-primary/10 border-brand-primary/20 text-brand-primary"
+                                )}>
+                                    {isOutOfStock ? "Out of Stock" : (status_label || `${productCount}`)}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Bottom Gradient Fade */}
                         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/40 to-transparent" />

@@ -223,31 +223,33 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
             <div className="bg-background rounded-3xl border border-white/5 overflow-hidden">
               <div className="p-8 pb-4 flex items-center justify-between">
                 <h1 className="text-2xl font-black text-white">{product.name}</h1>
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors",
-                  product.status_color === 'red' ? "bg-red-500/10 border border-red-500/20" :
-                    product.status_color === 'orange' ? "bg-orange-500/10 border border-orange-500/20" :
-                      product.status_color === 'yellow' ? "bg-yellow-500/10 border border-yellow-500/20" :
-                        product.status_color === 'green' ? "bg-green-500/10 border border-green-500/20" :
-                          "bg-brand-primary/10 border border-brand-primary/20"
-                )}>
+                {product.status_label && (
                   <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    product.status_color === 'red' ? "bg-[#ff4b4b]" :
-                      product.status_color === 'orange' ? "bg-[#ff8c00]" :
-                        product.status_color === 'yellow' ? "bg-[#ffcc00]" :
-                          product.status_color === 'green' ? "bg-[#00e676]" :
-                            "bg-[#00e5ff]"
-                  )} />
-                  <span className={cn(
-                    "text-[11px] font-bold",
-                    product.status_color === 'red' ? "text-red-400" :
-                      product.status_color === 'orange' ? "text-orange-400" :
-                        product.status_color === 'yellow' ? "text-yellow-400" :
-                          product.status_color === 'green' ? "text-green-400" :
-                            "text-brand-primary"
-                  )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`))}</span>
-                </div>
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors",
+                    product.status_color === 'red' ? "bg-red-500/10 border border-red-500/20" :
+                      product.status_color === 'orange' ? "bg-orange-500/10 border border-orange-500/20" :
+                        product.status_color === 'yellow' ? "bg-yellow-500/10 border border-yellow-500/20" :
+                          product.status_color === 'green' ? "bg-green-500/10 border border-green-500/20" :
+                            "bg-brand-primary/10 border border-brand-primary/20"
+                  )}>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full animate-pulse",
+                      product.status_color === 'red' ? "bg-[#ff4b4b]" :
+                        product.status_color === 'orange' ? "bg-[#ff8c00]" :
+                          product.status_color === 'yellow' ? "bg-[#ffcc00]" :
+                            product.status_color === 'green' ? "bg-[#00e676]" :
+                              "bg-[#00e5ff]"
+                    )} />
+                    <span className={cn(
+                      "text-[11px] font-bold",
+                      product.status_color === 'red' ? "text-red-400" :
+                        product.status_color === 'orange' ? "text-orange-400" :
+                          product.status_color === 'yellow' ? "text-yellow-400" :
+                            product.status_color === 'green' ? "text-green-400" :
+                              "text-brand-primary"
+                    )}>{product.status_label}</span>
+                  </div>
+                )}
               </div>
 
               <div className="px-8 pb-8">
@@ -307,12 +309,6 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                           <span className="text-sm font-bold text-white/80">{item}</span>
                         </div>
                       ))}
-                      <div className="flex items-center gap-2 pt-4">
-                        <div className={cn("w-1.5 h-1.5 rounded-full", isOutOfStock ? "bg-red-500" : "bg-emerald-500")} />
-                        <span className={cn("text-[13px] font-bold", isOutOfStock ? "text-red-400" : "text-emerald-400")}>
-                          {isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`)}
-                        </span>
-                      </div>
                     </>
                   ) : (
                     <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
@@ -364,15 +360,26 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">per item</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.2em] block mb-1">Status</span>
-                    <span className={cn(
-                      "text-xs font-black",
-                      product.status_color === 'red' ? "text-red-400" :
-                        product.status_color === 'orange' ? "text-orange-400" :
-                          product.status_color === 'yellow' ? "text-yellow-400" :
-                            product.status_color === 'green' ? "text-green-400" :
-                              "text-brand-primary"
-                    )}>{product.status_label || (isOutOfStock ? "Out of Stock" : (isUnlimited ? "In Stock" : `${currentStock} In Stock`))}</span>
+                    {product.status_label ? (
+                      <>
+                        <span className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.2em] block mb-1">Status</span>
+                        <span className={cn(
+                          "text-xs font-black",
+                          product.status_color === 'red' ? "text-red-400" :
+                            product.status_color === 'orange' ? "text-orange-400" :
+                              product.status_color === 'yellow' ? "text-yellow-400" :
+                                product.status_color === 'green' ? "text-green-400" :
+                                  "text-brand-primary"
+                        )}>{product.status_label}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.2em] block mb-1">Stock</span>
+                        <span className="text-xs font-black text-brand-primary">
+                          {isUnlimited ? "In Stock" : `${currentStock}`}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -427,14 +434,6 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                                 )}>{variant.name}</p>
                                 <div className="flex items-center justify-between gap-1 mt-1">
                                   <span className="text-[14px] font-bold text-white tracking-tight">${variant.price.toFixed(2)}</span>
-                                  <span className={cn(
-                                    "text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md",
-                                    variant.is_unlimited
-                                      ? "bg-[#a4f8ff]/10 text-[#a4f8ff]"
-                                      : variant.stock_count <= 0 ? "bg-red-500/10 text-red-400" : "text-white/40"
-                                  )}>
-                                    {variant.stock_count <= 0 && !variant.is_unlimited ? "Out of Stock" : (variant.is_unlimited ? "In Stock" : `${variant.stock_count} In Stock`)}
-                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -455,9 +454,11 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-[10px] font-black text-white/20 ml-1 uppercase tracking-[0.3em]">Quantity</p>
-                      <p className="text-[10px] font-bold text-white/30">
-                        {isUnlimited ? <span className="text-brand-primary">In Stock</span> : <><span className="text-brand-primary">{currentStock}</span> available</>}
-                      </p>
+                      {!isUnlimited && (
+                        <p className="text-[10px] font-bold text-white/30">
+                          <span className="text-brand-primary">{currentStock}</span> available
+                        </p>
+                      )}
                     </div>
                     <div className="relative group">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-primary/20 via-brand-primary/10 to-brand-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur transition-opacity duration-300" />
