@@ -125,12 +125,9 @@ function InvoiceContent() {
   const [timeLeft, setTimeLeft] = useState<string>("--:--")
 
   useEffect(() => {
-    if (!orderId) {
-      setIsLoading(false)
-      return
+    if (orderId) {
+      initializeData()
     }
-
-    loadOrder()
   }, [orderId])
 
   useEffect(() => {
@@ -168,12 +165,17 @@ function InvoiceContent() {
     }
   }, [order?.id])
 
-  async function loadOrder(showLoader = true) {
+  async function initializeData(showLoader = true) {
     if (showLoader) setIsLoading(true)
     try {
       const data = await getOrder(orderId!)
       if (data) {
         setOrder(data)
+
+        // Parallelize payment details if pending
+        if (data.status === 'pending') {
+          fetchPaymentDetails(data)
+        }
 
         // Force redirection to readable ID if current URL uses UUID
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId!)
@@ -183,10 +185,118 @@ function InvoiceContent() {
         }
       }
     } catch (error) {
-      console.error("Failed to load order:", error)
+      console.error("Failed to initialize order:", error)
       toast.error("Failed to load order details")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadOrder = (showLoader = false) => initializeData(showLoader)
+
+  const fetchPaymentDetails = async (targetOrder: any = order) => {
+    if (!targetOrder?.id || targetOrder.status !== 'pending') return
+    setIsLoadingPayment(true)
+    try {
+      const payment = targetOrder.payments?.[0]
+      const { getOxaPayPaymentInfo, generateOxaPayStaticAddress } = await import("@/lib/payments/oxapay")
+      const { getCryptoPrice } = await import("@/lib/payments/crypto-prices")
+
+      // START: Calculate real crypto amount
+      const payCurrency = payment?.provider || 'BTC'
+      const isPayPal = payCurrency === 'PayPal'
+
+      if (isPayPal) {
+        setPaymentDetails({
+          address: '',
+          amount: String(targetOrder.total),
+          qrCodeUrl: '',
+          expiresAt: new Date(targetOrder.created_at).getTime() + 3600000,
+          payCurrency: 'USD',
+          payLink: payment.pay_url || '',
+          trackId: payment.track_id || ''
+        })
+        setIsLoadingPayment(false)
+        return
+      }
+
+      const livePrice = await getCryptoPrice(payCurrency)
+      if (livePrice) setCurrentPrice(livePrice)
+
+      // Calculate exact amount: Total USD / Live Price
+      let calculatedCryptoAmount = String(targetOrder.total)
+      if (livePrice && livePrice > 0) {
+        calculatedCryptoAmount = (targetOrder.total / livePrice).toFixed(8)
+      }
+
+      if (payment?.track_id) {
+        const info = await getOxaPayPaymentInfo(payment.track_id)
+        const storedPayUrl = payment.pay_url || ''
+        const fallbackPayLink = `https://pay.oxapay.com/${payment.track_id}`
+
+        if (info?.address) {
+          const apiAmount = String(info.payAmount || "");
+          const isPlaceholder = (apiAmount === "1" || apiAmount === "1.00" || apiAmount === "1.0")
+            && (payCurrency.toUpperCase().includes("BTC") || payCurrency.toUpperCase().includes("BITCOIN") || payCurrency.toUpperCase().includes("ETH"));
+
+          const finalAmount = (isPlaceholder || !apiAmount || apiAmount === "0") ? calculatedCryptoAmount : apiAmount;
+
+          setPaymentDetails({
+            address: info.address,
+            amount: finalAmount,
+            qrCodeUrl: info.qrCodeUrl || '',
+            expiresAt: info.expiredAt ? new Date(info.expiredAt).getTime() : new Date(targetOrder.created_at).getTime() + 3600000,
+            payCurrency: payCurrency,
+            payLink: info?.payLink || storedPayUrl || fallbackPayLink,
+            trackId: payment.track_id
+          })
+          return
+        }
+
+        const staticAddress = await generateOxaPayStaticAddress({
+          currency: payCurrency,
+          orderId: targetOrder.id,
+          email: targetOrder.email,
+          description: `Order ${targetOrder.readable_id}`,
+        })
+
+        if (staticAddress?.address) {
+          setPaymentDetails({
+            address: staticAddress.address,
+            amount: calculatedCryptoAmount,
+            qrCodeUrl: staticAddress.qrCodeUrl || '',
+            expiresAt: new Date(targetOrder.created_at).getTime() + 3600000,
+            payCurrency: payCurrency,
+            payLink: storedPayUrl || fallbackPayLink,
+            trackId: payment.track_id
+          })
+          return
+        }
+
+        setPaymentDetails({
+          address: '',
+          amount: calculatedCryptoAmount,
+          qrCodeUrl: '',
+          expiresAt: new Date(targetOrder.created_at).getTime() + 3600000,
+          payCurrency: payCurrency,
+          payLink: info?.payLink || storedPayUrl,
+          trackId: payment.track_id
+        })
+      } else {
+        setPaymentDetails({
+          address: '',
+          amount: calculatedCryptoAmount,
+          qrCodeUrl: '',
+          expiresAt: new Date(targetOrder.created_at).getTime() + 3600000,
+          payCurrency: payCurrency,
+          payLink: '',
+          trackId: ''
+        })
+      }
+    } catch (error) {
+      console.error("Failed to fetch payment details:", error)
+    } finally {
+      setIsLoadingPayment(false)
     }
   }
 
@@ -223,134 +333,6 @@ function InvoiceContent() {
     }
   }
 
-  // Fetch payment details for pending orders
-  useEffect(() => {
-    if (!order?.id || order.status !== 'pending') return
-
-    const fetchPaymentDetails = async () => {
-      setIsLoadingPayment(true)
-      try {
-        const payment = order.payments?.[0]
-        const { getOxaPayPaymentInfo, generateOxaPayStaticAddress } = await import("@/lib/payments/oxapay")
-        const { getCryptoPrice } = await import("@/lib/payments/crypto-prices")
-
-        // START: Calculate real crypto amount
-        const payCurrency = payment?.provider || 'BTC'
-        const isPayPal = payCurrency === 'PayPal'
-
-        if (isPayPal) {
-          setPaymentDetails({
-            address: '',
-            amount: String(order.total),
-            qrCodeUrl: '',
-            expiresAt: new Date(order.created_at).getTime() + 3600000,
-            payCurrency: 'USD',
-            payLink: payment.pay_url || '',
-            trackId: payment.track_id || ''
-          })
-          setIsLoadingPayment(false)
-          return
-        }
-
-        const livePrice = await getCryptoPrice(payCurrency)
-        if (livePrice) setCurrentPrice(livePrice)
-
-        // Calculate exact amount: Total USD / Live Price
-        // defaults to order total if price fetch fails, but formatted for crypto
-        let calculatedCryptoAmount = String(order.total)
-        if (livePrice && livePrice > 0) {
-          calculatedCryptoAmount = (order.total / livePrice).toFixed(8) // Standard 8 decimals for crypto
-        }
-        // END: Calculate real crypto amount
-
-        if (payment?.track_id) {
-          const info = await getOxaPayPaymentInfo(payment.track_id)
-          console.log("[Invoice] OxaPay Info Response:", info)
-          console.log("[Invoice] Payment record:", payment)
-
-          // Use pay_url from database, or construct fallback from track_id
-          const storedPayUrl = payment.pay_url || ''
-          const fallbackPayLink = `https://pay.oxapay.com/${payment.track_id}`
-          // const payCurrency = info?.payCurrency || payment.provider || 'BTC' // Already defined above
-
-
-          // If OxaPay has address, use it
-          if (info?.address) {
-            // Heuristic: If API returns exactly "1" or "1.0" for major cryptos, it's likely a placeholder/error.
-            // In that case, use our calculated amount.
-            const apiAmount = String(info.payAmount || "");
-            const isPlaceholder = (apiAmount === "1" || apiAmount === "1.00" || apiAmount === "1.0")
-              && (payCurrency.toUpperCase().includes("BTC") || payCurrency.toUpperCase().includes("BITCOIN") || payCurrency.toUpperCase().includes("ETH"));
-
-            // Also force match if apiAmount is empty
-            const finalAmount = (isPlaceholder || !apiAmount || apiAmount === "0") ? calculatedCryptoAmount : apiAmount;
-
-            setPaymentDetails({
-              address: info.address,
-              amount: finalAmount,
-              qrCodeUrl: info.qrCodeUrl || '',
-              expiresAt: info.expiredAt ? new Date(info.expiredAt).getTime() : new Date(order.created_at).getTime() + 3600000,
-              payCurrency: payCurrency,
-              payLink: info?.payLink || storedPayUrl || fallbackPayLink,
-              trackId: payment.track_id
-            })
-            return
-          }
-
-          // Try generating static address if OxaPay inquiry returned no address
-          console.log("[Invoice] No address from inquiry, trying static address for:", payCurrency)
-          const staticAddress = await generateOxaPayStaticAddress({
-            currency: payCurrency,
-            orderId: order.id,
-            email: order.email,
-            description: `Order ${order.readable_id}`,
-          })
-          console.log("[Invoice] Static address result:", staticAddress)
-
-          if (staticAddress?.address) {
-            setPaymentDetails({
-              address: staticAddress.address,
-              amount: calculatedCryptoAmount, // Use calculated amount here
-              qrCodeUrl: staticAddress.qrCodeUrl || '',
-              expiresAt: new Date(order.created_at).getTime() + 3600000,
-              payCurrency: payCurrency,
-              payLink: storedPayUrl || fallbackPayLink,
-              trackId: payment.track_id
-            })
-            return
-          }
-
-          // Fallback to payLink only
-          setPaymentDetails({
-            address: '',
-            amount: calculatedCryptoAmount, // Use calculated amount
-            qrCodeUrl: '',
-            expiresAt: new Date(order.created_at).getTime() + 3600000,
-            payCurrency: payCurrency,
-            payLink: info?.payLink || storedPayUrl,
-            trackId: payment.track_id
-          })
-        } else {
-          // No track_id yet (unlikely if pending?), use manual calc defaults
-          setPaymentDetails({
-            address: '',
-            amount: calculatedCryptoAmount,
-            qrCodeUrl: '',
-            expiresAt: new Date(order.created_at).getTime() + 3600000,
-            payCurrency: payCurrency,
-            payLink: '',
-            trackId: ''
-          })
-        }
-      } catch (error) {
-        console.error("Failed to fetch payment details:", error)
-      } finally {
-        setIsLoadingPayment(false)
-      }
-    }
-
-    fetchPaymentDetails()
-  }, [order?.id, order?.status])
 
 
   // Countdown timer for payment expiration (1 hour from order creation)
@@ -529,7 +511,7 @@ function InvoiceContent() {
   }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency, paymentStatus])
 
 
-  if (isLoading) {
+  if (!order && isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#020406]" suppressHydrationWarning>
         <div className="flex flex-col items-center gap-4" suppressHydrationWarning>
