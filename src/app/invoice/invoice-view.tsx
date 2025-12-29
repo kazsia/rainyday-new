@@ -418,7 +418,11 @@ function InvoiceContent() {
         // 3. Check Blockchain directly (Real-time tracking) for instant detection
         if (paymentDetails.address) {
           const bcStatus = await trackAddressStatus(paymentDetails.address, paymentDetails.payCurrency)
-          setBlockchainStatus(bcStatus)
+          // Prevent flickering: Only update if we detect something OR if we haven't detected anything yet.
+          // If we already detected a tx, but the API flickers/fails (detected=false), we ignore it.
+          if (bcStatus.detected || !blockchainStatus?.detected) {
+            setBlockchainStatus(bcStatus)
+          }
 
           // If blockchain detected payment before OxaPay, show immediate feedback!
           if (bcStatus.detected && !hasShownDetectedToast) {
@@ -484,7 +488,7 @@ function InvoiceContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 100) // Ultra-fast 100ms polling
+    }, 2000) // Standard 2s polling to avoid rate limits
 
     return () => clearInterval(pollInterval)
   }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency])
