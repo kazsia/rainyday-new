@@ -12,11 +12,12 @@ export async function verifyBlockchainPayment(
     paymentId: string,
     address: string,
     currency: string,
-    expectedAmount: number
+    expectedAmount: number,
+    minTimestamp?: number
 ) {
     try {
         // 1. Check blockchain status
-        const status = await trackAddressStatus(address, currency)
+        const status = await trackAddressStatus(address, currency, minTimestamp)
 
         if (!status.detected) {
             return { success: false, status: 'waiting', message: 'No payment detected yet' }

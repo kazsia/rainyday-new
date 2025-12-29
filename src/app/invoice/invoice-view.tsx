@@ -149,7 +149,7 @@ function InvoiceContent() {
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'payments', filter: `order_id=eq.${order.id}` },
+        { event: '*', schema: 'public', table: 'payments', filter: `order_id=eq.${order.id}` },
         () => {
           loadOrder(false)
         }
@@ -390,22 +390,33 @@ function InvoiceContent() {
 
   // Poll for payment status - FASTER 3s polling with blockchain tracking
   useEffect(() => {
-    if (order?.status !== 'pending' || !paymentDetails?.trackId || payment?.provider === 'PayPal') return
+    if (order?.status !== 'pending' || !paymentDetails?.trackId || payment?.provider === 'PayPal' || paymentStatus !== 'pending') return
 
     let hasShownDetectedToast = false
+    let hasCompleted = false
     let consecutiveErrors = 0
 
     const pollInterval = setInterval(async () => {
+      if (hasCompleted) return
       try {
         // 0. Check internal DB status (Real-time sync for admin manual actions)
-        // 0. Check internal DB status (Real-time sync for admin manual actions)
         const currentOrder = await getOrder(order.id)
-        if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
-          setPaymentStatus('completed')
-          toast.success("Order confirmed! Finalizing...")
-          clearInterval(pollInterval)
-          loadOrder(false)
-          return
+        if (currentOrder) {
+          if (['paid', 'delivered', 'completed'].includes(currentOrder.status)) {
+            hasCompleted = true
+            setPaymentStatus('completed')
+            toast.success("Order confirmed! Finalizing...")
+            clearInterval(pollInterval)
+            loadOrder(false)
+            return
+          } else if (currentOrder.status === 'processing') {
+            setPaymentStatus('processing')
+          } else if (currentOrder.status === 'expired') {
+            hasCompleted = true
+            setPaymentStatus('expired')
+            clearInterval(pollInterval)
+            return
+          }
         }
 
         // 1. Check OxaPay status
@@ -417,7 +428,8 @@ function InvoiceContent() {
 
         // 3. Check Blockchain directly (Real-time tracking) for instant detection
         if (paymentDetails.address) {
-          const bcStatus = await trackAddressStatus(paymentDetails.address, paymentDetails.payCurrency)
+          const minTimestamp = order?.created_at ? Math.floor(new Date(order.created_at).getTime() / 1000) : undefined
+          const bcStatus = await trackAddressStatus(paymentDetails.address, paymentDetails.payCurrency, minTimestamp)
           // Prevent flickering: Only update if we detect something OR if we haven't detected anything yet.
           // If we already detected a tx, but the API flickers/fails (detected=false), we ignore it.
           if (bcStatus.detected || !blockchainStatus?.detected) {
@@ -425,7 +437,7 @@ function InvoiceContent() {
           }
 
           // If blockchain detected payment before OxaPay, show immediate feedback!
-          if (bcStatus.detected && !hasShownDetectedToast) {
+          if (bcStatus.detected && !hasShownDetectedToast && !hasCompleted) {
             hasShownDetectedToast = true
             setPaymentStatus('processing')
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
@@ -434,19 +446,20 @@ function InvoiceContent() {
             try {
               const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
               // Verify will update DB to 'processing' if 0 confs, or 'completed' if confirmed
-              await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount))
+              await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount), minTimestamp)
             } catch (err) {
               console.error("Failed to sync detected status:", err)
             }
           }
 
-          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2) /* was bcStatus.txId */ {
+          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2 && !hasCompleted) /* was bcStatus.txId */ {
             // Trust blockchain confirmation
             try {
               const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
-              const result = await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount))
+              const result = await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount), minTimestamp)
 
               if (result.success && result.status === 'confirmed') {
+                hasCompleted = true
                 toast.success("Blockchain confirmed! Finalizing...")
                 setPaymentStatus('completed')
                 clearInterval(pollInterval)
@@ -471,12 +484,13 @@ function InvoiceContent() {
           }
 
           if (info.status === 'Paid' || info.status === 'Confirming') {
-            if (!hasShownDetectedToast) {
+            if (!hasShownDetectedToast && !hasCompleted) {
               hasShownDetectedToast = true
               toast.success("Payment detected! Confirming on blockchain...")
             }
             setPaymentStatus('processing')
           }
+
           if (info.status === 'Paid' && info.txID) {
             // ACTIVE SYNC: Trigger server update immediately
             try {
@@ -486,12 +500,14 @@ function InvoiceContent() {
               console.error("Failed to sync paid status:", err)
             }
 
-            setPaymentStatus('completed')
-            toast.success("Payment Confirmed!")
-            clearInterval(pollInterval)
-            loadOrder(false)
-          }
-          if (info.status === 'Expired' || info.status === 'Failed') {
+            if (!hasCompleted) {
+              hasCompleted = true
+              setPaymentStatus('completed')
+              toast.success("Payment Confirmed!")
+              clearInterval(pollInterval)
+              loadOrder(false)
+            }
+          } else if ((info.status === 'Expired' || info.status === 'Failed') && !hasCompleted) {
             setPaymentStatus('expired')
             toast.error("Payment expired. Please create a new order.")
             clearInterval(pollInterval)
@@ -510,7 +526,7 @@ function InvoiceContent() {
     }, 1000) // High-frequency 1s polling with robust API fallbacks
 
     return () => clearInterval(pollInterval)
-  }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency])
+  }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency, paymentStatus])
 
 
   if (isLoading) {
@@ -710,11 +726,11 @@ function InvoiceContent() {
                     { label: "Total Price", value: `$${Number(order.total).toFixed(2)}` },
                     ...(isPaid && paymentDetails?.amount ? [{ label: `Total Amount (${paymentDetails.payCurrency})`, value: `${paymentDetails.amount} ${paymentDetails.payCurrency}` }] : []),
                     { label: "Created At", value: new Date(order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) },
-                    ...(isPaid && payment?.tx_id ? [{
+                    ...((isPaid && payment?.tx_id) || blockchainStatus?.txId ? [{
                       label: "Transaction Hash",
-                      value: payment.tx_id,
+                      value: (isPaid ? payment?.tx_id : blockchainStatus?.txId) || payment?.tx_id,
                       copy: true,
-                      link: getExplorerUrl(payment.tx_id, payment.provider || "") || undefined
+                      link: getExplorerUrl((isPaid ? payment?.tx_id : blockchainStatus?.txId) || payment?.tx_id || "", payment?.provider || paymentDetails?.payCurrency || "") || undefined
                     }] : []),
                     ...(isPaid ? [{ label: "Completed At", value: new Date(order.updated_at || order.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) }] : []),
                   ].map((item: any, i) => (
@@ -1025,12 +1041,6 @@ function InvoiceContent() {
                       </div>
                     ) : paymentDetails?.address ? (
                       <div className="space-y-8">
-                        {/* Top Auto-Process Banner */}
-                        <div className="p-4 rounded-xl bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-center">
-                          <p className="text-[11px] font-bold text-[#a4f8ff]">
-                            Your order will be automatically processed once the payment is received.
-                          </p>
-                        </div>
 
                         <div className="relative pl-12 space-y-12">
                           {/* Step 1: Destination Address */}
@@ -1043,6 +1053,18 @@ function InvoiceContent() {
                             <div className="space-y-1">
                               <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
                               <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
+                            </div>
+
+                            {/* Delivery Notice */}
+                            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-brand-primary/10 to-transparent border border-brand-primary/10 flex items-center gap-4 group/delivery-note relative overflow-hidden">
+                              <div className="absolute inset-0 bg-brand-primary/5 opacity-0 group-hover/delivery-note:opacity-100 transition-opacity duration-500" />
+                              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center flex-shrink-0 relative z-10 border border-brand-primary/20">
+                                <ShieldCheck className="w-5 h-5 text-brand-primary" />
+                              </div>
+                              <div className="relative z-10">
+                                <p className="text-[11px] font-black text-[#a4f8ff] uppercase tracking-widest mb-0.5">Instant Delivery Information</p>
+                                <p className="text-xs font-medium text-white/60">Product will be delivered after <span className="text-white font-bold">2 confirmations</span> on the blockchain.</p>
+                              </div>
                             </div>
 
                             {/* QR Code Container */}
@@ -1166,14 +1188,25 @@ function InvoiceContent() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
-                          <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-1 h-1 rounded-full animate-pulse",
+                              !blockchainStatus?.detected ? "bg-[#a4f8ff]/40" : "bg-green-500"
+                            )} />
+                            <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest leading-none">
+                              {!blockchainStatus?.detected ? 'Syncing with Nodes...' : 'Live Monitoring...'}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       <div className="space-y-3">
                         {!blockchainStatus?.detected && (
-                          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                            <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 group/waiting">
+                            <div className="w-8 h-8 rounded-lg bg-white/[0.02] flex items-center justify-center">
+                              <Loader2 className="w-3 h-3 text-white/20 animate-spin group-hover/waiting:text-[#a4f8ff]/40 transition-colors" />
+                            </div>
+                            <p className="text-sm font-medium text-white/40">Searching for transactions on the blockchain...</p>
                           </div>
                         )}
 

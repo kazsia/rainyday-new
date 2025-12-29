@@ -43,6 +43,7 @@ import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 import { getOrder, updateOrderStatus } from "@/lib/db/orders"
 import { safeCreateOrder, safeUpdateOrder, safeCreatePayment } from "@/lib/actions/safe-checkout"
 import { createOxaPayWhiteLabel, getOxaPayPaymentInfo } from "@/lib/payments/oxapay" // Static import for reliability
+import { createClient } from "@/lib/supabase/client"
 import { Suspense } from "react"
 
 // All OxaPay supported cryptocurrencies (exact symbols from their API)
@@ -794,34 +795,85 @@ function CheckoutMainContent() {
     status: 'waiting' | 'detected' | 'confirmed' | 'failed'
   } | null>(null)
 
+  // Effect to handle Realtime status updates
+  React.useEffect(() => {
+    if (!existingOrder?.id) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`order_status_${existingOrder.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${existingOrder.id}`
+        },
+        (payload: any) => {
+          const newStatus = payload.new.status
+          if (['paid', 'delivered', 'completed'].includes(newStatus)) {
+            setPaymentStatus('completed')
+            toast.success("Payment confirmed via Realtime!")
+            setTimeout(() => {
+              router.push(`/invoice?id=${orderId || existingOrder.readable_id}`)
+            }, 1000)
+          } else if (newStatus === 'expired') {
+            setPaymentStatus('expired')
+            toast.error("Order expired.")
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments',
+          filter: `order_id=eq.${existingOrder.id}`
+        },
+        (payload: any) => {
+          const payment = payload.new
+          if (payment?.tx_id && !blockchainStatus?.txId) {
+            setBlockchainStatus({
+              detected: true,
+              txId: payment.tx_id,
+              status: payment.status === 'completed' ? 'confirmed' : 'detected',
+              confirmations: payment.payload?.confirmations || 0,
+              lastCheck: new Date(),
+              timestamp: Date.now() / 1000
+            })
+            if (paymentStatus === 'pending') {
+              setPaymentStatus('processing')
+              toast.success("Payment detected via Realtime!")
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [existingOrder?.id, orderId, router])
+
   // Effect to poll for payment status when on step 2 - FASTER polling with blockchain tracking
   React.useEffect(() => {
-    if (step !== 2 || !orderId) return
+    if (step !== 2 || !orderId || paymentStatus !== 'pending') return
 
     let hasShownDetectedToast = false
     let hasShownExpiredToast = false
     let hasCompleted = false
     let consecutiveErrors = 0
+    let pollCount = 0
 
-    // Poll every 3 seconds for faster detection
+    // Small delay before first poll to let Realtime kick in if possible
     const pollInterval = setInterval(async () => {
       // Skip if already completed or expired
       if (hasCompleted || hasShownExpiredToast) return
 
       try {
-        // 0. Check internal DB status (Real-time sync for admin manual actions)
-        const currentOrder = await getOrder(orderId)
-        if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'delivered' || currentOrder.status === 'completed')) {
-          hasCompleted = true
-          setPaymentStatus('completed')
-          toast.success("Order marked as paid! Finalizing...")
-          clearInterval(pollInterval)
-          setTimeout(() => {
-            router.push(`/invoice?id=${orderId}`)
-          }, 2000)
-          return
-        }
-
+        pollCount++
         // 1. & 2. PARALLEL EXECUTION: Check both simultaneously for speed
         const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
         const { trackAddressStatus } = await import("@/lib/payments/blockchain-tracking")
@@ -835,8 +887,31 @@ function CheckoutMainContent() {
           blockchainPromise = trackAddressStatus(cryptoDetails.address, cryptoDetails.payCurrency, minTimestamp)
         }
 
-        // Execute in parallel
-        const [info, bcStatus] = await Promise.all([oxaPayPromise, blockchainPromise])
+        // Execute in parallel (OxaPay, Blockchain, and occasional DB fallback)
+        const [info, bcStatus, currentOrder] = await Promise.all([
+          oxaPayPromise,
+          blockchainPromise,
+          // 0. Occasional DB check (every 10s at 2s interval) as a fallback for Realtime
+          pollCount % 5 === 0 ? getOrder(orderId) : Promise.resolve(null)
+        ])
+
+        if (currentOrder) {
+          if (['paid', 'delivered', 'completed'].includes(currentOrder.status)) {
+            hasCompleted = true
+            setPaymentStatus('completed')
+            toast.success("Order confirmed!")
+            clearInterval(pollInterval)
+            setTimeout(() => {
+              router.push(`/invoice?id=${orderId}`)
+            }, 1000)
+            return
+          } else if (currentOrder.status === 'processing') {
+            setPaymentStatus('processing')
+          } else if (currentOrder.status === 'expired') {
+            setPaymentStatus('expired')
+            clearInterval(pollInterval)
+          }
+        }
 
         // Handle Blockchain Result
         if (bcStatus) {
@@ -853,7 +928,8 @@ function CheckoutMainContent() {
               const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
               // Verify will update DB to 'processing' if 0 confs, or 'completed' if confirmed
               if (cryptoDetails) {
-                await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount))
+                const minTimestamp = existingOrder?.created_at ? Math.floor(new Date(existingOrder.created_at).getTime() / 1000) : undefined
+                await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount), minTimestamp)
               }
             } catch (err) {
               console.error("Failed to sync detected status:", err)
@@ -862,12 +938,13 @@ function CheckoutMainContent() {
 
           // When blockchain shows sufficient confirmations (2+), complete the order
           // Don't wait for OxaPay - trust the blockchain as the source of truth
-          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2) {
+          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2 && !hasCompleted) {
             // Re-verify to ensure DB is updated to 'completed'
             try {
               const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
               if (cryptoDetails) {
-                const result = await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount))
+                const minTimestamp = existingOrder?.created_at ? Math.floor(new Date(existingOrder.created_at).getTime() / 1000) : undefined
+                const result = await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount), minTimestamp)
 
                 if (result.success && result.status === 'confirmed') {
                   hasCompleted = true
@@ -886,18 +963,16 @@ function CheckoutMainContent() {
           }
         }
 
-
-
         // Handle OxaPay Result
         if (info) {
           if (info.status === 'Paid' || info.status === 'Confirming') {
-            if (!hasShownDetectedToast) {
+            if (!hasShownDetectedToast && !hasCompleted) {
               hasShownDetectedToast = true
               toast.success("Payment detected! Confirming on blockchain...")
             }
             setPaymentStatus('processing')
           }
-          if (info.status === 'Paid' && info.txID) {
+          if (info.status === 'Paid' && info.txID && !hasCompleted) {
             hasCompleted = true
             // ACTIVE SYNC: Trigger server update immediately
             try {
@@ -925,6 +1000,7 @@ function CheckoutMainContent() {
             toast.error("Payment expired. Please try again.")
           }
         }
+        consecutiveErrors = 0
       } catch (error: any) {
         consecutiveErrors++
         const errorMsg = error?.message || String(error)
@@ -935,10 +1011,10 @@ function CheckoutMainContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 1000) // High-frequency 1s polling with robust API fallbacks
+    }, 2000) // Polling interval set to 2s since we have Realtime as primary
 
     return () => clearInterval(pollInterval)
-  }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
+  }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router, existingOrder, paymentStatus])
 
   const handleCheckPaymentStatus = async () => {
     setIsProcessing(true)
@@ -1548,6 +1624,17 @@ function CheckoutMainContent() {
                         <span className="text-xs text-white/40">Total Amount ({cryptoDetails?.payCurrency})</span>
                         <span className="text-xs font-bold text-[#a4f8ff]">{cryptoDetails?.amount} {cryptoDetails?.payCurrency}</span>
                       </div>
+                      {blockchainStatus?.txId && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-white/40">Transaction Hash</span>
+                          <span className="text-xs font-medium text-white/60 flex items-center gap-2">
+                            <span className="truncate max-w-[150px]">{blockchainStatus.txId}</span>
+                            <button onClick={() => copyToClipboard(blockchainStatus.txId || "")} className="hover:text-[#a4f8ff] transition-colors">
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1562,6 +1649,18 @@ function CheckoutMainContent() {
                       <div className="space-y-1">
                         <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
                         <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
+                      </div>
+
+                      {/* Delivery Notice */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-brand-primary/10 to-transparent border border-brand-primary/10 flex items-center gap-4 group/delivery-note relative overflow-hidden">
+                        <div className="absolute inset-0 bg-brand-primary/5 opacity-0 group-hover/delivery-note:opacity-100 transition-opacity duration-500" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center flex-shrink-0 relative z-10 border border-brand-primary/20">
+                          <ShieldCheck className="w-5 h-5 text-brand-primary" />
+                        </div>
+                        <div className="relative z-10">
+                          <p className="text-[11px] font-black text-[#a4f8ff] uppercase tracking-widest mb-0.5">Instant Delivery Information</p>
+                          <p className="text-xs font-medium text-white/60">Product will be delivered after <span className="text-white font-bold">2 confirmations</span> on the blockchain.</p>
+                        </div>
                       </div>
 
                       {/* QR Code Container */}
@@ -1621,14 +1720,25 @@ function CheckoutMainContent() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
-                        <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "w-1 h-1 rounded-full animate-pulse",
+                            paymentStatus === 'pending' ? "bg-[#a4f8ff]/40" : "bg-green-500"
+                          )} />
+                          <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest leading-none">
+                            {paymentStatus === 'pending' ? 'Syncing with Nodes...' : 'Live Monitoring...'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       {paymentStatus === 'pending' && (
-                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                          <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 group/waiting">
+                          <div className="w-8 h-8 rounded-lg bg-white/[0.02] flex items-center justify-center">
+                            <Loader2 className="w-3 h-3 text-white/20 animate-spin group-hover/waiting:text-[#a4f8ff]/40 transition-colors" />
+                          </div>
+                          <p className="text-sm font-medium text-white/40">Searching for transactions on the blockchain...</p>
                         </div>
                       )}
 

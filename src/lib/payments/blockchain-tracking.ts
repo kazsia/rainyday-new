@@ -16,85 +16,50 @@ export interface TransactionStatus {
 }
 
 /**
- * Track BTC address via Mempool.space and BlockCypher
- */
-/**
- * Track BTC address via multiple providers for redundancy
- * Providers: Mempool.space, Blockchair, SoChain, BlockCypher
+ * Track BTC address via multiple providers in parallel for instant detection
+ * Providers: Mempool.space, SoChain, Blockchain.info, BlockCypher
  */
 async function trackBTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
-    // 1. Mempool.space (Fastest, best for mempool)
-    try {
-        const response = await fetch(`https://mempool.space/api/address/${address}/txs`, { signal: AbortSignal.timeout(3000) })
-        if (response.ok) {
+    const fetchers = [
+        // 1. Mempool.space (Fastest, best for mempool)
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://mempool.space/api/address/${address}/txs`, { signal: AbortSignal.timeout(3000) })
+            if (!response.ok) throw new Error("Mempool failed")
             const txs = await response.json()
-            if (txs && txs.length > 0) {
-                const latestTx = txs[0]
-                const txTimestamp = latestTx.status.block_time || Date.now() / 1000 // Mempool doesn't give time for unconfirmed sometimes, use current? logic: if detected, it's new. 
-                // Actually unconfirmed txs might not have block_time. status.confirmed=false.
+            if (!txs || txs.length === 0) return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
 
-                if (minTimestamp && latestTx.status.confirmed && txTimestamp < minTimestamp) {
-                    // If confirmed and old, check next? Usually mempool returns new first.
-                    // If the first tx is old, likely no new tx.
-                }
+            const latestTx = txs[0]
+            const txTimestamp = latestTx.status.block_time || Date.now() / 1000
+            if (minTimestamp && latestTx.status.confirmed && txTimestamp < minTimestamp) return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
 
-                if (!minTimestamp || !latestTx.status.confirmed || txTimestamp >= minTimestamp) {
-                    const confirmations = latestTx.status.confirmed ? 3 : 0 // Simplified
-                    let amountSatoshis = 0
-                    for (const vout of latestTx.vout || []) {
-                        if (vout.scriptpubkey_address === address) {
-                            amountSatoshis += vout.value || 0
-                        }
-                    }
-                    return {
-                        detected: true,
-                        confirmations: confirmations,
-                        txId: latestTx.txid,
-                        status: confirmations >= 2 ? 'confirmed' : 'detected',
-                        lastCheck: new Date(),
-                        amountReceived: amountSatoshis / 100000000,
-                        timestamp: txTimestamp
-                    }
-                }
+            const confirmations = latestTx.status.confirmed ? 3 : 0
+            let amountSatoshis = 0
+            for (const vout of latestTx.vout || []) {
+                if (vout.scriptpubkey_address === address) amountSatoshis += vout.value || 0
             }
-        }
-    } catch (e) {
-        // console.warn("BTC Mempool.space failed", e) 
-    }
-
-    // 2. Blockchair (Very reliable)
-    try {
-        const response = await fetch(`https://api.blockchair.com/bitcoin/dashboards/address/${address}?limit=2`, { signal: AbortSignal.timeout(3000) })
-        if (response.ok) {
-            const data = await response.json()
-            const addrData = data.data[address]
-            const txs = addrData.transactions || []
-            // Blockchair dashboard sometimes returns just hashes in 'transactions'. 
-            // But usually it has a list if we don't ask for too details? 
-            // Let's verify structure. The 'transactions' key in dashboard is array of hashes usually, 
-            // UNLESS 'transaction_details=true' which we didn't pass.
-            // BUT, the 'calls' or other fields might help.
-            // Actually, easier to use their raw transaction endpoint if we have hashes, but we don't.
-            // Wait, let's use Chain.so next as it's easier. Blockchair is complex without API key for full details sometimes.
-            // However, `data.data[address].address` has `balance` and `transaction_count`. 
-            // If we see balance > 0 and we expected it... but we need TXID.
-        }
-    } catch (e) { }
-
-    // 2. SoChain (Chain.so) - Simple and effective
-    try {
-        const response = await fetch(`https://chain.so/api/v2/get_tx_received/BTC/${address}`, { signal: AbortSignal.timeout(3000) })
-        if (response.ok) {
+            return {
+                detected: true,
+                confirmations,
+                txId: latestTx.txid,
+                status: confirmations >= 2 ? 'confirmed' : 'detected',
+                lastCheck: new Date(),
+                amountReceived: amountSatoshis / 100000000,
+                timestamp: txTimestamp
+            }
+        },
+        // 2. SoChain (Chain.so)
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://chain.so/api/v2/get_tx_received/BTC/${address}`, { signal: AbortSignal.timeout(3000) })
+            if (!response.ok) throw new Error("SoChain failed")
             const data = await response.json()
             const txs = data.data.txs || []
             for (const tx of txs) {
                 const txTime = parseInt(tx.time)
                 if (minTimestamp && txTime < minTimestamp) continue
-
                 const confirmations = parseInt(tx.confirmations) || 0
                 return {
                     detected: true,
-                    confirmations: confirmations,
+                    confirmations,
                     txId: tx.txid,
                     status: confirmations >= 2 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
@@ -102,34 +67,23 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
                     timestamp: txTime
                 }
             }
-        }
-    } catch (e) { }
-
-    // 3. Blockchain.info (RawBlock)
-    try {
-        const response = await fetch(`https://blockchain.info/rawaddr/${address}?limit=5`, { signal: AbortSignal.timeout(3000) })
-        if (response.ok) {
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+        },
+        // 3. Blockchain.info
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://blockchain.info/rawaddr/${address}?limit=5`, { signal: AbortSignal.timeout(3000) })
+            if (!response.ok) throw new Error("Blockchain.info failed")
             const data = await response.json()
             const txs = data.txs || []
             for (const tx of txs) {
                 const txTime = tx.time
                 if (minTimestamp && txTime < minTimestamp) continue
-
-                // Inputs/Outputs logic
                 let amountSatoshis = 0
-                // Blockchain.info structure: out[{addr, value, ...}]
-                for (const out of tx.out || []) {
-                    if (out.addr === address) amountSatoshis += out.value
-                }
-
-                // Confirmations not always directly in rawaddr tx object? 
-                // It has 'block_height'. We need current height to calc. 
-                // But wait, if it has block_height, it's confirmed. If no block_height, 0 confs.
+                for (const out of tx.out || []) { if (out.addr === address) amountSatoshis += out.value }
                 const isConfirmed = !!tx.block_height
-
                 return {
                     detected: true,
-                    confirmations: isConfirmed ? 3 : 0, // Estimating
+                    confirmations: isConfirmed ? 3 : 0,
                     txId: tx.hash,
                     status: isConfirmed ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
@@ -137,31 +91,25 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
                     timestamp: txTime
                 }
             }
-        }
-    } catch (e) { }
-
-    // 4. BlockCypher (Fallback)
-    try {
-        const bcResponse = await fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
-        if (bcResponse.ok) {
-            const data = await bcResponse.json()
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+        },
+        // 4. BlockCypher
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
+            if (!response.ok) throw new Error("BlockCypher failed")
+            const data = await response.json()
             const bcTxs = data.txs || []
-
             for (const tx of bcTxs) {
                 const txTime = tx.received ? new Date(tx.received).getTime() / 1000 : 0
                 if (minTimestamp && txTime < minTimestamp) continue
-
                 const confirmations = tx.confirmations || 0
                 let amountReceived = 0
                 for (const output of tx.outputs || []) {
-                    if (output.addresses?.includes(address)) {
-                        amountReceived += (output.value || 0) / 100000000
-                    }
+                    if (output.addresses?.includes(address)) amountReceived += (output.value || 0) / 100000000
                 }
-
                 return {
                     detected: true,
-                    confirmations: confirmations,
+                    confirmations,
                     txId: tx.hash,
                     status: confirmations >= 2 ? 'confirmed' : 'detected',
                     lastCheck: new Date(),
@@ -169,10 +117,24 @@ async function trackBTC(address: string, minTimestamp?: number): Promise<Transac
                     timestamp: txTime
                 }
             }
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
         }
-    } catch (e) { }
+    ]
 
-    return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+    const results = await Promise.allSettled(fetchers.map(f => f()))
+
+    // Pick the "best" result - prioritizing detected and then highest confirmation count
+    let bestResult: TransactionStatus = { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+
+    for (const res of results) {
+        if (res.status === 'fulfilled' && res.value.detected) {
+            if (!bestResult.detected || res.value.confirmations > bestResult.confirmations) {
+                bestResult = res.value
+            }
+        }
+    }
+
+    return bestResult
 }
 
 /**
@@ -260,45 +222,21 @@ async function trackSOL(address: string, minTimestamp?: number): Promise<Transac
 }
 
 /**
- * Track LTC address via BlockCypher - with proper timestamp filtering
+ * Track LTC address via multiple providers in parallel for instant detection
+ * Providers: Blockchair, SoChain, BlockCypher
  */
 async function trackLTC(address: string, minTimestamp?: number): Promise<TransactionStatus> {
-    try {
-        // Primary: Blockchair (More reliable than BlockCypher free tier)
-        const response = await fetch(`https://api.blockchair.com/litecoin/dashboards/address/${address}?limit=5`, { signal: AbortSignal.timeout(4000) })
-        if (response.ok) {
+    const fetchers = [
+        // 1. SoChain (Chain.so) - Fastest and simplest
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://chain.so/api/v2/get_tx_received/LTC/${address}`, { signal: AbortSignal.timeout(4000) })
+            if (!response.ok) throw new Error("SoChain failed")
             const data = await response.json()
-            const addrData = data.data[address]
-            const txs = addrData.transactions || []
-
-            if (txs.length === 0) {
-                // Check unconfirmed if available or just return waiting
-                return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
-            }
-
-            for (const txHash of txs) {
-                // Blockchair address endpoint gives list of tx hashes. We might need full details?
-                // Actually the dashboard endpoint gives some info. But let's check if we can get details.
-                // The 'transactions' array is just hashes. The 'calls' or 'layer_2' might differ.
-                // Wait, dashboard endpoint usually includes 'transactions' as list of objects in some contexts, but documentation says list of hashes.
-                // Let's use a better endpoint or just trust if we see a new TX.
-                // Actually, Blockchair 'dashboards/address' returns robust data but sometimes limits transaction details.
-
-                // Alternative: Chain.so (SoChain)
-                break; // Fallback to chain.so below for easier parsing
-            }
-        }
-
-        // Primary Alternative: Chain.so (Very simple API)
-        const soResponse = await fetch(`https://chain.so/api/v2/get_tx_received/LTC/${address}`, { signal: AbortSignal.timeout(4000) })
-        if (soResponse.ok) {
-            const data = await soResponse.json()
             const txs = data.data.txs || []
 
             for (const tx of txs) {
                 const txTime = parseInt(tx.time)
                 if (minTimestamp && txTime < minTimestamp) continue
-
                 const confirmations = parseInt(tx.confirmations) || 0
                 return {
                     detected: true,
@@ -310,22 +248,36 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
                     timestamp: txTime
                 }
             }
-        }
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+        },
+        // 2. Blockchair
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://api.blockchair.com/litecoin/dashboards/address/${address}?limit=5`, { signal: AbortSignal.timeout(4000) })
+            if (!response.ok) throw new Error("Blockchair failed")
+            const data = await response.json()
+            if (!data?.data || !data.data[address]) throw new Error("Invalid Blockchair data")
 
-    } catch (e) {
-        console.error("LTC Primary Tracking Error:", e)
-    }
+            const addrData = data.data[address]
+            const txs = addrData.transactions || []
 
-    // Fallback: BlockCypher (Rate limited often, but good backup)
-    try {
-        const response = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
-        if (response.ok) {
+            if (txs.length > 0) {
+                return {
+                    detected: true,
+                    confirmations: 0,
+                    txId: txs[0],
+                    status: 'detected',
+                    lastCheck: new Date(),
+                    timestamp: Date.now() / 1000
+                }
+            }
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+        },
+        // 3. BlockCypher
+        async (): Promise<TransactionStatus> => {
+            const response = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${address}/full?limit=5`, { signal: AbortSignal.timeout(4000) })
+            if (!response.ok) throw new Error("BlockCypher failed")
             const data = await response.json()
             const txs = data.txs || []
-
-            if (txs.length === 0 && data.unconfirmed_n_tx === 0) {
-                return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
-            }
 
             for (const tx of txs) {
                 const txTime = tx.received ? new Date(tx.received).getTime() / 1000 : 0
@@ -334,9 +286,7 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
                 const confirmations = tx.confirmations || 0
                 let amountReceived = 0
                 for (const output of tx.outputs || []) {
-                    if (output.addresses?.includes(address)) {
-                        amountReceived += (output.value || 0) / 100000000
-                    }
+                    if (output.addresses?.includes(address)) amountReceived += (output.value || 0) / 100000000
                 }
 
                 return {
@@ -349,11 +299,11 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
                     timestamp: txTime
                 }
             }
-            // Check unconfirmed
+
             if (data.unconfirmed_n_tx > 0 && data.unconfirmed_txrefs) {
-                for (const txref of data.unconfirmed_txrefs) {
-                    const txTime = txref.received ? new Date(txref.received).getTime() / 1000 : Date.now() / 1000
-                    if (minTimestamp && txTime < minTimestamp) continue
+                const txref = data.unconfirmed_txrefs[0]
+                const txTime = txref.received ? new Date(txref.received).getTime() / 1000 : Date.now() / 1000
+                if (!minTimestamp || txTime >= minTimestamp) {
                     return {
                         detected: true,
                         confirmations: 0,
@@ -365,12 +315,22 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
                     }
                 }
             }
+            return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
         }
-    } catch (e) {
-        console.error("LTC BlockCypher Error:", e)
+    ]
+
+    const results = await Promise.allSettled(fetchers.map(f => f()))
+    let bestResult: TransactionStatus = { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+
+    for (const res of results) {
+        if (res.status === 'fulfilled' && res.value.detected) {
+            if (!bestResult.detected || res.value.confirmations > bestResult.confirmations) {
+                bestResult = res.value
+            }
+        }
     }
 
-    return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
+    return bestResult
 }
 
 /**
