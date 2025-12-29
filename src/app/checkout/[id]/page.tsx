@@ -884,894 +884,484 @@ function CheckoutMainContent() {
               console.error("Failed to sync confirmed status:", err)
             }
           }
-          if (!hasShownDetectedToast) {
-            toast.success("Blockchain confirmed! Waiting for payment processor...")
-          }
         }
+      }
 
 
         // Handle OxaPay Result
         if (info) {
-          if (info.status === 'Paid' || info.status === 'Confirming') {
-            if (!hasShownDetectedToast) {
-              hasShownDetectedToast = true
-              toast.success("Payment detected! Confirming on blockchain...")
-            }
-            setPaymentStatus('processing')
-          }
-          if (info.status === 'Paid' && info.txID) {
-            hasCompleted = true
-            // ACTIVE SYNC: Trigger server update immediately
-            try {
-              const { markOrderAsPaid } = await import("@/lib/actions/checkout")
-              // We pass the txID, and the server action will RE-VERIFY it before marking paid
-              await markOrderAsPaid(existingOrder?.id || '', info.txID, {
-                address: cryptoDetails?.address,
-                currency: cryptoDetails?.payCurrency
-              })
-            } catch (err) {
-              console.error("Failed to sync paid status:", err)
-            }
-
-            setPaymentStatus('completed')
-            toast.success("Payment Confirmed! Redirecting...")
-            clearInterval(pollInterval)
-            setTimeout(() => {
-              router.push(`/invoice?id=${orderId}`)
-            }, 500)
-          }
-          if ((info.status === 'Expired' || info.status === 'Failed') && !hasShownExpiredToast) {
-            hasShownExpiredToast = true
-            clearInterval(pollInterval)
-            setPaymentStatus('expired')
-            toast.error("Payment expired. Please try again.")
-          }
-        }
-      } catch (error: any) {
-        consecutiveErrors++
-        const errorMsg = error?.message || String(error)
-        const isNetworkError = errorMsg.includes('fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')
-
-        // Silent retry for network errors up to 5 times (15 seconds)
-        if (!isNetworkError || consecutiveErrors > 5) {
-          console.error("Error polling payment status:", error)
-        }
-      }
-    }, 1000) // High-frequency 1s polling with robust API fallbacks
-
-    return () => clearInterval(pollInterval)
-  }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
-
-  const handleCheckPaymentStatus = async () => {
-    setIsProcessing(true)
-    try {
-      const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
-      const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
-      if (info) {
         if (info.status === 'Paid' || info.status === 'Confirming') {
+          if (!hasShownDetectedToast) {
+            hasShownDetectedToast = true
+            toast.success("Payment detected! Confirming on blockchain...")
+          }
           setPaymentStatus('processing')
-          toast.success("Payment detected! Confirming on blockchain...")
         }
         if (info.status === 'Paid' && info.txID) {
+          hasCompleted = true
+          // ACTIVE SYNC: Trigger server update immediately
+          try {
+            const { markOrderAsPaid } = await import("@/lib/actions/checkout")
+            // We pass the txID, and the server action will RE-VERIFY it before marking paid
+            await markOrderAsPaid(existingOrder?.id || '', info.txID, {
+              address: cryptoDetails?.address,
+              currency: cryptoDetails?.payCurrency
+            })
+          } catch (err) {
+            console.error("Failed to sync paid status:", err)
+          }
+
           setPaymentStatus('completed')
           toast.success("Payment Confirmed! Redirecting...")
+          clearInterval(pollInterval)
           setTimeout(() => {
             router.push(`/invoice?id=${orderId}`)
           }, 500)
-        } else if (info.status === 'Expired') {
+        }
+        if ((info.status === 'Expired' || info.status === 'Failed') && !hasShownExpiredToast) {
+          hasShownExpiredToast = true
+          clearInterval(pollInterval)
           setPaymentStatus('expired')
           toast.error("Payment expired. Please try again.")
-        } else {
-          toast.info("Waiting for payment...")
         }
       }
-    } catch (error) {
-      console.error("Error checking payment status:", error)
-      toast.error("Unable to check payment status")
-    } finally {
-      setIsProcessing(false)
+    } catch (error: any) {
+      consecutiveErrors++
+      const errorMsg = error?.message || String(error)
+      const isNetworkError = errorMsg.includes('fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')
+
+      // Silent retry for network errors up to 5 times (15 seconds)
+      if (!isNetworkError || consecutiveErrors > 5) {
+        console.error("Error polling payment status:", error)
+      }
     }
+  }, 1000) // High-frequency 1s polling with robust API fallbacks
+
+  return () => clearInterval(pollInterval)
+}, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
+
+const handleCheckPaymentStatus = async () => {
+  setIsProcessing(true)
+  try {
+    const { getOxaPayPaymentInfo } = await import("@/lib/payments/oxapay")
+    const info = await getOxaPayPaymentInfo(cryptoDetails?.invoiceId || '')
+    if (info) {
+      if (info.status === 'Paid' || info.status === 'Confirming') {
+        setPaymentStatus('processing')
+        toast.success("Payment detected! Confirming on blockchain...")
+      }
+      if (info.status === 'Paid' && info.txID) {
+        setPaymentStatus('completed')
+        toast.success("Payment Confirmed! Redirecting...")
+        setTimeout(() => {
+          router.push(`/invoice?id=${orderId}`)
+        }, 500)
+      } else if (info.status === 'Expired') {
+        setPaymentStatus('expired')
+        toast.error("Payment expired. Please try again.")
+      } else {
+        toast.info("Waiting for payment...")
+      }
+    }
+  } catch (error) {
+    console.error("Error checking payment status:", error)
+    toast.error("Unable to check payment status")
+  } finally {
+    setIsProcessing(false)
   }
+}
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success("Copied to clipboard!")
-  }
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text)
+  toast.success("Copied to clipboard!")
+}
 
-  if (isLoadingOrder) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#020406]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/40 text-xs font-black uppercase tracking-widest">Loading checkout module...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (cart.length === 0 && step === 1 && !urlOrderId) return null
-
+if (isLoadingOrder) {
   return (
-    <div className="min-h-screen bg-[#020406] text-white selection:bg-brand-primary/30 antialiased overflow-x-hidden">
-      {/* Background elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-primary/5 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-accent/5 blur-[120px] rounded-full animate-pulse delay-700" />
+    <div className="min-h-screen flex items-center justify-center bg-[#020406]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-white/40 text-xs font-black uppercase tracking-widest">Loading checkout module...</p>
       </div>
+    </div>
+  )
+}
 
-      <div className="relative flex flex-col lg:flex-row min-h-screen">
-        {/* Left Panel - Order Summary */}
-        <div className="w-full lg:w-[35%] p-4 md:p-6 lg:p-8 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-background/20 backdrop-blur-3xl">
-          <div className="space-y-6 md:space-y-8">
-            <div className="flex items-center justify-between">
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <Logo />
-              </motion.div>
+if (cart.length === 0 && step === 1 && !urlOrderId) return null
+
+return (
+  <div className="min-h-screen bg-[#020406] text-white selection:bg-brand-primary/30 antialiased overflow-x-hidden">
+    {/* Background elements */}
+    <div className="fixed inset-0 pointer-events-none">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-primary/5 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-accent/5 blur-[120px] rounded-full animate-pulse delay-700" />
+    </div>
+
+    <div className="relative flex flex-col lg:flex-row min-h-screen">
+      {/* Left Panel - Order Summary */}
+      <div className="w-full lg:w-[35%] p-4 md:p-6 lg:p-8 lg:sticky lg:top-0 h-fit lg:h-screen flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/5 bg-background/20 backdrop-blur-3xl">
+        <div className="space-y-6 md:space-y-8">
+          <div className="flex items-center justify-between">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+              <Logo />
+            </motion.div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.4em] translate-x-1">Pay Rainyday</p>
+              <div className="flex items-baseline gap-2">
+                <SparklesText
+                  text={formatPrice(finalTotal)}
+                  className="text-3xl font-black tracking-tighter"
+                  colors={{ first: "#a4f8ff", second: "#ffffff" }}
+                />
+                {savedTotal > 0 && appliedCoupon && (
+                  <span className="text-lg font-bold text-white/40 line-through decoration-white/20 decoration-2">
+                    {formatPrice(savedTotal)}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-brand-primary/40 uppercase tracking-[0.4em] translate-x-1">Pay Rainyday</p>
-                <div className="flex items-baseline gap-2">
-                  <SparklesText
-                    text={formatPrice(finalTotal)}
-                    className="text-3xl font-black tracking-tighter"
-                    colors={{ first: "#a4f8ff", second: "#ffffff" }}
-                  />
-                  {savedTotal > 0 && appliedCoupon && (
-                    <span className="text-lg font-bold text-white/40 line-through decoration-white/20 decoration-2">
-                      {formatPrice(savedTotal)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
-                <AnimatePresence mode="popLayout">
-                  {(savedItems.length > 0 ? savedItems : cart).map((item, idx) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 group hover:bg-white/[0.04] transition-all hover:border-white/10"
-                    >
-                      <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-xl border border-white/10">
-                        <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">{item.title}</h3>
-                        {item.variantName && (
-                          <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variantName}</p>
+            <div className="space-y-2 max-h-[30vh] lg:max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
+              <AnimatePresence mode="popLayout">
+                {(savedItems.length > 0 ? savedItems : cart).map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 group hover:bg-white/[0.04] transition-all hover:border-white/10"
+                  >
+                    <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-xl border border-white/10">
+                      <Image src={item.image || "/logo.png"} alt={item.title || "Product"} fill sizes="56px" className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">{item.title}</h3>
+                      {item.variantName && (
+                        <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variantName}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        {savedItems.length > 0 ? null : (
+                          <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 border border-white/10">
+                            <button
+                              disabled={item.quantity <= 0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateQuantity(item, -1);
+                              }}
+                              className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-[10px] font-black w-5 text-center text-white">{item.quantity}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateQuantity(item, 1);
+                              }}
+                              className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
                         )}
-                        <div className="flex items-center gap-3 mt-2">
-                          {savedItems.length > 0 ? null : (
-                            <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5 border border-white/10">
+                        {/* Increased spacing for cart safety */}
+                        {!savedItems.length && <div className="ml-2">
+                          {pendingDelete === item.id ? (
+                            <div className="flex items-center gap-1 animate-in fade-in duration-200">
                               <button
-                                disabled={item.quantity <= 0}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleUpdateQuantity(item, -1);
+                                  handleUpdateQuantity(item, -item.quantity);
+                                  setPendingDelete(null);
+                                  toast.info(`Removed ${item.title}`);
                                 }}
-                                className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-2 py-1 bg-red-500 text-white text-[8px] font-black rounded-md hover:bg-red-600 transition-colors uppercase tracking-wider"
                               >
-                                <Minus className="w-3 h-3" />
+                                Confirm
                               </button>
-                              <span className="text-[10px] font-black w-5 text-center text-white">{item.quantity}</span>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleUpdateQuantity(item, 1);
+                                  setPendingDelete(null);
                                 }}
-                                className="p-1 hover:bg-white/20 rounded-md transition-colors text-white hover:text-brand-primary"
+                                className="px-2 py-1 bg-white/10 text-white/60 text-[8px] font-black rounded-md hover:bg-white/20 transition-colors uppercase tracking-wider"
                               >
-                                <Plus className="w-3 h-3" />
+                                Cancel
                               </button>
                             </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPendingDelete(item.id);
+                              }}
+                              className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/10"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           )}
-                          {/* Increased spacing for cart safety */}
-                          {!savedItems.length && <div className="ml-2">
-                            {pendingDelete === item.id ? (
-                              <div className="flex items-center gap-1 animate-in fade-in duration-200">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateQuantity(item, -item.quantity);
-                                    setPendingDelete(null);
-                                    toast.info(`Removed ${item.title}`);
-                                  }}
-                                  className="px-2 py-1 bg-red-500 text-white text-[8px] font-black rounded-md hover:bg-red-600 transition-colors uppercase tracking-wider"
-                                >
-                                  Confirm
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPendingDelete(null);
-                                  }}
-                                  className="px-2 py-1 bg-white/10 text-white/60 text-[8px] font-black rounded-md hover:bg-white/20 transition-colors uppercase tracking-wider"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPendingDelete(item.id);
-                                }}
-                                className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/10"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>}
-                        </div>
+                        </div>}
                       </div>
-                      <div className="text-right">
-                        {savedItems.length === 0 && (
-                          <p className="text-xs font-black text-white group-hover:text-brand-primary transition-colors">{formatPrice(item.price * item.quantity)}</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/5 space-y-2 bg-gradient-to-t from-black/20 to-transparent">
-            <div className="space-y-3">
-              {/* Subtotal - quieter */}
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/15">
-                <span className="flex items-center gap-2">Subtotal</span>
-                <span className="text-white/30 tracking-normal">{formatPrice(subtotal)}</span>
-              </div>
-
-              {appliedCoupon && (
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary/80">
-                  <span className="flex items-center gap-2">Discount <span className="text-white/30">({appliedCoupon.code})</span></span>
-                  <span className="tracking-normal">-{formatPrice(discountAmount)}</span>
-                </div>
-              )}
-
-              {/* Processing fee - very quiet */}
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/10">
-                <span className="flex items-center gap-2">Processing Fee</span>
-                <span className="tracking-normal">$0.00</span>
-              </div>
-
-              {/* TOTAL - Most dominant */}
-              <div className="flex justify-between items-center pt-2 mt-1 border-t border-white/5">
-                <span className="text-sm font-black tracking-widest text-white uppercase">Total</span>
-                <div className="text-right">
-                  <SparklesText
-                    text={formatPrice(finalTotal)}
-                    className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_25px_rgba(164,248,255,0.3)]"
-                    sparklesCount={10}
-                  />
-                </div>
-              </div>
+                    </div>
+                    <div className="text-right">
+                      {savedItems.length === 0 && (
+                        <p className="text-xs font-black text-white group-hover:text-brand-primary transition-colors">{formatPrice(item.price * item.quantity)}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         </div>
 
-        {/* Right Panel - Steps & Payment */}
-        <div className="flex-1 p-4 md:p-6 lg:p-8 lg:px-12 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(38,188,196,0.05),transparent_60%)] pointer-events-none" />
+        <div className="pt-4 border-t border-white/5 space-y-2 bg-gradient-to-t from-black/20 to-transparent">
+          <div className="space-y-3">
+            {/* Subtotal - quieter */}
+            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/15">
+              <span className="flex items-center gap-2">Subtotal</span>
+              <span className="text-white/30 tracking-normal">{formatPrice(subtotal)}</span>
+            </div>
 
-          {/* Steps Navigation */}
-          <div className="grid grid-cols-3 gap-6 relative z-10 mb-8 max-w-2xl mx-auto w-full">
-            {[
-              { s: 1, label: "Order Information" },
-              { s: 2, label: "Confirm & Pay" },
-              { s: 3, label: "Receive Your Items" }
-            ].map((item) => {
-              const isActiveOrCompleted = step >= item.s
-              const isCurrent = step === item.s
-              return (
-                <div key={item.s} className="space-y-3 flex-1">
-                  <div className={cn(
-                    "h-1 w-full rounded-full transition-all duration-1000",
-                    isActiveOrCompleted ? "bg-[#a4f8ff] shadow-[0_0_15px_rgba(164,248,255,0.5)]" : "bg-white/5"
-                  )} />
-                  <div className="space-y-1">
-                    <p className={cn(
-                      "text-[10px] font-black uppercase tracking-widest transition-colors",
-                      isActiveOrCompleted ? "text-[#a4f8ff]" : "text-white/20"
-                    )}>Step {item.s}</p>
-                    <p className={cn(
-                      "text-xs font-bold tracking-tight transition-colors",
-                      isActiveOrCompleted ? "text-white/90" : "text-white/20"
-                    )}>{item.label}</p>
-                  </div>
-                </div>
-              )
-            })}
+            {appliedCoupon && (
+              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-primary/80">
+                <span className="flex items-center gap-2">Discount <span className="text-white/30">({appliedCoupon.code})</span></span>
+                <span className="tracking-normal">-{formatPrice(discountAmount)}</span>
+              </div>
+            )}
+
+            {/* Processing fee - very quiet */}
+            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/10">
+              <span className="flex items-center gap-2">Processing Fee</span>
+              <span className="tracking-normal">$0.00</span>
+            </div>
+
+            {/* TOTAL - Most dominant */}
+            <div className="flex justify-between items-center pt-2 mt-1 border-t border-white/5">
+              <span className="text-sm font-black tracking-widest text-white uppercase">Total</span>
+              <div className="text-right">
+                <SparklesText
+                  text={formatPrice(finalTotal)}
+                  className="block text-xl sm:text-2xl font-black text-brand-primary tracking-tighter drop-shadow-[0_0_25px_rgba(164,248,255,0.3)]"
+                  sparklesCount={10}
+                />
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div className="flex-1 max-w-xl w-full mx-auto flex flex-col relative z-10">
-            <AnimatePresence mode="wait">
-              {/* Step 1 Content: Order Details */}
-              {step === 1 ? (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-4 pb-6"
-                >
-                  <div className="space-y-4">
+      {/* Right Panel - Steps & Payment */}
+      <div className="flex-1 p-4 md:p-6 lg:p-8 lg:px-12 bg-[#030607]/40 backdrop-blur-md relative overflow-hidden flex flex-col">
+        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(38,188,196,0.05),transparent_60%)] pointer-events-none" />
+
+        {/* Steps Navigation */}
+        <div className="grid grid-cols-3 gap-6 relative z-10 mb-8 max-w-2xl mx-auto w-full">
+          {[
+            { s: 1, label: "Order Information" },
+            { s: 2, label: "Confirm & Pay" },
+            { s: 3, label: "Receive Your Items" }
+          ].map((item) => {
+            const isActiveOrCompleted = step >= item.s
+            const isCurrent = step === item.s
+            return (
+              <div key={item.s} className="space-y-3 flex-1">
+                <div className={cn(
+                  "h-1 w-full rounded-full transition-all duration-1000",
+                  isActiveOrCompleted ? "bg-[#a4f8ff] shadow-[0_0_15px_rgba(164,248,255,0.5)]" : "bg-white/5"
+                )} />
+                <div className="space-y-1">
+                  <p className={cn(
+                    "text-[10px] font-black uppercase tracking-widest transition-colors",
+                    isActiveOrCompleted ? "text-[#a4f8ff]" : "text-white/20"
+                  )}>Step {item.s}</p>
+                  <p className={cn(
+                    "text-xs font-bold tracking-tight transition-colors",
+                    isActiveOrCompleted ? "text-white/90" : "text-white/20"
+                  )}>{item.label}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="flex-1 max-w-xl w-full mx-auto flex flex-col relative z-10">
+          <AnimatePresence mode="wait">
+            {/* Step 1 Content: Order Details */}
+            {step === 1 ? (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 pb-6"
+              >
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-white/90">E-mail Address *</label>
+                    </div>
+                    <div className="relative group">
+                      <Input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="The order confirmation will be sent to this e-mail address."
+                        className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
+                      />
+                      <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
+                    </div>
+                  </div>
+
+                  {settings.checkout.show_coupon && (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-white/90">E-mail Address *</label>
+                        <label className="text-sm font-medium text-white/90">Coupon Code</label>
                       </div>
                       <div className="relative group">
                         <Input
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="The order confirmation will be sent to this e-mail address."
-                          className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                          placeholder="Have a discount? Enter it here."
+                          disabled={!!appliedCoupon || isCheckingCoupon}
+                          className={cn(
+                            "h-11 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5",
+                            appliedCoupon && "border-[#a4f8ff]/40 text-[#a4f8ff]"
+                          )}
                         />
                         <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
-                      </div>
-                    </div>
-
-                    {settings.checkout.show_coupon && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-white/90">Coupon Code</label>
-                        </div>
-                        <div className="relative group">
-                          <Input
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                            placeholder="Have a discount? Enter it here."
-                            disabled={!!appliedCoupon || isCheckingCoupon}
-                            className={cn(
-                              "h-11 px-6 pr-28 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5",
-                              appliedCoupon && "border-[#a4f8ff]/40 text-[#a4f8ff]"
-                            )}
-                          />
-                          <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
-                          {appliedCoupon ? (
-                            <button
-                              onClick={() => {
-                                setAppliedCoupon(null)
-                                setCouponCode("")
-                              }}
-                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-red-400/40 hover:border-red-400 hover:bg-red-400/10 transition-all rounded-lg text-[9px] font-bold text-red-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest"
-                            >
-                              Remove
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={handleApplyCoupon}
-                              disabled={isCheckingCoupon || !couponCode}
-                              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-[#a4f8ff]/40 hover:border-[#a4f8ff] hover:bg-[#a4f8ff]/10 transition-all rounded-lg text-[9px] font-bold text-[#a4f8ff] flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
-                            >
-                              {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
-                                Apply
-                                <ArrowRight className="w-3 h-3" />
-                              </>}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Dynamic Custom Fields */}
-                    {cart.some(item => item.custom_fields && item.custom_fields.length > 0) && (
-                      <div className="space-y-6">
-                        {cart.filter(item => item.custom_fields && item.custom_fields.length > 0).map((item) => (
-                          <div key={item.id} className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-2.5 h-2.5 text-brand-primary" />
-                              <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
-                                {item.title} - Extra Info
-                              </label>
-                            </div>
-                            <div className="space-y-4">
-                              {item.custom_fields?.map((field: any) => (
-                                <div key={field.name} className="space-y-2">
-                                  <label className="text-[10px] font-bold text-white/60 uppercase tracking-widest pl-1">
-                                    {field.name} {field.required && <span className="text-red-500">*</span>}
-                                  </label>
-                                  <div className="relative group">
-                                    <Input
-                                      value={customFieldValues[`${item.id}_${field.name}`] || field.default_value || ""}
-                                      onChange={(e) => setCustomFieldValues({
-                                        ...customFieldValues,
-                                        [`${item.id}_${field.name}`]: e.target.value
-                                      })}
-                                      placeholder={field.hint || `Enter ${field.name}...`}
-                                      className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
-                                    />
-                                    <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="space-y-4 px-1 pb-1">
-                      <div className="flex items-center justify-between pb-1">
-                        <label className="text-sm font-medium text-white/90">Payment Method *</label>
-                      </div>
-
-                      <div className="space-y-3">
-                        {/* Primary Method - PayPal */}
-                        {!disabledMethods.includes("PayPal") && (
-                          <div
-                            onClick={() => setSelectedMethod("PayPal")}
-                            className={cn(
-                              "p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group h-[64px]",
-                              selectedMethod === "PayPal"
-                                ? "bg-brand-primary/5 border-brand-primary"
-                                : "bg-white/[0.02] border-white/5 hover:border-white/10"
-                            )}
+                        {appliedCoupon ? (
+                          <button
+                            onClick={() => {
+                              setAppliedCoupon(null)
+                              setCouponCode("")
+                            }}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-red-400/40 hover:border-red-400 hover:bg-red-400/10 transition-all rounded-lg text-[9px] font-bold text-red-400 flex items-center gap-2 active:scale-95 uppercase tracking-widest"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors overflow-hidden p-2",
-                                selectedMethod === "PayPal" ? "bg-[#003087]/10" : "bg-white/5 group-hover:bg-white/10"
-                              )}>
-                                <img
-                                  src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg"
-                                  alt="PayPal"
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[15px] font-bold text-white">PayPal</span>
-                                <span className="text-[11px] text-white/40">Secure instant payment</span>
-                              </div>
-                            </div>
-                            <div className="h-6 w-16 opacity-30">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal Text" className="w-full h-full object-contain brightness-0 invert" />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Dynamic Crypto Section */}
-                        <div className="space-y-3">
-                          {displayCryptoItems.map((method) => {
-                            const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
-                            const isSelected = selectedMethod === methodName
-
-                            return (
-                              <div
-                                key={method.id + method.network}
-                                onClick={() => {
-                                  if (method.name === "Ethereum") {
-                                    setIsEthNetworkModalOpen(true)
-                                  } else {
-                                    setSelectedMethod(methodName)
-                                  }
-                                }}
-                                className={cn(
-                                  "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                                  isSelected
-                                    ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
-                                    : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
-                                )}
-                              >
-                                <div className="flex flex-col">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[15px] font-bold text-white">{method.name}</span>
-                                    {method.id === "ltc" && (
-                                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
-                                        <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
-                                        <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
-                                </div>
-
-                                <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
-                                  <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
-                                </div>
-
-                                {isSelected && (
-                                  <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-
-                        {/* Show More Button - Opens Modal */}
-                        <button
-                          onClick={() => setIsMethodModalOpen(true)}
-                          className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all flex items-center justify-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-widest group"
-                        >
-                          <span>Show more</span>
-                          <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                        </button>
-                      </div>
-
-                      <div className="pt-2 space-y-2">
-                        {[
-                          { label: "I have read and agree to Rainyday's Terms of Service.", state: agreeToTerms, setter: setAgreeToTerms, show: settings.checkout.show_terms },
-                          { label: "I would like to receive updates and promotions from Rainyday.", state: agreeToPromo, setter: setAgreeToPromo, show: settings.checkout.show_newsletter }
-                        ].filter(c => c.show).map((check, i) => (
-                          <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
-                            <div className="relative">
-                              <input
-                                type="checkbox"
-                                checked={check.state}
-                                onChange={(e) => check.setter(e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className={cn(
-                                "w-5 h-5 rounded border transition-all flex items-center justify-center relative z-10",
-                                check.state ? "bg-[#a4f8ff] border-[#a4f8ff]" : "bg-white/[0.02] border-white/10 group-hover:border-white/20"
-                              )}>
-                                {check.state && <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />}
-                              </div>
-                            </div>
-                            <span className={cn(
-                              "text-xs transition-colors",
-                              check.state ? "text-white" : "text-white/40 group-hover:text-white/60"
-                            )}>{check.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-
-
-                  {/* Simple CTA Button */}
-                  <Button
-                    onClick={handleProceedToPayment}
-                    disabled={isProcessing || isLoadingOrder}
-                    className="w-full h-11 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#70d4db] text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Initializing...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <span>Proceed to Payment</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="space-y-8"
-                >
-                  {/* Top Auto-Process Banner */}
-                  <div className="p-4 rounded-xl bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-center">
-                    <p className="text-[11px] font-bold text-[#a4f8ff]">
-                      Your order will be automatically processed once the payment is received.
-                    </p>
-                  </div>
-
-                  {/* Payment Timer */}
-                  <div className={cn(
-                    "p-4 rounded-xl flex items-center justify-between relative overflow-hidden transition-all",
-                    timeLeft === "EXPIRED"
-                      ? "bg-red-500/10 border border-red-500/20"
-                      : parseInt(timeLeft?.split(':')[0] || '60') < 5
-                        ? "bg-orange-500/10 border border-orange-500/20"
-                        : "bg-white/[0.02] border border-white/5"
-                  )}>
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center",
-                        timeLeft === "EXPIRED"
-                          ? "bg-red-500/20"
-                          : parseInt(timeLeft?.split(':')[0] || '60') < 5
-                            ? "bg-orange-500/20"
-                            : "bg-brand-primary/10"
-                      )}>
-                        <Clock className={cn(
-                          "w-4 h-4",
-                          timeLeft === "EXPIRED" ? "text-red-500" :
-                            parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400 animate-pulse" : "text-brand-primary"
-                        )} />
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Time Remaining</p>
-                        <p className={cn(
-                          "text-sm font-black tracking-tight",
-                          timeLeft === "EXPIRED" ? "text-red-500" :
-                            parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400" : "text-white"
-                        )}>{timeLeft}</p>
-                      </div>
-                    </div>
-                    <p className="text-[8px] font-bold text-white/20 uppercase tracking-wider">Invoice auto-expires</p>
-                  </div>
-
-                  {/* Order Info Summary */}
-                  <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
-                    {/* Crypto Header */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#a4f8ff]/10 flex items-center justify-center">
-                        {cryptoDetails?.payCurrency && (
-                          <img
-                            src={`https://cryptologos.cc/logos/${cryptoDetails.payCurrency === 'BTC' ? 'bitcoin-btc' :
-                              cryptoDetails.payCurrency === 'ETH' ? 'ethereum-eth' :
-                                cryptoDetails.payCurrency === 'LTC' ? 'litecoin-ltc' :
-                                  cryptoDetails.payCurrency === 'USDT' ? 'tether-usdt' :
-                                    cryptoDetails.payCurrency === 'SOL' ? 'solana-sol' :
-                                      cryptoDetails.payCurrency === 'TRX' ? 'tron-trx' :
-                                        cryptoDetails.payCurrency === 'DOGE' ? 'dogecoin-doge' :
-                                          cryptoDetails.payCurrency === 'XMR' ? 'monero-xmr' :
-                                            cryptoDetails.payCurrency === 'TON' ? 'toncoin-ton' :
-                                              cryptoDetails.payCurrency.toLowerCase()
-                              }-logo.svg?v=035`}
-                            alt={cryptoDetails.payCurrency}
-                            className="w-6 h-6"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">{cryptoDetails?.payCurrency || 'Crypto'}</p>
-                        <p className="text-[10px] font-medium text-white/40 truncate max-w-[200px]">{orderId || urlOrderId}</p>
-                      </div>
-                    </div>
-
-                    {/* Info Rows */}
-                    <div className="space-y-2 pt-2 border-t border-white/5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-white/40">Invoice ID</span>
-                        <span className="text-xs font-medium text-white/60 flex items-center gap-2">
-                          <span className="truncate max-w-[150px]">{orderId || urlOrderId}</span>
-                          <button onClick={() => copyToClipboard(orderId || urlOrderId || '')} className="hover:text-[#a4f8ff] transition-colors">
-                            <Copy className="w-3 h-3" />
+                            Remove
+                            <Trash2 className="w-3 h-3" />
                           </button>
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-white/40">E-mail Address</span>
-                        <span className="text-xs font-medium text-white/60">{email}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-white/40">Total Price</span>
-                        <span className="text-xs font-bold text-white">{formatPrice(savedTotal || cartTotal)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-white/40">Total Amount ({cryptoDetails?.payCurrency})</span>
-                        <span className="text-xs font-bold text-[#a4f8ff]">{cryptoDetails?.amount} {cryptoDetails?.payCurrency}</span>
+                        ) : (
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={isCheckingCoupon || !couponCode}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 bg-transparent border border-[#a4f8ff]/40 hover:border-[#a4f8ff] hover:bg-[#a4f8ff]/10 transition-all rounded-lg text-[9px] font-bold text-[#a4f8ff] flex items-center gap-2 active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {isCheckingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : <>
+                              Apply
+                              <ArrowRight className="w-3 h-3" />
+                            </>}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="relative pl-12 space-y-12">
-                    {/* Step 1: Destination Address */}
-                    <div className="relative space-y-6">
-                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#a4f8ff] flex items-center justify-center text-black text-sm font-black shadow-[0_0_20px_rgba(164,248,255,0.4)] z-10">
-                        1
-                      </div>
-                      {/* Connector Line to Step 2 */}
-                      <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#a4f8ff]/40" />
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
-                        <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
-                      </div>
-
-                      {/* QR Code Container */}
-                      <div className="w-48 h-48 bg-white p-4 rounded-3xl relative group/qr overflow-hidden hover:scale-[1.02] transition-transform duration-500">
-                        <Image
-                          src={cryptoDetails?.qrCodeUrl || "/logo.png"}
-                          alt="QR Code"
-                          fill
-                          sizes="192px"
-                          className="object-contain p-2"
-                        />
-                        {/* Subtle Scan Line */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-[#a4f8ff]/0 via-[#a4f8ff]/20 to-[#a4f8ff]/0 h-1 top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
-                      </div>
-
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
-                        <div
-                          onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                          className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
-                        >
-                          <code className="text-sm font-bold text-black break-all">{cryptoDetails?.address || 'Initializing...'}</code>
-                          <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
+                  {/* Dynamic Custom Fields */}
+                  {cart.some(item => item.custom_fields && item.custom_fields.length > 0) && (
+                    <div className="space-y-6">
+                      {cart.filter(item => item.custom_fields && item.custom_fields.length > 0).map((item) => (
+                        <div key={item.id} className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-2.5 h-2.5 text-brand-primary" />
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                              {item.title} - Extra Info
+                            </label>
+                          </div>
+                          <div className="space-y-4">
+                            {item.custom_fields?.map((field: any) => (
+                              <div key={field.name} className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/60 uppercase tracking-widest pl-1">
+                                  {field.name} {field.required && <span className="text-red-500">*</span>}
+                                </label>
+                                <div className="relative group">
+                                  <Input
+                                    value={customFieldValues[`${item.id}_${field.name}`] || field.default_value || ""}
+                                    onChange={(e) => setCustomFieldValues({
+                                      ...customFieldValues,
+                                      [`${item.id}_${field.name}`]: e.target.value
+                                    })}
+                                    placeholder={field.hint || `Enter ${field.name}...`}
+                                    className="h-11 px-6 bg-white/[0.03] border-white/5 rounded-xl focus:bg-white/[0.05] transition-all placeholder:text-white/10 text-white font-bold text-sm focus-visible:ring-0 focus-visible:border-white/5"
+                                  />
+                                  <div className="absolute inset-0 rounded-xl border border-white/0 group-focus-within:border-[#a4f8ff] group-focus-within:ring-4 group-focus-within:ring-[#a4f8ff]/10 pointer-events-none transition-all" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open(cryptoDetails?.payLink, '_blank')}
-                          className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
-                        >
-                          Open Wallet
-                          <ExternalLink className="w-4 h-4 group-hover/wallet:scale-110 transition-transform" />
-                        </Button>
-                      </div>
+                      ))}
                     </div>
+                  )}
 
-                    {/* Step 2: Exact Amount */}
-                    <div className="relative space-y-6">
-                      <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#a4f8ff] flex items-center justify-center text-[#a4f8ff] text-sm font-black ring-1 ring-[#a4f8ff]/20">
-                        2
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
-                        <p className="text-sm font-medium text-white/40">You can copy it below.</p>
-                      </div>
-                      <div
-                        onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/amt w-fit min-w-[200px]"
-                      >
-                        <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
-                        <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Transaction History Tracking */}
-                  <div className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
-                        <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
-                      </div>
+                  <div className="space-y-4 px-1 pb-1">
+                    <div className="flex items-center justify-between pb-1">
+                      <label className="text-sm font-medium text-white/90">Payment Method *</label>
                     </div>
 
                     <div className="space-y-3">
-                      {paymentStatus === 'pending' && (
-                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                          <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                      {/* Primary Method - PayPal */}
+                      {!disabledMethods.includes("PayPal") && (
+                        <div
+                          onClick={() => setSelectedMethod("PayPal")}
+                          className={cn(
+                            "p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group h-[64px]",
+                            selectedMethod === "PayPal"
+                              ? "bg-brand-primary/5 border-brand-primary"
+                              : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "w-10 h-10 rounded-xl flex items-center justify-center transition-colors overflow-hidden p-2",
+                              selectedMethod === "PayPal" ? "bg-[#003087]/10" : "bg-white/5 group-hover:bg-white/10"
+                            )}>
+                              <img
+                                src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg"
+                                alt="PayPal"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[15px] font-bold text-white">PayPal</span>
+                              <span className="text-[11px] text-white/40">Secure instant payment</span>
+                            </div>
+                          </div>
+                          <div className="h-6 w-16 opacity-30">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal Text" className="w-full h-full object-contain brightness-0 invert" />
+                          </div>
                         </div>
                       )}
 
-                      {(paymentStatus === 'processing' || paymentStatus === 'completed') && (
-                        <>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
-                              <p className="text-[10px] font-black uppercase tracking-tighter text-green-500">
-                                DETECTED
-                              </p>
-                              {blockchainStatus?.txId && (
-                                <p className="text-[8px] font-mono text-white/30 truncate">
-                                  {blockchainStatus.txId.slice(0, 12)}...{blockchainStatus.txId.slice(-8)}
-                                </p>
-                              )}
-                            </div>
-                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
-                              <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
-                                {paymentStatus === 'completed'
-                                  ? '2/2 Confirmed ✓'
-                                  : blockchainStatus
-                                    ? <span className="flex items-center gap-2">
-                                      {Math.min(blockchainStatus.confirmations || 0, 2)}/2 Confirmations
-                                      <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
-                                    </span>
-                                    : <span className="flex items-center gap-2">
-                                      0/2 Confirmations
-                                      <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
-                                    </span>}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Blockchain Explorer Link */}
-                          <a
-                            href={blockchainStatus?.txId
-                              ? getExplorerUrl(blockchainStatus.txId, cryptoDetails?.payCurrency || "", false)
-                              : getExplorerUrl(cryptoDetails?.address || "", cryptoDetails?.payCurrency || "", true)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-[9px] font-black text-[#a4f8ff]/70 hover:bg-[#a4f8ff]/10 hover:text-[#a4f8ff] transition-all group"
-                          >
-                            {blockchainStatus?.txId ? 'VIEW TRANSACTION ON BLOCKCHAIN' : 'VIEW ADDRESS ON BLOCKCHAIN'}
-                            <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setStep(1)
-                      setSavedItems([])
-                      if (urlOrderId) {
-                        localStorage.removeItem(`checkout_sess_${urlOrderId}`)
-                      }
-                    }}
-                    className="w-full h-10 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-brand-primary transition-all flex items-center justify-center gap-2 group"
-                  >
-                    <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                    Return to order information
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Sticky Footer Link */}
-            <div className="mt-auto py-6 border-t border-white/5 flex justify-center items-center bg-gradient-to-t from-[#030607] to-transparent">
-              <Link href="/store" className="flex items-center gap-3 text-[10px] font-black text-white/20 hover:text-brand-primary uppercase tracking-[0.3em] transition-all group">
-                <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                Keep Shopping
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div >
-        </div >
-      </div >
-
-      <AnimatePresence>
-        {/* Select Payment Method Modal */}
-        {isMethodModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMethodModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-3xl bg-[#0d1117] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
-            >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                <h3 className="text-lg font-bold">Select Payment Method</h3>
-                <button
-                  onClick={() => setIsMethodModalOpen(false)}
-                  className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-white"
-                >
-                  <Plus className="w-5 h-5 rotate-45" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                {cryptoGroups.map((group) => {
-                  const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
-                  const filteredItems = group.items.filter(m => !disabledMethods.includes(m.name) && !disabledMethods.includes(getMethodName(m)))
-
-                  if (filteredItems.length === 0) return null
-
-                  return (
-                    <div key={group.label} className="space-y-3">
-                      <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {filteredItems.map((method) => {
-                          const methodName = getMethodName(method)
+                      {/* Dynamic Crypto Section */}
+                      <div className="space-y-3">
+                        {displayCryptoItems.map((method) => {
+                          const methodName = (method.name === "Tether" || method.name === "USD coin" || method.name === "Ethereum") ? `${method.name} (${method.network})` : method.name
                           const isSelected = selectedMethod === methodName
+
                           return (
                             <div
                               key={method.id + method.network}
                               onClick={() => {
                                 if (method.name === "Ethereum") {
-                                  setIsMethodModalOpen(false)
                                   setIsEthNetworkModalOpen(true)
                                 } else {
                                   setSelectedMethod(methodName)
-                                  setIsMethodModalOpen(false)
                                 }
                               }}
                               className={cn(
                                 "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                                isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                                isSelected
+                                  ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10"
+                                  : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
                               )}
                             >
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[14px] font-bold text-white">{method.name}</span>
+                                  <span className="text-[15px] font-bold text-white">{method.name}</span>
                                   {method.id === "ltc" && (
                                     <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
                                       <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
@@ -1787,92 +1377,500 @@ function CheckoutMainContent() {
                               </div>
 
                               {isSelected && (
-                                <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
+                                <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#020406] rounded-full animate-in zoom-in duration-200" />
                               )}
                             </div>
                           )
                         })}
                       </div>
+
+                      {/* Show More Button - Opens Modal */}
+                      <button
+                        onClick={() => setIsMethodModalOpen(true)}
+                        className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all flex items-center justify-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-widest group"
+                      >
+                        <span>Show more</span>
+                        <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                      </button>
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      {[
+                        { label: "I have read and agree to Rainyday's Terms of Service.", state: agreeToTerms, setter: setAgreeToTerms, show: settings.checkout.show_terms },
+                        { label: "I would like to receive updates and promotions from Rainyday.", state: agreeToPromo, setter: setAgreeToPromo, show: settings.checkout.show_newsletter }
+                      ].filter(c => c.show).map((check, i) => (
+                        <label key={i} className="flex items-center gap-3 cursor-pointer group select-none">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={check.state}
+                              onChange={(e) => check.setter(e.target.checked)}
+                              className="sr-only"
+                            />
+                            <div className={cn(
+                              "w-5 h-5 rounded border transition-all flex items-center justify-center relative z-10",
+                              check.state ? "bg-[#a4f8ff] border-[#a4f8ff]" : "bg-white/[0.02] border-white/10 group-hover:border-white/20"
+                            )}>
+                              {check.state && <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />}
+                            </div>
+                          </div>
+                          <span className={cn(
+                            "text-xs transition-colors",
+                            check.state ? "text-white" : "text-white/40 group-hover:text-white/60"
+                          )}>{check.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+
+
+                {/* Simple CTA Button */}
+                <Button
+                  onClick={handleProceedToPayment}
+                  disabled={isProcessing || isLoadingOrder}
+                  className="w-full h-11 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#70d4db] text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Initializing...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Proceed to Payment</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-8"
+              >
+                {/* Top Auto-Process Banner */}
+                <div className="p-4 rounded-xl bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-center">
+                  <p className="text-[11px] font-bold text-[#a4f8ff]">
+                    Your order will be automatically processed once the payment is received.
+                  </p>
+                </div>
+
+                {/* Payment Timer */}
+                <div className={cn(
+                  "p-4 rounded-xl flex items-center justify-between relative overflow-hidden transition-all",
+                  timeLeft === "EXPIRED"
+                    ? "bg-red-500/10 border border-red-500/20"
+                    : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                      ? "bg-orange-500/10 border border-orange-500/20"
+                      : "bg-white/[0.02] border border-white/5"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      timeLeft === "EXPIRED"
+                        ? "bg-red-500/20"
+                        : parseInt(timeLeft?.split(':')[0] || '60') < 5
+                          ? "bg-orange-500/20"
+                          : "bg-brand-primary/10"
+                    )}>
+                      <Clock className={cn(
+                        "w-4 h-4",
+                        timeLeft === "EXPIRED" ? "text-red-500" :
+                          parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400 animate-pulse" : "text-brand-primary"
+                      )} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Time Remaining</p>
+                      <p className={cn(
+                        "text-sm font-black tracking-tight",
+                        timeLeft === "EXPIRED" ? "text-red-500" :
+                          parseInt(timeLeft?.split(':')[0] || '60') < 5 ? "text-orange-400" : "text-white"
+                      )}>{timeLeft}</p>
+                    </div>
+                  </div>
+                  <p className="text-[8px] font-bold text-white/20 uppercase tracking-wider">Invoice auto-expires</p>
+                </div>
+
+                {/* Order Info Summary */}
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+                  {/* Crypto Header */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#a4f8ff]/10 flex items-center justify-center">
+                      {cryptoDetails?.payCurrency && (
+                        <img
+                          src={`https://cryptologos.cc/logos/${cryptoDetails.payCurrency === 'BTC' ? 'bitcoin-btc' :
+                            cryptoDetails.payCurrency === 'ETH' ? 'ethereum-eth' :
+                              cryptoDetails.payCurrency === 'LTC' ? 'litecoin-ltc' :
+                                cryptoDetails.payCurrency === 'USDT' ? 'tether-usdt' :
+                                  cryptoDetails.payCurrency === 'SOL' ? 'solana-sol' :
+                                    cryptoDetails.payCurrency === 'TRX' ? 'tron-trx' :
+                                      cryptoDetails.payCurrency === 'DOGE' ? 'dogecoin-doge' :
+                                        cryptoDetails.payCurrency === 'XMR' ? 'monero-xmr' :
+                                          cryptoDetails.payCurrency === 'TON' ? 'toncoin-ton' :
+                                            cryptoDetails.payCurrency.toLowerCase()
+                            }-logo.svg?v=035`}
+                          alt={cryptoDetails.payCurrency}
+                          className="w-6 h-6"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">{cryptoDetails?.payCurrency || 'Crypto'}</p>
+                      <p className="text-[10px] font-medium text-white/40 truncate max-w-[200px]">{orderId || urlOrderId}</p>
+                    </div>
+                  </div>
+
+                  {/* Info Rows */}
+                  <div className="space-y-2 pt-2 border-t border-white/5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-white/40">Invoice ID</span>
+                      <span className="text-xs font-medium text-white/60 flex items-center gap-2">
+                        <span className="truncate max-w-[150px]">{orderId || urlOrderId}</span>
+                        <button onClick={() => copyToClipboard(orderId || urlOrderId || '')} className="hover:text-[#a4f8ff] transition-colors">
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-white/40">E-mail Address</span>
+                      <span className="text-xs font-medium text-white/60">{email}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-white/40">Total Price</span>
+                      <span className="text-xs font-bold text-white">{formatPrice(savedTotal || cartTotal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-white/40">Total Amount ({cryptoDetails?.payCurrency})</span>
+                      <span className="text-xs font-bold text-[#a4f8ff]">{cryptoDetails?.amount} {cryptoDetails?.payCurrency}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative pl-12 space-y-12">
+                  {/* Step 1: Destination Address */}
+                  <div className="relative space-y-6">
+                    <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#a4f8ff] flex items-center justify-center text-black text-sm font-black shadow-[0_0_20px_rgba(164,248,255,0.4)] z-10">
+                      1
+                    </div>
+                    {/* Connector Line to Step 2 */}
+                    <div className="absolute -left-[28px] top-10 bottom-[-48px] w-[1px] bg-[#a4f8ff]/40" />
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-black text-white/90">You should send a payment to the following address.</h3>
+                      <p className="text-sm font-medium text-white/40">You can scan the QR code.</p>
+                    </div>
+
+                    {/* QR Code Container */}
+                    <div className="w-48 h-48 bg-white p-4 rounded-3xl relative group/qr overflow-hidden hover:scale-[1.02] transition-transform duration-500">
+                      <Image
+                        src={cryptoDetails?.qrCodeUrl || "/logo.png"}
+                        alt="QR Code"
+                        fill
+                        sizes="192px"
+                        className="object-contain p-2"
+                      />
+                      {/* Subtle Scan Line */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-[#a4f8ff]/0 via-[#a4f8ff]/20 to-[#a4f8ff]/0 h-1 top-0 animate-[scan_4s_linear_infinite] pointer-events-none" />
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
+                      <div
+                        onClick={() => copyToClipboard(cryptoDetails?.address || '')}
+                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
+                      >
+                        <code className="text-sm font-bold text-black break-all">{cryptoDetails?.address || 'Initializing...'}</code>
+                        <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(cryptoDetails?.payLink, '_blank')}
+                        className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
+                      >
+                        Open Wallet
+                        <ExternalLink className="w-4 h-4 group-hover/wallet:scale-110 transition-transform" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Exact Amount */}
+                  <div className="relative space-y-6">
+                    <div className="absolute -left-[48px] top-0 w-10 h-10 rounded-full bg-[#0b0f1a] border border-[#a4f8ff] flex items-center justify-center text-[#a4f8ff] text-sm font-black ring-1 ring-[#a4f8ff]/20">
+                      2
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
+                      <p className="text-sm font-medium text-white/40">You can copy it below.</p>
+                    </div>
+                    <div
+                      onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
+                      className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/amt w-fit min-w-[200px]"
+                    >
+                      <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
+                      <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transaction History Tracking */}
+                <div className="p-6 rounded-2xl bg-background/40 border border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a4f8ff]">Transaction History</h4>
+                      <span className="text-[8px] font-black text-[#a4f8ff]/40 uppercase tracking-widest animate-pulse">Syncing with Nodes...</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {paymentStatus === 'pending' && (
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                        <p className="text-sm font-medium text-white/40">No transactions yet...</p>
+                      </div>
+                    )}
+
+                    {(paymentStatus === 'processing' || paymentStatus === 'completed') && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
+                            <p className="text-[10px] font-black uppercase tracking-tighter text-green-500">
+                              DETECTED
+                            </p>
+                            {blockchainStatus?.txId && (
+                              <p className="text-[8px] font-mono text-white/30 truncate">
+                                {blockchainStatus.txId.slice(0, 12)}...{blockchainStatus.txId.slice(-8)}
+                              </p>
+                            )}
+                          </div>
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
+                            <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
+                              {paymentStatus === 'completed'
+                                ? '2/2 Confirmed ✓'
+                                : blockchainStatus
+                                  ? <span className="flex items-center gap-2">
+                                    {Math.min(blockchainStatus.confirmations || 0, 2)}/2 Confirmations
+                                    <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                                  </span>
+                                  : <span className="flex items-center gap-2">
+                                    0/2 Confirmations
+                                    <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                                  </span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Blockchain Explorer Link */}
+                        <a
+                          href={blockchainStatus?.txId
+                            ? getExplorerUrl(blockchainStatus.txId, cryptoDetails?.payCurrency || "", false)
+                            : getExplorerUrl(cryptoDetails?.address || "", cryptoDetails?.payCurrency || "", true)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-[9px] font-black text-[#a4f8ff]/70 hover:bg-[#a4f8ff]/10 hover:text-[#a4f8ff] transition-all group"
+                        >
+                          {blockchainStatus?.txId ? 'VIEW TRANSACTION ON BLOCKCHAIN' : 'VIEW ADDRESS ON BLOCKCHAIN'}
+                          <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setStep(1)
+                    setSavedItems([])
+                    if (urlOrderId) {
+                      localStorage.removeItem(`checkout_sess_${urlOrderId}`)
+                    }
+                  }}
+                  className="w-full h-10 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-brand-primary transition-all flex items-center justify-center gap-2 group"
+                >
+                  <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                  Return to order information
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Sticky Footer Link */}
+          <div className="mt-auto py-6 border-t border-white/5 flex justify-center items-center bg-gradient-to-t from-[#030607] to-transparent">
+            <Link href="/store" className="flex items-center gap-3 text-[10px] font-black text-white/20 hover:text-brand-primary uppercase tracking-[0.3em] transition-all group">
+              <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Keep Shopping
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div >
+      </div >
+    </div >
+
+    <AnimatePresence>
+      {/* Select Payment Method Modal */}
+      {isMethodModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMethodModalOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-3xl bg-[#0d1117] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+          >
+            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+              <h3 className="text-lg font-bold">Select Payment Method</h3>
+              <button
+                onClick={() => setIsMethodModalOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-white"
+              >
+                <Plus className="w-5 h-5 rotate-45" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+              {cryptoGroups.map((group) => {
+                const getMethodName = (m: any) => (m.name === "Tether" || m.name === "USD coin" || m.name === "Ethereum") ? `${m.name} (${m.network})` : m.name
+                const filteredItems = group.items.filter(m => !disabledMethods.includes(m.name) && !disabledMethods.includes(getMethodName(m)))
+
+                if (filteredItems.length === 0) return null
+
+                return (
+                  <div key={group.label} className="space-y-3">
+                    <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest pl-1">{group.label}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {filteredItems.map((method) => {
+                        const methodName = getMethodName(method)
+                        const isSelected = selectedMethod === methodName
+                        return (
+                          <div
+                            key={method.id + method.network}
+                            onClick={() => {
+                              if (method.name === "Ethereum") {
+                                setIsMethodModalOpen(false)
+                                setIsEthNetworkModalOpen(true)
+                              } else {
+                                setSelectedMethod(methodName)
+                                setIsMethodModalOpen(false)
+                              }
+                            }}
+                            className={cn(
+                              "relative flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                              isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[14px] font-bold text-white">{method.name}</span>
+                                {method.id === "ltc" && (
+                                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/20">
+                                    <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                                    <span className="text-[8px] font-bold text-yellow-400 uppercase">Popular</span>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{method.network}</span>
+                            </div>
+
+                            <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                              <img src={method.icon} alt={method.name} className="w-full h-full object-contain" />
+                            </div>
+
+                            {isSelected && (
+                              <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#0d1117] rounded-full animate-in zoom-in duration-200" />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div >
+          </motion.div >
+        </div >
+      )}
+
+      {/* ETH Network Selection Modal */}
+      {
+        isEthNetworkModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEthNetworkModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-xl bg-[#090b0d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#a4f8ff]/10 rounded-xl">
+                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Select ETH Network</h3>
+                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Choose your preferred network</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEthNetworkModalOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40 hover:text-white"
+                >
+                  <Plus className="w-5 h-5 rotate-45" />
+                </button>
+              </div>
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ETH_NETWORKS.map((method) => {
+                  const methodName = `${method.name} (${method.network})`
+                  const isSelected = selectedMethod === methodName
+
+                  return (
+                    <div
+                      key={method.id}
+                      onClick={() => {
+                        setSelectedMethod(methodName)
+                        setIsEthNetworkModalOpen(false)
+                      }}
+                      className={cn(
+                        "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
+                        isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[14px] font-bold text-white">{method.network}</span>
+                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Ethereum</span>
+                      </div>
+                      <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
+                        <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
+                      )}
                     </div>
                   )
                 })}
-              </div >
-            </motion.div >
-          </div >
-        )}
-
-        {/* ETH Network Selection Modal */}
-        {
-          isEthNetworkModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsEthNetworkModalOpen(false)}
-                className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-xl bg-[#090b0d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-              >
-                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center bg-[#a4f8ff]/10 rounded-xl">
-                      <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" alt="ETH" className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">Select ETH Network</h3>
-                      <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Choose your preferred network</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsEthNetworkModalOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40 hover:text-white"
-                  >
-                    <Plus className="w-5 h-5 rotate-45" />
-                  </button>
-                </div>
-                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {ETH_NETWORKS.map((method) => {
-                    const methodName = `${method.name} (${method.network})`
-                    const isSelected = selectedMethod === methodName
-
-                    return (
-                      <div
-                        key={method.id}
-                        onClick={() => {
-                          setSelectedMethod(methodName)
-                          setIsEthNetworkModalOpen(false)
-                        }}
-                        className={cn(
-                          "relative flex items-center justify-between py-3.5 px-4 rounded-xl cursor-pointer group transition-all duration-200",
-                          isSelected ? "bg-white/[0.05] border border-[#a4f8ff] ring-4 ring-[#a4f8ff]/10" : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]"
-                        )}
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-[14px] font-bold text-white">{method.network}</span>
-                          <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Ethereum</span>
-                        </div>
-                        <div className="w-8 h-8 flex items-center justify-center p-1.5 bg-white/5 rounded-lg transition-transform duration-300 group-hover:scale-110">
-                          <img src={method.icon} alt={method.network} className="w-full h-full object-contain" />
-                        </div>
-                        {isSelected && (
-                          <CheckCircle2 className="w-4 h-4 text-[#a4f8ff] absolute -right-1 -top-1 bg-[#090b0d] rounded-full animate-in zoom-in duration-200" />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            </div>
-          )
-        }
-      </AnimatePresence >
-    </div >
-  )
+              </div>
+            </motion.div>
+          </div>
+        )
+      }
+    </AnimatePresence >
+  </div >
+)
 }
 
 export default function CheckoutPage() {
