@@ -30,10 +30,9 @@ const navigation = [
     },
     {
         name: "Orders",
-        href: "/admin/orders",
+        href: "/admin/invoices",
         icon: ShoppingCart,
         children: [
-            { name: "All Orders", href: "/admin/orders" },
             { name: "Invoices", href: "/admin/invoices" },
             { name: "Customers", href: "/admin/customers" },
             { name: "Feedbacks", href: "/admin/feedbacks" },
