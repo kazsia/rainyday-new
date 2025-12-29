@@ -1,5 +1,4 @@
 "use client"
-// force hmr refresh: 2
 
 import * as React from "react"
 import Image from "next/image"
@@ -47,7 +46,6 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     async function loadProduct() {
       try {
         const data = await getProduct(id)
-        console.log("[CLIENT_DIAGNOSTIC] Product data:", data)
         setProduct(data)
 
         // If product has variants, select the first one by default
@@ -72,12 +70,40 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     loadProduct()
   }, [id])
 
-  const minQty = selectedVariant?.min_quantity || product?.min_quantity || 1
-  const maxQty = selectedVariant?.max_quantity || product?.max_quantity || 1000000
-  const currentPrice = selectedVariant ? selectedVariant.price : product?.price
-  const slashedPrice = selectedVariant?.slashed_price || product?.slashed_price
-  const currentStock = selectedVariant ? selectedVariant.stock_count : (product?.stock_count || 0)
-  const isUnlimited = selectedVariant ? selectedVariant.is_unlimited : (product?.is_unlimited || false)
+  // Calculate effective stock based on payment_restrictions_enabled and variants
+  const stockDeliveryEnabled = product?.payment_restrictions_enabled
+
+  // When Stock & Delivery is enabled, always use product-level values (ignore variants)
+  const effectiveVariant = stockDeliveryEnabled ? null : selectedVariant
+
+  const minQty = effectiveVariant?.min_quantity || product?.min_quantity || 1
+  const maxQty = effectiveVariant?.max_quantity || product?.max_quantity || 1000000
+  const currentPrice = effectiveVariant ? effectiveVariant.price : product?.price
+  const slashedPrice = effectiveVariant?.slashed_price || product?.slashed_price
+
+  const hasVariants = product?.variants && product.variants.filter((v: any) => v.is_active).length > 0
+
+  let currentStock = 0
+  let isUnlimited = false
+
+  if (stockDeliveryEnabled) {
+    // Stock & Delivery is enabled - always use product-level stock (ignore variants)
+    currentStock = product?.stock_count || 0
+    isUnlimited = product?.is_unlimited || false
+  } else if (selectedVariant) {
+    // Stock & Delivery disabled + variant selected - use variant stock
+    currentStock = selectedVariant.stock_count || 0
+    isUnlimited = selectedVariant.is_unlimited || false
+  } else if (hasVariants) {
+    // Stock & Delivery disabled but has variants - sum of variant stock
+    currentStock = product.variants.filter((v: any) => v.is_active).reduce((sum: number, v: any) => sum + (v.stock_count || 0), 0)
+    isUnlimited = product.variants.some((v: any) => v.is_active && v.is_unlimited)
+  } else {
+    // Stock & Delivery disabled and no variants - stock is 0
+    currentStock = 0
+    isUnlimited = false
+  }
+
   const isOutOfStock = !isUnlimited && (currentStock <= 0)
   const totalPrice = currentPrice * quantity
 
@@ -269,54 +295,19 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                 </div>
               </div>
 
-              {/* Tabs */}
+              {/* Description */}
               <div className="px-8 pb-8">
-                <div className="flex gap-4 border-b border-white/5 mb-6">
-                  <button
-                    onClick={() => setActiveTab("description")}
-                    className={cn(
-                      "pb-3 text-xs font-bold tracking-wider uppercase transition-colors relative",
-                      activeTab === "description" ? "text-brand-primary" : "text-white/20 hover:text-white/40"
-                    )}
-                  >
-                    Description
-                    {activeTab === "description" && (
-                      <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("tos")}
-                    className={cn(
-                      "pb-3 text-xs font-bold tracking-wider uppercase transition-colors relative",
-                      activeTab === "tos" ? "text-brand-primary" : "text-white/20 hover:text-white/40"
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      🔒 Terms Of Service
-                    </span>
-                    {activeTab === "tos" && (
-                      <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary" />
-                    )}
-                  </button>
+                <div className="border-b border-white/5 mb-6 pb-3">
+                  <h3 className="text-xs font-bold tracking-wider uppercase text-brand-primary">Description</h3>
                 </div>
 
                 <div className="space-y-3">
-                  {activeTab === "description" ? (
-                    <>
-                      {descriptionPoints.map((item: string, i: number) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-brand-primary/40" />
-                          <span className="text-sm font-bold text-white/80">{item}</span>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                      <p className="text-sm text-white/40 leading-relaxed ">
-                        By purchasing this product, you agree to our Terms of Service. All sales are final due to the digital nature of the product.
-                      </p>
+                  {descriptionPoints.map((item: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-primary/40" />
+                      <span className="text-sm font-bold text-white/80">{item}</span>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -405,8 +396,8 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                   })}
                 </div>
 
-                {/* Variant Selection - only show if more than 1 active variant */}
-                {product.variants && product.variants.filter((v: any) => v.is_active).length > 1 && (
+                {/* Variant Selection - only show if more than 1 active variant AND Stock & Delivery is disabled */}
+                {!stockDeliveryEnabled && product.variants && product.variants.filter((v: any) => v.is_active).length > 1 && (
                   <div className="mb-8 relative z-10">
                     <p className="text-[10px] font-black text-white/20 mb-4 ml-1 uppercase tracking-[0.3em]">Select Option</p>
                     <div className="grid grid-cols-1 gap-2.5">

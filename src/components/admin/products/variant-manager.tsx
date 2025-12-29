@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Loader2, Trash2, Plus, Edit2, Save, X, Layers, ChevronDown, ChevronUp, GripVertical, Box, Zap, Share2, Activity } from "lucide-react"
-import { getVariants, createVariant, updateVariant, deleteVariant, reorderVariants } from "@/lib/db/products"
+import { getVariants, createVariant, updateVariant, deleteVariant, reorderVariants, updateProduct } from "@/lib/db/products"
 import { cn } from "@/lib/utils"
 import { StockDialog } from "./stock-dialog"
 import { Reorder, useDragControls } from "framer-motion"
@@ -38,6 +38,10 @@ interface Variant {
 interface VariantManagerProps {
     productId: string
     deliveryType?: string
+    onStockDeliveryDisabled?: () => void
+    stockDeliveryEnabled?: boolean
+    variantsEnabled?: boolean
+    onVariantsEnabledChange?: (enabled: boolean) => void
 }
 
 interface VariantItemProps {
@@ -424,7 +428,7 @@ function VariantItem({
     )
 }
 
-export function VariantManager({ productId, deliveryType }: VariantManagerProps) {
+export function VariantManager({ productId, deliveryType, onStockDeliveryDisabled, stockDeliveryEnabled, variantsEnabled, onVariantsEnabledChange }: VariantManagerProps) {
     const [variants, setVariants] = useState<Variant[]>([])
     const [isVariantsLoading, setIsVariantsLoading] = useState(true)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -475,6 +479,15 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
             const created = await createVariant(productId, newVariantData)
 
             if (created) {
+                // Auto-disable Stock & Delivery section when a variant is added
+                try {
+                    await updateProduct(productId, { payment_restrictions_enabled: false })
+                    // Notify parent to update UI in real-time
+                    onStockDeliveryDisabled?.()
+                } catch (e) {
+                    // Silent fail - not critical
+                }
+
                 toast.success("Variant added")
                 await loadVariants()
                 setExpandedId(created.id)
@@ -548,22 +561,73 @@ export function VariantManager({ productId, deliveryType }: VariantManagerProps)
                     </div>
                     <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Variants</h2>
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="h-9 px-4 bg-transparent border-[#a4f8ff]/20 hover:border-[#a4f8ff]/40 hover:bg-[#a4f8ff]/5 text-[#a4f8ff] hover:text-[#8aefff] font-bold text-[10px] uppercase tracking-[0.1em] rounded-lg transition-all"
-                    onClick={handleAdd}
-                    disabled={isCreating}
-                >
-                    {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
-                    {isCreating ? "Adding..." : "Add Variant"}
-                </Button>
+                <div className="flex items-center gap-3">
+                    {/* Global Variants Toggle */}
+                    <div className="flex items-center gap-2 bg-[#0b0d16] border border-white/5 rounded-lg px-3 py-2">
+                        <span className={cn(
+                            "text-[10px] font-bold uppercase tracking-wider",
+                            variantsEnabled ? "text-emerald-400" : "text-white/30"
+                        )}>
+                            {variantsEnabled ? "Enabled" : "Disabled"}
+                        </span>
+                        <Switch
+                            checked={variantsEnabled || false}
+                            onCheckedChange={(checked) => {
+                                onVariantsEnabledChange?.(checked)
+                                // If enabling variants, auto-disable Stock & Delivery
+                                if (checked) {
+                                    onStockDeliveryDisabled?.()
+                                }
+                            }}
+                            disabled={stockDeliveryEnabled}
+                            className={cn(
+                                "data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-white/10",
+                                stockDeliveryEnabled && "opacity-50 cursor-not-allowed"
+                            )}
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 px-4 bg-transparent border-[#a4f8ff]/20 hover:border-[#a4f8ff]/40 hover:bg-[#a4f8ff]/5 text-[#a4f8ff] hover:text-[#8aefff] font-bold text-[10px] uppercase tracking-[0.1em] rounded-lg transition-all"
+                        onClick={handleAdd}
+                        disabled={isCreating || !variantsEnabled}
+                    >
+                        {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+                        {isCreating ? "Adding..." : "Add Variant"}
+                    </Button>
+                </div>
             </div>
 
             <div className={cn(
                 "space-y-4 border-t border-white/5",
-                (variants.length > 0) ? "pt-3" : ""
+                (variants.length > 0 || stockDeliveryEnabled) ? "pt-3" : ""
             )}>
+                {/* Warning when Stock & Delivery is enabled */}
+                {stockDeliveryEnabled && (
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                            <Zap className="w-4 h-4 text-amber-500" />
+                        </div>
+                        <div>
+                            <p className="text-[12px] font-bold text-amber-500">Stock & Delivery is enabled</p>
+                            <p className="text-[11px] text-amber-500/60">Variants are ignored when Stock & Delivery is enabled. Disable it to use variant-based stock.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Empty state when no variants */}
+                {variants.length === 0 && !stockDeliveryEnabled && (
+                    <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-[#0b0d16] border border-dashed border-white/10">
+                        <div className="w-12 h-12 rounded-xl bg-[#a4f8ff]/10 flex items-center justify-center mb-4">
+                            <Layers className="w-6 h-6 text-[#a4f8ff]/50" />
+                        </div>
+                        <p className="text-[13px] font-bold text-white/60 mb-1">No variants yet</p>
+                        <p className="text-[11px] text-white/30 text-center max-w-xs">
+                            Add variants to offer different options (sizes, tiers, etc.) with separate pricing and stock.
+                        </p>
+                    </div>
+                )}
 
 
                 <Reorder.Group axis="y" values={variants} onReorder={handleReorder} className="space-y-4">

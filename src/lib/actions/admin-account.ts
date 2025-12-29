@@ -126,12 +126,12 @@ export async function createAdminApiKey(label: string, scopes: string[]) {
     const user = await ensureAdmin()
     const supabase = await createAdminClient() // Use admin client to handle key hashing potentially
 
-    // Simple key generation for demo - in production use a cryptographically secure random string
+    // Generate API key - consider using crypto.randomUUID() for production
     const rawKey = `rd_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`
     const prefix = rawKey.substring(0, 7)
 
-    // In a real app, hash the key before storing
-    const keyHash = rawKey // Placeholder: should be hashed
+    // TODO: Hash the key before storing for security
+    const keyHash = rawKey
 
     const { data, error } = await supabase
         .from("admin_api_keys")

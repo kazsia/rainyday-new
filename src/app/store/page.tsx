@@ -275,24 +275,43 @@ export default function StorePage() {
                         ))}
 
                         {/* Render Standalone Products */}
-                        {standaloneProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                id={product.id}
-                                slug={product.slug}
-                                title={product.name}
-                                price={product.price}
-                                category={product.category?.name || "General"}
-                                image={product.image_url || "/logo.png"}
-                                productCount={product.stock_count}
-                                delivery_type={product.delivery_type}
-                                is_unlimited={product.is_unlimited}
-                                badge_links={product.badge_links}
-                                status_label={product.status_label}
-                                status_color={product.status_color}
-                                description={product.description}
-                            />
-                        ))}
+                        {standaloneProducts.map((product) => {
+                            // Calculate effective stock
+                            const stockDeliveryEnabled = product.payment_restrictions_enabled
+                            const hasVariants = product.variants && product.variants.filter((v: any) => v.is_active).length > 0
+                            let effectiveStock = 0
+                            let effectiveUnlimited = false
+
+                            if (stockDeliveryEnabled) {
+                                effectiveStock = product.stock_count || 0
+                                effectiveUnlimited = product.is_unlimited
+                            } else if (hasVariants) {
+                                effectiveStock = product.variants.filter((v: any) => v.is_active).reduce((sum: number, v: any) => sum + (v.stock_count || 0), 0)
+                                effectiveUnlimited = product.variants.some((v: any) => v.is_active && v.is_unlimited)
+                            } else {
+                                effectiveStock = 0
+                                effectiveUnlimited = false
+                            }
+
+                            return (
+                                <ProductCard
+                                    key={product.id}
+                                    id={product.id}
+                                    slug={product.slug}
+                                    title={product.name}
+                                    price={product.price}
+                                    category={product.category?.name || "General"}
+                                    image={product.image_url || "/logo.png"}
+                                    productCount={effectiveStock}
+                                    delivery_type={product.delivery_type}
+                                    is_unlimited={effectiveUnlimited}
+                                    badge_links={product.badge_links}
+                                    status_label={product.status_label}
+                                    status_color={product.status_color}
+                                    description={product.description}
+                                />
+                            )
+                        })}
                     </div>
                 ) : (
                     <div className="py-32 text-center animate-in zoom-in-95 duration-500">
@@ -342,24 +361,43 @@ export default function StorePage() {
 
                     <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10">
-                            {activeGroup?.products.map((product: any) => (
-                                <ProductCard
-                                    key={product.id}
-                                    id={product.id}
-                                    slug={product.slug}
-                                    title={product.name}
-                                    price={product.price}
-                                    category={product.category?.name || "General"}
-                                    image={product.image_url || "/logo.png"}
-                                    productCount={product.stock_count}
-                                    delivery_type={product.delivery_type}
-                                    is_unlimited={product.is_unlimited}
-                                    badge_links={product.badge_links}
-                                    status_label={product.status_label}
-                                    status_color={product.status_color}
-                                    description={product.description}
-                                />
-                            ))}
+                            {activeGroup?.products.map((product: any) => {
+                                // Calculate effective stock (same logic)
+                                const stockDeliveryEnabled = product.payment_restrictions_enabled
+                                const hasVariants = product.variants && product.variants.filter((v: any) => v.is_active).length > 0
+                                let effectiveStock = 0
+                                let effectiveUnlimited = false
+
+                                if (stockDeliveryEnabled) {
+                                    effectiveStock = product.stock_count || 0
+                                    effectiveUnlimited = product.is_unlimited
+                                } else if (hasVariants) {
+                                    effectiveStock = product.variants.filter((v: any) => v.is_active).reduce((sum: number, v: any) => sum + (v.stock_count || 0), 0)
+                                    effectiveUnlimited = product.variants.some((v: any) => v.is_active && v.is_unlimited)
+                                } else {
+                                    effectiveStock = 0
+                                    effectiveUnlimited = false
+                                }
+
+                                return (
+                                    <ProductCard
+                                        key={product.id}
+                                        id={product.id}
+                                        slug={product.slug}
+                                        title={product.name}
+                                        price={product.price}
+                                        category={product.category?.name || "General"}
+                                        image={product.image_url || "/logo.png"}
+                                        productCount={effectiveStock}
+                                        delivery_type={product.delivery_type}
+                                        is_unlimited={effectiveUnlimited}
+                                        badge_links={product.badge_links}
+                                        status_label={product.status_label}
+                                        status_color={product.status_color}
+                                        description={product.description}
+                                    />
+                                )
+                            })}
                         </div>
                     </div>
 

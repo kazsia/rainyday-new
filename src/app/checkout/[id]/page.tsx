@@ -98,25 +98,60 @@ const ETH_NETWORKS = [
 ]
 
 
-const getExplorerUrl = (txId: string, provider: string) => {
-  if (!txId) return "#"
+// Get blockchain explorer URL for either a transaction ID or address
+const getExplorerUrl = (idOrAddress: string, provider: string, isAddress = false) => {
+  if (!idOrAddress) return "#"
   const p = provider.toLowerCase()
-  if (p.includes('btc') || p.includes('bitcoin')) return `https://mempool.space/tx/${txId}`
-  if (p.includes('eth') || p.includes('ethereum') || p.includes('erc20')) return `https://etherscan.io/tx/${txId}`
-  if (p.includes('ltc') || p.includes('litecoin')) return `https://live.blockcypher.com/ltc/tx/${txId}`
-  if (p.includes('doge')) return `https://live.blockcypher.com/doge/tx/${txId}`
-  if (p.includes('trx') || p.includes('tron') || p.includes('trc20')) return `https://tronscan.org/#/transaction/${txId}`
-  if (p.includes('bnb') || p.includes('bsc') || p.includes('bep20')) return `https://bscscan.com/tx/${txId}`
-  if (p.includes('sol') || p.includes('solana')) return `https://solscan.io/tx/${txId}`
-  if (p.includes('ton')) return `https://tonviewer.com/transaction/${txId}`
-  if (p.includes('pol') || p.includes('polygon') || p.includes('matic')) return `https://polygonscan.com/tx/${txId}`
-  if (p.includes('xrp') || p.includes('ripple')) return `https://xrpscan.com/tx/${txId}`
-  if (p.includes('xmr') || p.includes('monero')) return `https://xmrchain.net/tx/${txId}`
-  if (p.includes('bch') || p.includes('bitcoin cash')) return `https://blockchair.com/bitcoin-cash/transaction/${txId}`
+
+  // Detect if input is an address (not a tx hash) - addresses are shorter and have specific formats
+  const looksLikeAddress = idOrAddress.length < 50 ||
+    idOrAddress.startsWith('ltc1') || idOrAddress.startsWith('L') ||
+    idOrAddress.startsWith('bc1') || idOrAddress.startsWith('1') || idOrAddress.startsWith('3') ||
+    idOrAddress.startsWith('T') || // TRX
+    idOrAddress.startsWith('0x') && idOrAddress.length === 42 // ETH address
+
+  const useAddress = isAddress || looksLikeAddress
+
+  if (p.includes('btc') || p.includes('bitcoin')) {
+    return useAddress ? `https://mempool.space/address/${idOrAddress}` : `https://mempool.space/tx/${idOrAddress}`
+  }
+  if (p.includes('eth') || p.includes('ethereum') || p.includes('erc20')) {
+    return useAddress ? `https://etherscan.io/address/${idOrAddress}` : `https://etherscan.io/tx/${idOrAddress}`
+  }
+  if (p.includes('ltc') || p.includes('litecoin')) {
+    return useAddress ? `https://live.blockcypher.com/ltc/address/${idOrAddress}` : `https://live.blockcypher.com/ltc/tx/${idOrAddress}`
+  }
+  if (p.includes('doge')) {
+    return useAddress ? `https://live.blockcypher.com/doge/address/${idOrAddress}` : `https://live.blockcypher.com/doge/tx/${idOrAddress}`
+  }
+  if (p.includes('trx') || p.includes('tron') || p.includes('trc20')) {
+    return useAddress ? `https://tronscan.org/#/address/${idOrAddress}` : `https://tronscan.org/#/transaction/${idOrAddress}`
+  }
+  if (p.includes('bnb') || p.includes('bsc') || p.includes('bep20')) {
+    return useAddress ? `https://bscscan.com/address/${idOrAddress}` : `https://bscscan.com/tx/${idOrAddress}`
+  }
+  if (p.includes('sol') || p.includes('solana')) {
+    return useAddress ? `https://solscan.io/account/${idOrAddress}` : `https://solscan.io/tx/${idOrAddress}`
+  }
+  if (p.includes('ton')) {
+    return useAddress ? `https://tonviewer.com/${idOrAddress}` : `https://tonviewer.com/transaction/${idOrAddress}`
+  }
+  if (p.includes('pol') || p.includes('polygon') || p.includes('matic')) {
+    return useAddress ? `https://polygonscan.com/address/${idOrAddress}` : `https://polygonscan.com/tx/${idOrAddress}`
+  }
+  if (p.includes('xrp') || p.includes('ripple')) {
+    return useAddress ? `https://xrpscan.com/account/${idOrAddress}` : `https://xrpscan.com/tx/${idOrAddress}`
+  }
+  if (p.includes('xmr') || p.includes('monero')) {
+    return `https://xmrchain.net/tx/${idOrAddress}` // Monero doesn't have public address explorers
+  }
+  if (p.includes('bch') || p.includes('bitcoin cash')) {
+    return useAddress ? `https://blockchair.com/bitcoin-cash/address/${idOrAddress}` : `https://blockchair.com/bitcoin-cash/transaction/${idOrAddress}`
+  }
 
   // Fallback
-  if (txId.startsWith('0x')) return `https://etherscan.io/search?q=${txId}`
-  return `https://blockchair.com/search?q=${txId}`
+  if (idOrAddress.startsWith('0x')) return `https://etherscan.io/search?q=${idOrAddress}`
+  return `https://blockchair.com/search?q=${idOrAddress}`
 }
 
 function CheckoutMainContent() {
@@ -870,7 +905,7 @@ function CheckoutMainContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 500) // Extreme 0.5-second polling
+    }, 100) // Ultra-fast 100ms polling
 
     return () => clearInterval(pollInterval)
   }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])
@@ -1568,39 +1603,50 @@ function CheckoutMainContent() {
                       )}
 
                       {(paymentStatus === 'processing' || paymentStatus === 'completed') && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
-                            <p className="text-[10px] font-black uppercase tracking-tighter text-green-500">
-                              DETECTED
-                            </p>
+                        <>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Transaction</p>
+                              <p className="text-[10px] font-black uppercase tracking-tighter text-green-500">
+                                DETECTED
+                              </p>
+                              {blockchainStatus?.txId && (
+                                <p className="text-[8px] font-mono text-white/30 truncate">
+                                  {blockchainStatus.txId.slice(0, 12)}...{blockchainStatus.txId.slice(-8)}
+                                </p>
+                              )}
+                            </div>
+                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
+                              <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
+                                {paymentStatus === 'completed'
+                                  ? '2/2 Confirmed ✓'
+                                  : blockchainStatus
+                                    ? <span className="flex items-center gap-2">
+                                      {Math.min(blockchainStatus.confirmations || 0, 2)}/2 Confirmations
+                                      <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                                    </span>
+                                    : <span className="flex items-center gap-2">
+                                      0/2 Confirmations
+                                      <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
+                                    </span>}
+                              </p>
+                            </div>
                           </div>
-                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
-                            <p className="text-[10px] font-black text-[#a4f8ff] tracking-tighter uppercase">
-                              {paymentStatus === 'completed'
-                                ? 'Confirmed'
-                                : blockchainStatus
-                                  ? <span className="flex items-center gap-2">
-                                    {blockchainStatus.confirmations || 0}/2 Confirmations
-                                    <Loader2 className="w-2.5 h-2.5 animate-spin opacity-50" />
-                                  </span>
-                                  : 'Confirming...'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
 
-                      {blockchainStatus?.txId && (
-                        <a
-                          href={getExplorerUrl(blockchainStatus.txId, cryptoDetails?.payCurrency || "")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-white/40 hover:bg-white/10 hover:text-white transition-all group"
-                        >
-                          VIEW ON BLOCKCHAIN
-                          <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                        </a>
+                          {/* Blockchain Explorer Link */}
+                          <a
+                            href={blockchainStatus?.txId
+                              ? getExplorerUrl(blockchainStatus.txId, cryptoDetails?.payCurrency || "", false)
+                              : getExplorerUrl(cryptoDetails?.address || "", cryptoDetails?.payCurrency || "", true)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#a4f8ff]/5 border border-[#a4f8ff]/10 text-[9px] font-black text-[#a4f8ff]/70 hover:bg-[#a4f8ff]/10 hover:text-[#a4f8ff] transition-all group"
+                          >
+                            {blockchainStatus?.txId ? 'VIEW TRANSACTION ON BLOCKCHAIN' : 'VIEW ADDRESS ON BLOCKCHAIN'}
+                            <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                          </a>
+                        </>
                       )}
                     </div>
                   </div>

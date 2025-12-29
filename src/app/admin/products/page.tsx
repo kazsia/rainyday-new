@@ -273,14 +273,39 @@ export default function AdminProductsPage() {
                                             ${product.price}
                                         </td>
                                         <td className="px-5 py-3">
-                                            <span className={cn(
-                                                "text-[10px] font-black px-1.5 py-0.5 rounded border",
-                                                (product.is_unlimited || product.stock_count > 0)
-                                                    ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
-                                                    : "text-rose-400 bg-rose-400/5 border-rose-500/10"
-                                            )}>
-                                                {product.is_unlimited ? "∞" : product.stock_count}
-                                            </span>
+                                            {(() => {
+                                                // Calculate effective stock
+                                                const stockDeliveryEnabled = product.payment_restrictions_enabled
+                                                const hasVariants = product.variants && product.variants.length > 0
+
+                                                let effectiveStock = 0
+                                                let isUnlimited = false
+
+                                                if (stockDeliveryEnabled) {
+                                                    // Stock & Delivery is enabled - use product-level stock
+                                                    effectiveStock = product.stock_count || 0
+                                                    isUnlimited = product.is_unlimited
+                                                } else if (hasVariants) {
+                                                    // Stock & Delivery disabled but has variants - sum variant stock
+                                                    effectiveStock = product.variants.reduce((sum: number, v: any) => sum + (v.stock_count || 0), 0)
+                                                    isUnlimited = product.variants.some((v: any) => v.is_unlimited)
+                                                } else {
+                                                    // Stock & Delivery disabled and no variants - stock is 0
+                                                    effectiveStock = 0
+                                                    isUnlimited = false
+                                                }
+
+                                                return (
+                                                    <span className={cn(
+                                                        "text-[10px] font-black px-1.5 py-0.5 rounded border",
+                                                        (isUnlimited || effectiveStock > 0)
+                                                            ? "text-emerald-400 bg-emerald-400/5 border-emerald-400/10"
+                                                            : "text-rose-400 bg-rose-400/5 border-rose-500/10"
+                                                    )}>
+                                                        {isUnlimited ? "∞" : effectiveStock}
+                                                    </span>
+                                                )
+                                            })()}
                                         </td>
                                         <td className="px-5 py-3 text-[11px] text-[var(--sa-fg-dim)]">
                                             {product.category?.name || "—"}
@@ -392,10 +417,34 @@ export default function AdminProductsPage() {
                                 <div className="space-y-1">
                                     <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Stock & Status</p>
                                     <div className="flex items-center gap-2">
-                                        <span className={cn(
-                                            "text-xs font-bold",
-                                            (product.is_unlimited || product.stock_count > 0) ? "text-brand-primary" : "text-red-500"
-                                        )}>{product.is_unlimited ? "∞" : `${product.stock_count} left`}</span>
+                                        {(() => {
+                                            // Calculate effective stock (same logic as desktop)
+                                            const stockDeliveryEnabled = product.payment_restrictions_enabled
+                                            const hasVariants = product.variants && product.variants.length > 0
+
+                                            let effectiveStock = 0
+                                            let isUnlimited = false
+
+                                            if (stockDeliveryEnabled) {
+                                                effectiveStock = product.stock_count || 0
+                                                isUnlimited = product.is_unlimited
+                                            } else if (hasVariants) {
+                                                effectiveStock = product.variants.reduce((sum: number, v: any) => sum + (v.stock_count || 0), 0)
+                                                isUnlimited = product.variants.some((v: any) => v.is_unlimited)
+                                            } else {
+                                                effectiveStock = 0
+                                                isUnlimited = false
+                                            }
+
+                                            return (
+                                                <span className={cn(
+                                                    "text-xs font-bold",
+                                                    (isUnlimited || effectiveStock > 0) ? "text-brand-primary" : "text-red-500"
+                                                )}>
+                                                    {isUnlimited ? "∞" : `${effectiveStock} left`}
+                                                </span>
+                                            )
+                                        })()}
                                         <span className="text-[10px] text-white/40">• {product.is_active ? 'Public' : 'Hidden'}</span>
                                     </div>
                                 </div>

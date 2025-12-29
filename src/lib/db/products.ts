@@ -136,13 +136,6 @@ export async function getProduct(idOrSlug: string) {
         }
 
         if (error) throw error
-        console.error(`[DIAGNOSTIC] PRODUCT_ID: ${idOrSlug}`, {
-            name: data?.name,
-            product_stock: data?.stock_count,
-            is_unlimited: data?.is_unlimited,
-            badges_count: data?.badge_links?.length,
-            variants: data?.variants?.map((v: any) => ({ name: v.name, stock: v.stock_count, unlimited: v.is_unlimited }))
-        })
         return data
     } catch (e) {
         console.error("[GET_PRODUCT_CRITICAL]", e)
@@ -375,11 +368,18 @@ export async function getCategoriesWithProducts() {
         const supabase = await createServerClient()
         const { data, error } = await supabase
             .from("product_categories")
-            .select("*, products(id, name, is_active)") // Fetch minimal product info
+            .select("*, products(id, name, is_active, is_deleted)")
             .order("sort_order", { ascending: true })
 
         if (error) throw error
-        return data
+
+        // Filter out soft-deleted products from the returned data
+        const filteredData = data?.map(category => ({
+            ...category,
+            products: (category.products || []).filter((p: any) => !p.is_deleted)
+        })) || []
+
+        return filteredData
     } catch (e) {
         console.error("[GET_CATEGORIES_WITH_PRODUCTS_CRITICAL]", e)
         return []

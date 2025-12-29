@@ -493,12 +493,20 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
-                            {/* Options & Variants - Only shown when product-level stock is disabled */}
-                            {!formData.payment_restrictions_enabled && (
-                                <div className="space-y-6">
-                                    <VariantManager productId={id as string} deliveryType={formData.delivery_type} />
-                                </div>
-                            )}
+                            {/* Options & Variants - Always shown so users can manage variants */}
+                            <div className="space-y-6">
+                                <VariantManager
+                                    productId={id as string}
+                                    deliveryType={formData.delivery_type}
+                                    onStockDeliveryDisabled={() => setFormData(prev => ({ ...prev, payment_restrictions_enabled: false }))}
+                                    stockDeliveryEnabled={formData.payment_restrictions_enabled}
+                                    variantsEnabled={!formData.payment_restrictions_enabled}
+                                    onVariantsEnabledChange={(enabled) => {
+                                        // When enabling variants, disable Stock & Delivery (and vice versa)
+                                        setFormData(prev => ({ ...prev, payment_restrictions_enabled: !enabled }))
+                                    }}
+                                />
+                            </div>
 
 
 
