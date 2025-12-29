@@ -33,6 +33,7 @@ const navLinks = [
     { name: "Contact", href: "/support" },
     { name: "F.A.Q", href: "/faq" },
     { name: "Feedback", href: "/feedback" },
+    { name: "Privacy", href: "/privacy" },
     { name: "Terms", href: "/terms" },
 ]
 
@@ -61,7 +62,7 @@ export function ProximaNavbar() {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="hidden lg:flex items-center gap-1">
+                <div className="hidden lg:flex items-center gap-0.5">
                     {navLinks.map((link) => {
                         const isActive = pathname === link.href
                         const isFeedback = link.name === "Feedback"
@@ -70,7 +71,7 @@ export function ProximaNavbar() {
                                 key={link.name}
                                 href={link.href}
                                 className={cn(
-                                    "h-10 px-4 rounded-lg text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/5",
+                                    "h-10 px-3 rounded-lg text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/5 whitespace-nowrap",
                                     isActive
                                         ? "text-brand-primary"
                                         : "text-muted-foreground hover:text-white"
@@ -92,37 +93,25 @@ export function ProximaNavbar() {
                 <div className="flex items-center gap-3 md:gap-4 ml-auto lg:ml-0">
                     {/* Stats Pills (Desktop) */}
                     {stats && (
-                        <div className="hidden xl:flex items-center gap-2 mr-2">
+                        <div className="hidden lg:flex items-center gap-2 mr-2">
                             <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest leading-none mb-1">Store Performance</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                                <span className="text-[9px] font-bold text-white/20 uppercase tracking-wider leading-none mb-1">Store Performance</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
                                         <div className="w-1 h-1 rounded-full bg-brand-primary animate-pulse" />
-                                        <span className="text-[11px] font-bold text-white/70 uppercase tracking-tight">{stats.sales.toLocaleString()} Sales</span>
+                                        <span className="text-[10px] font-bold text-white/70 uppercase tracking-tight">{stats.sales.toLocaleString()} Sales</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                                        <User className="w-3 h-3 text-white/40" />
-                                        <span className="text-[11px] font-bold text-white/70 uppercase tracking-tight">{stats.buyers.toLocaleString()} Buyers</span>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                                        <User className="w-2.5 h-2.5 text-white/40" />
+                                        <span className="text-[10px] font-bold text-white/70 uppercase tracking-tight">{stats.buyers.toLocaleString()} Buyers</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-px h-8 bg-white/5 mx-2" />
+                            <div className="w-px h-8 bg-white/5 mx-1" />
                         </div>
                     )}
 
-                    {/* Currency Selector */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="h-9 px-4 rounded-full text-xs font-bold text-muted-foreground hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider hidden sm:flex items-center gap-2 border border-white/5">
-                                {(mounted && currencyHydrated) ? symbol : "$"} <span className="opacity-50">{currency}</span>
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-card border-border">
-                            <DropdownMenuItem onClick={() => setCurrency("USD")}>$ USD</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setCurrency("EUR")}>€ EUR</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setCurrency("GBP")}>£ GBP</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+
 
                     <Link href="/cart" className="relative group">
                         <div className={cn(
