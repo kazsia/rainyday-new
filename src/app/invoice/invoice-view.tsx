@@ -582,7 +582,7 @@ function InvoiceContent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-black text-white truncate group-hover:text-brand-primary transition-colors">{item.product?.name}</h3>
-                      {item.variant?.name && (
+                      {(item.variant?.name && !item.product?.payment_restrictions_enabled) && (
                         <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest mt-0.5">{item.variant.name}</p>
                       )}
                       <div className="flex items-center gap-3 mt-1">
@@ -778,7 +778,9 @@ function InvoiceContent() {
                                     <h3 className="text-base font-black text-white/90">
                                       {item.product?.name || item.product_name || 'Product'}
                                     </h3>
-                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{item.variant?.name || 'Default'}</p>
+                                    {!item.product?.payment_restrictions_enabled && (
+                                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{item.variant?.name || 'Default'}</p>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-4">
                                     <div className="px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
