@@ -847,16 +847,48 @@ function CheckoutMainContent() {
             hasShownDetectedToast = true
             setPaymentStatus('processing')
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
+
+            // ACTIVE SYNC: Trigger server update immediately on detection
+            try {
+              const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
+              // Verify will update DB to 'processing' if 0 confs, or 'completed' if confirmed
+              if (cryptoDetails) {
+                await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount))
+              }
+            } catch (err) {
+              console.error("Failed to sync detected status:", err)
+            }
           }
 
           // When blockchain shows sufficient confirmations (2+), complete the order
           // Don't wait for OxaPay - trust the blockchain as the source of truth
           if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2) {
-            if (!hasShownDetectedToast) {
-              toast.success("Blockchain confirmed! Waiting for payment processor...")
+            // Re-verify to ensure DB is updated to 'completed'
+            try {
+              const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
+              if (cryptoDetails) {
+                const result = await verifyBlockchainPayment(existingOrder?.payments?.[0]?.id || '', cryptoDetails.address, cryptoDetails.payCurrency, parseFloat(cryptoDetails.amount))
+
+                if (result.success && result.status === 'confirmed') {
+                  hasCompleted = true
+                  setPaymentStatus('completed')
+                  toast.success("Blockchain confirmed! Finalizing...")
+                  clearInterval(pollInterval)
+                  setTimeout(() => {
+                    router.push(`/invoice?id=${orderId}`)
+                  }, 500)
+                  return
+                }
+              }
+            } catch (err) {
+              console.error("Failed to sync confirmed status:", err)
             }
           }
+          if (!hasShownDetectedToast) {
+            toast.success("Blockchain confirmed! Waiting for payment processor...")
+          }
         }
+
 
         // Handle OxaPay Result
         if (info) {
@@ -905,7 +937,7 @@ function CheckoutMainContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 100) // Ultra-fast 100ms polling
+    }, 1000) // High-frequency 1s polling with robust API fallbacks
 
     return () => clearInterval(pollInterval)
   }, [step, orderId, cryptoDetails?.invoiceId, cryptoDetails?.address, cryptoDetails?.payCurrency, router])

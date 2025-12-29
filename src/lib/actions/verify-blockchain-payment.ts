@@ -22,8 +22,18 @@ export async function verifyBlockchainPayment(
             return { success: false, status: 'waiting', message: 'No payment detected yet' }
         }
 
-        // 2. If detected but not confirmed, return detected status
+        // 2. If detected but not confirmed (0 confirmations), update DB to 'processing' for instant feedback
         if (status.status === 'detected') {
+            // Update status to 'processing' so user sees "Payment Detected" immediately on other devices/reloads
+            await updatePaymentStatus(paymentId, 'processing', {
+                payload: {
+                    blockchain_detected: true,
+                    tx_id: status.txId,
+                    amount_received: status.amountReceived,
+                    confirmations: status.confirmations
+                }
+            })
+
             return {
                 success: true,
                 status: 'detected',
@@ -36,7 +46,10 @@ export async function verifyBlockchainPayment(
         // 3. If confirmed, verify amount (with 5% tolerance for network fees)
         if (status.status === 'confirmed' && status.amountReceived) {
             const tolerance = expectedAmount * 0.05
+            console.log(`[VerifyPayment] Confirmed. Received: ${status.amountReceived}, Expected: ${expectedAmount}, Tolerance: ${tolerance}`)
+
             if (status.amountReceived >= expectedAmount - tolerance) {
+                console.log("[VerifyPayment] Amount matches. Completing order...")
                 // Amount matches - update payment status in database
                 await updatePaymentStatus(paymentId, 'completed', {
                     providerPaymentId: status.txId,
@@ -55,6 +68,7 @@ export async function verifyBlockchainPayment(
                     txId: status.txId
                 }
             } else {
+                console.warn(`[VerifyPayment] Amount mismatch! Received: ${status.amountReceived}, Expected: ${expectedAmount}`)
                 return {
                     success: false,
                     status: 'underpaid',
@@ -64,12 +78,25 @@ export async function verifyBlockchainPayment(
             }
         }
 
-        // 4. Confirmed but no amount info - trust OxaPay for final verification
+        // 4. Confirmed but no amount info from blockchain API - trust confirmations and complete anyway
         if (status.status === 'confirmed') {
+            console.log("[VerifyPayment] Confirmed without amountReceived. Completing order based on confirmations...")
+
+            // Complete the order - trust confirmation count >= 2 (already checked by blockchain-tracking)
+            await updatePaymentStatus(paymentId, 'completed', {
+                providerPaymentId: status.txId,
+                payload: {
+                    blockchain_confirmed: true,
+                    tx_id: status.txId,
+                    confirmations: status.confirmations,
+                    verified_by: 'blockchain_confirmations_only'
+                }
+            })
+
             return {
                 success: true,
-                status: 'confirmed_pending',
-                message: 'Blockchain confirmed, awaiting payment gateway verification',
+                status: 'confirmed',
+                message: 'Blockchain confirmed, order completed',
                 txId: status.txId
             }
         }

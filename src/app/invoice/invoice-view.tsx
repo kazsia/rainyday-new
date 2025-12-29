@@ -429,14 +429,33 @@ function InvoiceContent() {
             hasShownDetectedToast = true
             setPaymentStatus('processing')
             toast.success("Payment detected on blockchain! Waiting for confirmations...")
+
+            // ACTIVE SYNC: Trigger server update immediately on detection
+            try {
+              const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
+              // Verify will update DB to 'processing' if 0 confs, or 'completed' if confirmed
+              await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount))
+            } catch (err) {
+              console.error("Failed to sync detected status:", err)
+            }
           }
 
-          if (bcStatus.status === 'confirmed' && bcStatus.txId) {
-            // VISUAL ONLY: We rely on OxaPay for the actual "Paid" status trigger.
-            if (!hasShownDetectedToast) {
-              toast.success("Blockchain confirmed! Waiting for payment processor...")
+          if (bcStatus.status === 'confirmed' && bcStatus.confirmations >= 2) /* was bcStatus.txId */ {
+            // Trust blockchain confirmation
+            try {
+              const { verifyBlockchainPayment } = await import("@/lib/actions/verify-blockchain-payment")
+              const result = await verifyBlockchainPayment(payment.id, paymentDetails.address, paymentDetails.payCurrency, parseFloat(paymentDetails.amount))
+
+              if (result.success && result.status === 'confirmed') {
+                toast.success("Blockchain confirmed! Finalizing...")
+                setPaymentStatus('completed')
+                clearInterval(pollInterval)
+                loadOrder(false)
+                return
+              }
+            } catch (err) {
+              console.error("Failed to sync confirmed status:", err)
             }
-            // Do NOT set paymentStatus('completed') here. Wait for OxaPay.
           }
         }
 
@@ -488,7 +507,7 @@ function InvoiceContent() {
           console.error("Error polling payment status:", error)
         }
       }
-    }, 2000) // Standard 2s polling to avoid rate limits
+    }, 1000) // High-frequency 1s polling with robust API fallbacks
 
     return () => clearInterval(pollInterval)
   }, [order?.status, paymentDetails?.trackId, paymentDetails?.address, paymentDetails?.payCurrency])
