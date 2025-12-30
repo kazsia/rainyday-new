@@ -509,15 +509,15 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       <div className="relative flex items-center bg-[#0d1a1d] rounded-2xl border border-white/[0.08] overflow-hidden transition-all group-hover:border-brand-primary/30">
                         <motion.button
                           onClick={() => {
-                            const newVal = Math.max(1, quantity - 1)
+                            const newVal = Math.max(minQty, quantity - 1)
                             setQuantity(newVal)
                             setInputValue(String(newVal))
                           }}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity <= 1}
+                          disabled={quantity <= minQty}
                           className={cn(
                             "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity <= 1
+                            quantity <= minQty
                               ? "text-white/10 cursor-not-allowed"
                               : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                           )}
@@ -531,21 +531,29 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             pattern="[0-9]*"
                             value={inputValue}
                             onChange={(e) => {
-                              // Allow typing any digits freely
+                              // Allow typing any digits freely for good UX
                               const rawValue = e.target.value.replace(/[^0-9]/g, '')
                               setInputValue(rawValue)
-                              // Sync to quantity immediately (no clamping)
+                              // Update quantity for live preview (warnings will show)
                               const val = parseInt(rawValue, 10)
                               if (!isNaN(val) && val > 0) {
                                 setQuantity(val)
                               }
                             }}
                             onBlur={() => {
-                              // If empty or invalid, reset to 1
+                              // Clamp value on blur to enforce limits
                               const val = parseInt(inputValue, 10)
-                              if (isNaN(val) || val < 1) {
-                                setQuantity(1)
-                                setInputValue("1")
+                              const effectiveMax = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
+
+                              if (isNaN(val) || val < minQty) {
+                                setQuantity(minQty)
+                                setInputValue(String(minQty))
+                              } else if (val > effectiveMax) {
+                                setQuantity(effectiveMax)
+                                setInputValue(String(effectiveMax))
+                                toast.error(effectiveMax === currentStock && !isUnlimited
+                                  ? `Quantity adjusted to available stock (${effectiveMax})`
+                                  : `Quantity adjusted to maximum allowed (${effectiveMax})`)
                               }
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
@@ -553,12 +561,21 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         </div>
                         <motion.button
                           onClick={() => {
-                            const newVal = quantity + 1
-                            setQuantity(newVal)
-                            setInputValue(String(newVal))
+                            const effectiveMax = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
+                            if (quantity < effectiveMax) {
+                              const newVal = quantity + 1
+                              setQuantity(newVal)
+                              setInputValue(String(newVal))
+                            }
                           }}
                           whileTap={{ scale: 0.9 }}
-                          className="w-14 h-14 flex items-center justify-center transition-all text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
+                          disabled={quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))}
+                          className={cn(
+                            "w-14 h-14 flex items-center justify-center transition-all",
+                            quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))
+                              ? "text-white/10 cursor-not-allowed"
+                              : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
+                          )}
                         >
                           <Plus className="w-4 h-4" />
                         </motion.button>
