@@ -45,18 +45,23 @@ const getPaymentIcon = (provider: string) => {
 }
 
 // Get blockchain explorer URL for either a transaction ID or address
-const getExplorerUrl = (idOrAddress: string, provider: string, isAddress = false) => {
+const getExplorerUrl = (idOrAddress: string, provider: string, isAddress?: boolean) => {
   if (!idOrAddress) return undefined
   const p = provider.toLowerCase()
 
-  // Detect if input is an address (not a tx hash) - addresses are shorter and have specific formats
-  const looksLikeAddress = idOrAddress.length < 50 ||
-    idOrAddress.startsWith('ltc1') || idOrAddress.startsWith('L') ||
-    idOrAddress.startsWith('bc1') || idOrAddress.startsWith('1') || idOrAddress.startsWith('3') ||
-    idOrAddress.startsWith('T') || // TRX
-    idOrAddress.startsWith('0x') && idOrAddress.length === 42 // ETH address
-
-  const useAddress = isAddress || looksLikeAddress
+  // If isAddress is explicitly set, use that value directly
+  // Otherwise, detect if input is an address (not a tx hash) via heuristics
+  let useAddress: boolean
+  if (isAddress !== undefined) {
+    useAddress = isAddress
+  } else {
+    // Heuristic detection: addresses are shorter and have specific formats
+    useAddress = idOrAddress.length < 50 ||
+      idOrAddress.startsWith('ltc1') || idOrAddress.startsWith('L') ||
+      idOrAddress.startsWith('bc1') || idOrAddress.startsWith('1') || idOrAddress.startsWith('3') ||
+      idOrAddress.startsWith('T') || // TRX
+      (idOrAddress.startsWith('0x') && idOrAddress.length === 42) // ETH address
+  }
 
   if (p.includes('btc') || p.includes('bitcoin')) {
     return useAddress ? `https://mempool.space/address/${idOrAddress}` : `https://mempool.space/tx/${idOrAddress}`
