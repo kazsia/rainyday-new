@@ -27,22 +27,7 @@ import { TransactionStatus } from "@/lib/payments/blockchain-tracking"
 import { FeedbackForm } from "@/components/feedback/feedback-form"
 import { useSiteSettingsWithDefaults } from "@/context/site-settings-context"
 
-const getPaymentIcon = (provider: string) => {
-  const p = provider.toLowerCase()
-  if (p.includes('btc') || p.includes('bitcoin')) return "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035"
-  if (p.includes('eth') || p.includes('ethereum')) return "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035"
-  if (p.includes('ltc') || p.includes('litecoin')) return "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035"
-  if (p.includes('usdt') || p.includes('tether')) return "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035"
-  if (p.includes('usdc')) return "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035"
-  if (p.includes('sol') || p.includes('solana')) return "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035"
-  if (p.includes('trx') || p.includes('tron')) return "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035"
-  if (p.includes('bnb')) return "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035"
-  if (p.includes('doge')) return "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035"
-  if (p.includes('shib')) return "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035"
-  if (p.includes('ton')) return "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035"
-  if (p.includes('paypal') || p === 'pp') return "https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg"
-  return null
-}
+import { getPaymentIcon, getPaymentName } from "@/lib/utils/payment"
 
 // Get blockchain explorer URL for either a transaction ID or address
 const getExplorerUrl = (idOrAddress: string, provider: string, isAddress?: boolean) => {
@@ -706,17 +691,13 @@ function InvoiceContent() {
 
               <div className="space-y-6">
                 {/* Payment Method Header - Clean Card Style */}
-                {isPaid && payment?.provider && (
+                {isPaid && payment && (
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0d1117] border border-white/5">
                     <div className="w-12 h-12 rounded-xl bg-[#1a1f36] flex items-center justify-center p-2.5 overflow-hidden">
-                      {getPaymentIcon(payment.provider) ? (
-                        <img src={getPaymentIcon(payment.provider)!} alt={payment.provider} className="w-full h-full object-contain" />
-                      ) : (
-                        <CreditCard className="w-6 h-6 text-white/40" />
-                      )}
+                      {getPaymentIcon(payment) || <CreditCard className="w-6 h-6 text-white/40" />}
                     </div>
                     <div>
-                      <p className="text-base font-bold text-white">{payment.provider}</p>
+                      <p className="text-base font-bold text-white">{getPaymentName(payment)}</p>
                       <p className="text-xs text-white/40 font-mono">{payment.track_id || order.readable_id || order.id}</p>
                     </div>
                   </div>
