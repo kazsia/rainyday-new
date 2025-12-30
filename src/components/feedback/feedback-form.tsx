@@ -34,7 +34,7 @@ export function FeedbackForm({ invoiceId, orderId, onSuccess }: FeedbackFormProp
         invoice_id: invoiceId,
         order_id: orderId,
         rating,
-        message: message.trim() || undefined
+        message: message.trim()
       })
       setIsSubmitted(true)
       toast.success("Thank you for your feedback!")
