@@ -1043,92 +1043,35 @@ function CheckoutMainContent() {
     }
   }
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = (text: string) => {
     if (!text) {
       toast.error("Nothing to copy")
       return
     }
 
-    // Method 1: Modern Clipboard API (only works on HTTPS)
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.writeText(text)
-        toast.success("Copied!")
-        return
-      } catch (e) {
-        console.log("Clipboard API failed, trying fallback")
-      }
-    }
-
-    // Method 2: Input element approach (better iOS support than textarea)
+    // Create a visible input at bottom of screen (mobile requires visibility)
     const input = document.createElement('input')
-    input.setAttribute('type', 'text')
-    input.setAttribute('value', text)
-    input.setAttribute('readonly', 'readonly')
-    input.style.position = 'absolute'
-    input.style.left = '-9999px'
-    input.style.top = `${window.scrollY}px` // Prevent scroll jump on iOS
-    input.style.fontSize = '16px' // Prevent zoom on iOS
-    input.style.opacity = '0'
+    input.value = text
+    input.style.position = 'fixed'
+    input.style.bottom = '0'
+    input.style.left = '0'
+    input.style.width = '100%'
+    input.style.height = '1px'
+    input.style.opacity = '0.01'
+    input.style.zIndex = '9999'
+    input.style.fontSize = '16px'
 
     document.body.appendChild(input)
-
-    // iOS specific: need to use setSelectionRange
     input.focus()
-    input.setSelectionRange(0, text.length)
+    input.select()
 
-    let success = false
-    try {
-      success = document.execCommand('copy')
-    } catch (e) {
-      console.log("execCommand failed")
-    }
-
+    const success = document.execCommand('copy')
     document.body.removeChild(input)
 
     if (success) {
       toast.success("Copied!")
-      return
-    }
-
-    // Method 3: ContentEditable div approach (another iOS fallback)
-    const div = document.createElement('div')
-    div.contentEditable = 'true'
-    div.textContent = text
-    div.style.position = 'absolute'
-    div.style.left = '-9999px'
-    div.style.top = `${window.scrollY}px`
-    div.style.fontSize = '16px'
-    div.style.opacity = '0'
-
-    document.body.appendChild(div)
-
-    const range = document.createRange()
-    range.selectNodeContents(div)
-    const selection = window.getSelection()
-    if (selection) {
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-
-    try {
-      success = document.execCommand('copy')
-    } catch (e) {
-      console.log("ContentEditable copy failed")
-    }
-
-    document.body.removeChild(div)
-
-    if (success) {
-      toast.success("Copied!")
-      return
-    }
-
-    // Method 4: Last resort - show a prompt with the text for manual copy
-    toast.info("Long-press below to copy:")
-    const result = window.prompt("Copy this value:", text)
-    if (result !== null) {
-      toast.success("Value available for copy")
+    } else {
+      toast.error("Copy failed - please select manually")
     }
   }
 
