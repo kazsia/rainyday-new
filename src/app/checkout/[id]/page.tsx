@@ -1788,7 +1788,7 @@ function CheckoutMainContent() {
                         <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
                         <p className="text-sm font-medium text-white/40">You can copy it below.</p>
                       </div>
-                      <div className="flex items-center w-fit">
+                      <div className="flex items-stretch w-fit">
                         <input
                           type="text"
                           readOnly
@@ -1799,7 +1799,14 @@ function CheckoutMainContent() {
                         />
                         <button
                           type="button"
-                          onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
+                          onClick={() => {
+                            const amount = cryptoDetails?.amount
+                            if (!amount || amount === '...' || amount === '0') {
+                              toast.error("Amount not ready yet")
+                              return
+                            }
+                            copyToClipboard(amount)
+                          }}
                           className="h-14 px-4 bg-[#020406] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center"
                           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                           title="Copy amount"
