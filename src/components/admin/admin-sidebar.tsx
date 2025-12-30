@@ -262,7 +262,7 @@ function SidebarContent({ className, isDrawer, onClose }: { className?: string, 
     }
 
     if (!mounted) return (
-        <aside className={cn("w-60 min-h-screen bg-[var(--sa-sidebar)] border-r border-[var(--sa-border)] flex flex-col font-sans", className)} suppressHydrationWarning />
+        <aside className={cn("w-60 min-h-screen bg-[var(--sa-sidebar)] border-r border-[var(--sa-border)] flex flex-col font-sans relative overflow-hidden", className)} suppressHydrationWarning />
     )
 
     return (
@@ -387,7 +387,7 @@ function SidebarContent({ className, isDrawer, onClose }: { className?: string, 
 
 export function AdminSidebar(props: { className?: string, isDrawer?: boolean, onClose?: () => void }) {
     return (
-        <Suspense fallback={<aside className={cn("w-60 min-h-screen bg-[var(--sa-sidebar)] border-r border-[var(--sa-border)] flex flex-col font-sans", props.className)} suppressHydrationWarning />}>
+        <Suspense fallback={<aside className={cn("w-60 min-h-screen bg-[var(--sa-sidebar)] border-r border-[var(--sa-border)] flex flex-col font-sans relative overflow-hidden", props.className)} suppressHydrationWarning />}>
             <SidebarContent {...props} />
         </Suspense>
     )

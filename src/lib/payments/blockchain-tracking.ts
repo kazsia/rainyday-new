@@ -250,26 +250,13 @@ async function trackLTC(address: string, minTimestamp?: number): Promise<Transac
             }
             return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
         },
-        // 2. Blockchair
+        // 2. Blockchair - NOTE: Blockchair dashboard endpoint doesn't provide full tx details with timestamps
+        // We cannot reliably filter by minTimestamp here, so this provider should NOT be trusted for detection
+        // It's only useful as a backup when other providers fail and we need ANY signal
+        // DISABLED: This was causing false positives by detecting old transactions
         async (): Promise<TransactionStatus> => {
-            const response = await fetch(`https://api.blockchair.com/litecoin/dashboards/address/${address}?limit=5`, { signal: AbortSignal.timeout(4000) })
-            if (!response.ok) throw new Error("Blockchair failed")
-            const data = await response.json()
-            if (!data?.data || !data.data[address]) throw new Error("Invalid Blockchair data")
-
-            const addrData = data.data[address]
-            const txs = addrData.transactions || []
-
-            if (txs.length > 0) {
-                return {
-                    detected: true,
-                    confirmations: 0,
-                    txId: txs[0],
-                    status: 'detected',
-                    lastCheck: new Date(),
-                    timestamp: Date.now() / 1000
-                }
-            }
+            // Return waiting - let other providers handle detection
+            // Blockchair's dashboard endpoint doesn't give us tx timestamps to filter properly
             return { detected: false, confirmations: 0, status: 'waiting', lastCheck: new Date() }
         },
         // 3. BlockCypher
