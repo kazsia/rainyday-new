@@ -8,6 +8,8 @@ import { createBlacklistEntry } from "@/lib/db/blacklist"
 import { syncPaymentTxId } from "@/lib/db/payments"
 import { Button } from "@/components/ui/button"
 import {
+  Gift,
+  CheckCircle,
   ChevronLeft,
   Link as LinkIcon,
   Copy,
@@ -201,15 +203,122 @@ export default function AdminInvoiceDetailsPage() {
     )
   }
 
-  const getPaymentIcon = (provider: string | undefined) => {
-    if (!provider) return null
-    const p = provider.toLowerCase()
+  // Helper to get the actual crypto identifier from payment record
+  const getCryptoIdentifier = (payment: any) => {
+    // Check provider first
+    const provider = (payment?.provider || '').toLowerCase()
+    // Check currency field (often has actual crypto code like LTC, BTC)
+    const currency = (payment?.currency || '').toLowerCase()
+    // Check crypto address to infer coin type
+    const address = payment?.crypto_address || ''
+
+    // If provider is specific (not generic "crypto"), use it
+    if (provider && provider !== 'crypto' && provider !== 'usd') {
+      return provider
+    }
+
+    // If currency is a crypto code (not USD), use it
+    if (currency && currency !== 'usd') {
+      return currency
+    }
+
+    // Try to infer from crypto address format
+    if (address) {
+      // Bitcoin addresses: start with 1, 3, or bc1
+      if (/^(1|3)[a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(address) || /^bc1[a-z0-9]{39,59}$/.test(address)) {
+        return 'btc'
+      }
+      // Litecoin addresses: start with L, M, or ltc1
+      if (/^[LM][a-km-zA-HJ-NP-Z1-9]{26,33}$/.test(address) || /^ltc1[a-z0-9]{39,59}$/.test(address)) {
+        return 'ltc'
+      }
+      // Ethereum addresses: start with 0x and are 42 chars
+      if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return 'eth'
+      }
+      // Tron addresses: start with T
+      if (/^T[a-zA-Z0-9]{33}$/.test(address)) {
+        return 'trx'
+      }
+      // Monero addresses: start with 4 and are long
+      if (/^4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/.test(address)) {
+        return 'xmr'
+      }
+      // Solana addresses: base58, 32-44 chars
+      if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address) && !address.startsWith('T') && !address.startsWith('bc1') && !address.startsWith('ltc1')) {
+        // Likely Solana if not matching other patterns
+      }
+      // Dogecoin: starts with D
+      if (/^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/.test(address)) {
+        return 'doge'
+      }
+    }
+
+    // Use provider as fallback (even if it's generic "crypto")
+    return provider
+  }
+
+  const getPaymentIcon = (payment: any) => {
+    const p = getCryptoIdentifier(payment)
+    if (!p) return null
+
+    // Coupon icon
+    if (p === 'coupon') return <Gift className="w-4 h-4 text-purple-400" />
+    if (p === 'manual' || p === 'admin') return <CheckCircle className="w-4 h-4 text-indigo-400" />
+    if (p.includes('paypal') || p === 'pp') return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" className="w-4 h-4" alt="PayPal" />
+
     if (p.includes('btc') || p.includes('bitcoin')) return <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035" className="w-4 h-4" alt="BTC" />
     if (p.includes('eth') || p.includes('ethereum')) return <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035" className="w-4 h-4" alt="ETH" />
     if (p.includes('ltc') || p.includes('litecoin')) return <img src="https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035" className="w-4 h-4" alt="LTC" />
     if (p.includes('usdt')) return <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035" className="w-4 h-4" alt="USDT" />
-    if (p.includes('paypal') || p === 'pp') return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" className="w-4 h-4" alt="PayPal" />
+    if (p.includes('usdc')) return <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035" className="w-4 h-4" alt="USDC" />
+    if (p.includes('xmr') || p.includes('monero')) return <img src="https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035" className="w-4 h-4" alt="XMR" />
+    if (p.includes('sol') || p.includes('solana')) return <img src="https://cryptologos.cc/logos/solana-sol-logo.svg?v=035" className="w-4 h-4" alt="SOL" />
+    if (p.includes('trx') || p.includes('tron')) return <img src="https://cryptologos.cc/logos/tron-trx-logo.svg?v=035" className="w-4 h-4" alt="TRX" />
+    if (p.includes('bnb')) return <img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035" className="w-4 h-4" alt="BNB" />
+    if (p.includes('doge')) return <img src="https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035" className="w-4 h-4" alt="DOGE" />
+    if (p.includes('bch')) return <img src="https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035" className="w-4 h-4" alt="BCH" />
+    if (p.includes('ton')) return <img src="https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035" className="w-4 h-4" alt="TON" />
+    if (p.includes('xrp') || p.includes('ripple')) return <img src="https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035" className="w-4 h-4" alt="XRP" />
+    if (p.includes('dai')) return <img src="https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035" className="w-4 h-4" alt="DAI" />
+    if (p.includes('pol') || p.includes('matic') || p.includes('polygon')) return <img src="https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035" className="w-4 h-4" alt="POL" />
+    if (p.includes('shib')) return <img src="https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035" className="w-4 h-4" alt="SHIB" />
+
+    // Generic crypto icon
+    if (p === 'crypto') return <div className="w-4 h-4 rounded-full bg-cyan-500/20 flex items-center justify-center text-[8px] text-cyan-400 font-bold">₿</div>
+
     return <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[8px]">?</div>
+  }
+
+  const getPaymentName = (payment: any) => {
+    const p = getCryptoIdentifier(payment)
+    if (!p) return "—"
+
+    // Show coupon/manual as payment method
+    if (p === 'coupon') return "Coupon"
+    if (p === 'manual' || p === 'admin') return "Manual"
+    if (p.includes('paypal') || p === 'pp') return "PayPal"
+
+    if (p.includes('btc') || p.includes('bitcoin')) return "Bitcoin"
+    if (p.includes('eth') || p.includes('ethereum')) return "Ethereum"
+    if (p.includes('ltc') || p.includes('litecoin')) return "Litecoin"
+    if (p.includes('usdt')) return "Tether"
+    if (p.includes('usdc')) return "USD Coin"
+    if (p.includes('xmr') || p.includes('monero')) return "Monero"
+    if (p.includes('sol') || p.includes('solana')) return "Solana"
+    if (p.includes('trx') || p.includes('tron')) return "Tron"
+    if (p.includes('bnb')) return "BNB"
+    if (p.includes('doge')) return "Dogecoin"
+    if (p.includes('bch')) return "Bitcoin Cash"
+    if (p.includes('ton')) return "Toncoin"
+    if (p.includes('xrp') || p.includes('ripple')) return "Ripple"
+    if (p.includes('dai')) return "DAI"
+    if (p.includes('pol') || p.includes('matic') || p.includes('polygon')) return "Polygon"
+    if (p.includes('shib')) return "Shiba Inu"
+
+    // For any other provider, show "Crypto" if generic
+    if (p === 'crypto') return "Crypto"
+    return p.toUpperCase()
   }
 
   const getExplorerUrl = (txId: string, provider: string) => {
@@ -362,8 +471,8 @@ export default function AdminInvoiceDetailsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-white/40 uppercase tracking-widest">Payment Method</span>
                 <div className="flex items-center gap-3 bg-white/[0.02] border border-white/5 px-3 py-1.5 rounded-xl">
-                  <span className="text-xs font-bold text-white tracking-tight">{order.payments?.[0]?.provider || "Unknown"}</span>
-                  {getPaymentIcon(order.payments?.[0]?.provider)}
+                  <span className="text-xs font-bold text-white tracking-tight">{getPaymentName(order.payments?.[0])}</span>
+                  {getPaymentIcon(order.payments?.[0])}
                 </div>
               </div>
               <div className="flex items-center justify-between">
