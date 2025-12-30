@@ -188,12 +188,13 @@ export async function getChartData(range?: { from: Date; to: Date }): Promise<Ch
 // --- RECENT ORDERS ---
 export async function getRecentOrders(limit = 10, range?: { from: Date; to: Date }) {
     try {
+        const { getPaymentName } = await import("@/lib/utils/payment")
         const supabase = await createAdminClient()
         let query = supabase.from("orders")
             .select(`
                 *,
                 order_items(product:products(name)),
-                payments(provider)
+                payments(*)
             `)
             .order("created_at", { ascending: false })
             .limit(limit)
@@ -209,18 +210,22 @@ export async function getRecentOrders(limit = 10, range?: { from: Date; to: Date
             return []
         }
 
-        return data?.map((o: any) => ({
-            id: o.id,
-            readable_id: o.readable_id,
-            product: (o.order_items as any[])?.[0]?.product?.name || "Unknown",
-            price: `$${Number(o.total ?? 0).toFixed(2)}`,
-            paid: o.status === 'paid' || o.status === 'delivered' ? `+$${Number(o.total ?? 0).toFixed(2)}` : 'Pending',
-            method: formatPaymentMethod((o.payments as any[])?.[0]?.provider),
-            provider: (o.payments as any[])?.[0]?.provider || "Crypto",
-            email: o.email,
-            time: getTimeAgo(new Date(o.created_at)),
-            status: o.status
-        })) || []
+        return data?.map((o: any) => {
+            const firstPayment = (o.payments as any[])?.[0]
+            return {
+                id: o.id,
+                readable_id: o.readable_id,
+                product: (o.order_items as any[])?.[0]?.product?.name || "Unknown",
+                price: `$${Number(o.total ?? 0).toFixed(2)}`,
+                paid: o.status === 'paid' || o.status === 'delivered' ? `+$${Number(o.total ?? 0).toFixed(2)}` : 'Pending',
+                method: getPaymentName(firstPayment),
+                provider: firstPayment?.provider || "Crypto",
+                email: o.email,
+                time: getTimeAgo(new Date(o.created_at)),
+                status: o.status,
+                payment_info: firstPayment // Pass full payment record
+            }
+        }) || []
     } catch (e) {
         console.error("[DASHBOARD_ORDERS_CRITICAL]", e)
         return []

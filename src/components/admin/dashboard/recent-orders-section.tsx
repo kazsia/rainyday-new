@@ -6,27 +6,53 @@ import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-const PAYMENT_LOGOS: Record<string, string> = {
-    "BTC": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035",
-    "ETH": "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035",
-    "LTC": "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035",
-    "USDT": "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035",
-    "USDC": "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035",
-    "SOL": "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035",
-    "DOGE": "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035",
-    "TRX": "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035",
-    "XRP": "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035",
-    "BNB": "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035",
-}
+import { getCryptoIdentifier } from "@/lib/utils/payment"
 
-const getPaymentLogo = (provider: string) => {
-    const key = provider.toUpperCase()
-    if (PAYMENT_LOGOS[key]) {
-        return <div className="w-3.5 h-3.5 relative flex-shrink-0"><Image src={PAYMENT_LOGOS[key]} alt={provider} fill className="object-contain" unoptimized /></div>
+const getPaymentLogo = (payment: any) => {
+    const p = getCryptoIdentifier(payment)
+    if (!p) return <CreditCard className="w-3.5 h-3.5 text-[var(--sa-fg-muted)]" />
+
+    // Coupon / Manual
+    if (p === 'coupon') return <CreditCard className="w-3.5 h-3.5 text-purple-400" />
+    if (p === 'manual' || p === 'admin') return <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+
+    const logoMap: Record<string, string> = {
+        "btc": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035",
+        "bitcoin": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035",
+        "eth": "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035",
+        "ethereum": "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035",
+        "ltc": "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035",
+        "litecoin": "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035",
+        "usdt": "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035",
+        "usdc": "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035",
+        "sol": "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035",
+        "solana": "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035",
+        "doge": "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035",
+        "dogecoin": "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035",
+        "trx": "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035",
+        "tron": "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035",
+        "xrp": "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035",
+        "ripple": "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035",
+        "bnb": "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035",
+        "xmr": "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035",
+        "monero": "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035",
+        "ton": "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035",
     }
-    if (key === 'PAYPAL') {
+
+    const logoUrl = logoMap[p.toLowerCase()] || Object.entries(logoMap).find(([k]) => p.toLowerCase().includes(k))?.[1]
+
+    if (logoUrl) {
+        return <div className="w-3.5 h-3.5 relative flex-shrink-0"><Image src={logoUrl} alt={p} fill className="object-contain" unoptimized /></div>
+    }
+
+    if (p.includes('paypal') || p === 'pp') {
         return <div className="w-3.5 h-3.5 flex items-center justify-center bg-[#003087] rounded-[2px] text-[8px] font-black text-white leading-none">PP</div>
     }
+
+    if (p === 'crypto') {
+        return <div className="w-3.5 h-3.5 flex items-center justify-center bg-cyan-500/20 rounded-full text-[8px] font-black text-cyan-400 leading-none">₿</div>
+    }
+
     return <CreditCard className="w-3.5 h-3.5 text-[var(--sa-accent)]" />
 }
 
@@ -41,6 +67,7 @@ interface Order {
     email: string
     time: string
     status: string
+    payment_info?: any
 }
 
 interface RecentOrdersSectionProps {
@@ -112,7 +139,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <div className="flex items-center gap-2 text-[var(--sa-fg-dim)] bg-white/[0.03] border border-white/[0.05] rounded-md px-2 py-1 w-fit group-hover:bg-white/[0.05] transition-colors">
-                                            {getPaymentLogo(order.provider)}
+                                            {getPaymentLogo(order.payment_info)}
                                             <span className="text-[9px] font-bold uppercase tracking-widest">{order.method}</span>
                                         </div>
                                     </td>
@@ -188,7 +215,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
 
                             <div className="flex items-center justify-between pt-1 mt-1 border-t border-white/[0.03]">
                                 <div className="flex items-center gap-1.5 text-[var(--sa-fg-dim)] bg-white/[0.03] border border-white/[0.05] px-2 py-0.5 rounded">
-                                    {getPaymentLogo(order.provider)}
+                                    {getPaymentLogo(order.payment_info)}
                                     <span className="text-[9px] font-bold uppercase tracking-widest">{order.method}</span>
                                 </div>
                                 <Button variant="ghost" className="h-6 px-2 text-[9px] text-[var(--sa-accent)] font-bold uppercase tracking-wider hover:bg-[var(--sa-accent)]/10" asChild>
