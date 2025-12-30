@@ -1,3 +1,6 @@
+import React from 'react'
+import { Gift, CheckCircle, CreditCard } from 'lucide-react'
+
 export const getCryptoIdentifier = (payment: any) => {
     // Check provider first
     const provider = (payment?.provider || '').toLowerCase()
@@ -46,6 +49,54 @@ export const getCryptoIdentifier = (payment: any) => {
 
     // Use provider as fallback (even if it's generic "crypto")
     return provider
+}
+
+export const getPaymentIcon = (payment: any) => {
+    const p = getCryptoIdentifier(payment)
+    if (!p) return null
+
+    // Coupon icon
+    if (p === 'coupon') return <Gift className="w-4 h-4 text-purple-400" />
+    if (p === 'manual' || p === 'admin') return <CheckCircle className="w-4 h-4 text-indigo-400" />
+    if (p.includes('paypal') || p === 'pp') return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_Icon_2014.svg" className="w-4 h-4" alt="PayPal" />
+
+    const logoMap: Record<string, string> = {
+        "btc": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035",
+        "bitcoin": "https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=035",
+        "eth": "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035",
+        "ethereum": "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035",
+        "ltc": "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035",
+        "litecoin": "https://cryptologos.cc/logos/litecoin-ltc-logo.svg?v=035",
+        "usdt": "https://cryptologos.cc/logos/tether-usdt-logo.svg?v=035",
+        "usdc": "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=035",
+        "sol": "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035",
+        "solana": "https://cryptologos.cc/logos/solana-sol-logo.svg?v=035",
+        "doge": "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035",
+        "dogecoin": "https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=035",
+        "trx": "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035",
+        "tron": "https://cryptologos.cc/logos/tron-trx-logo.svg?v=035",
+        "xrp": "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035",
+        "ripple": "https://cryptologos.cc/logos/xrp-xrp-logo.svg?v=035",
+        "bnb": "https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=035",
+        "xmr": "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035",
+        "monero": "https://cryptologos.cc/logos/monero-xmr-logo.svg?v=035",
+        "ton": "https://cryptologos.cc/logos/toncoin-ton-logo.svg?v=035",
+        "dai": "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=035",
+        "bch": "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.svg?v=035",
+        "pol": "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=035",
+        "shib": "https://cryptologos.cc/logos/shiba-inu-shib-logo.svg?v=035",
+    }
+
+    const logoUrl = logoMap[p.toLowerCase()] || Object.entries(logoMap).find(([k]) => p.toLowerCase().includes(k))?.[1]
+
+    if (logoUrl) {
+        return <img src={logoUrl} className="w-4 h-4 object-contain" alt={p} />
+    }
+
+    // Generic crypto icon
+    if (p === 'crypto') return <div className="w-4 h-4 rounded-full bg-cyan-500/20 flex items-center justify-center text-[8px] text-cyan-400 font-bold">₿</div>
+
+    return <CreditCard className="w-4 h-4 text-white/20" />
 }
 
 export const getPaymentName = (payment: any) => {
