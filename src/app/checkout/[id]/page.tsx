@@ -737,9 +737,9 @@ function CheckoutMainContent() {
         // 3. Create the Payment record with OxaPay track ID, pay_url, and crypto address
         const payResult = await safeCreatePayment({
           order_id: order.id,
-          provider: payCurrencyMap[selectedMethod] || "Crypto",
+          provider: payCurrencyMap[baseMethodName] || "Crypto",
           amount: total,
-          currency: "USD",
+          currency: payCurrencyMap[baseMethodName] || "USD",
           track_id: response.trackId,
           pay_url: response.payLink,
           crypto_address: response.address || null
