@@ -11,7 +11,10 @@ export async function updateSession(request: NextRequest) {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
         if (!supabaseUrl || !supabaseAnonKey) {
-            console.error("[MIDDLEWARE] Missing Supabase environment variables")
+            // Only log in production if this happens unexpectedly
+            if (process.env.NODE_ENV === "production") {
+                console.error("[MIDDLEWARE] Missing Supabase environment variables")
+            }
             return supabaseResponse
         }
 
@@ -38,21 +41,45 @@ export async function updateSession(request: NextRequest) {
             }
         )
 
-        // Refresh session if expired
-        // IMPORTANT: We use getUser() instead of getSession() for the most reliable auth state
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-        if (authError) {
-            // Log and continue - session might just be invalid/expired
-            console.debug("[MIDDLEWARE] Auth error:", authError.message)
-        }
-
         const pathname = request.nextUrl.pathname
+        const isAdminRoute = pathname.startsWith("/admin")
+
+        // ============================================
+        // OPTIMIZATION: Skip getUser() for public routes if no Supabase cookies exist
+        // ============================================
+        const hasAuthCookies = request.cookies.getAll().some(c => c.name.startsWith("sb-"))
+
+        let user = null
+        if (hasAuthCookies || isAdminRoute) {
+            // Refresh session if expired
+            // IMPORTANT: We use getUser() instead of getSession() for the most reliable auth state
+            const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+
+            if (authError) {
+                // Handle "refresh_token_not_found" and other errors gracefully 
+                // to avoid noisy stack traces in Edge runtime
+                const isNoSession = authError.message.includes("Auth session missing")
+                const isInvalidRefresh = authError.message.includes("Refresh Token Not Found")
+
+                if (isAdminRoute && (isNoSession || isInvalidRefresh)) {
+                    // Force redirect to login for admin routes if auth fails
+                    const redirectUrl = new URL("/auth", request.url)
+                    redirectUrl.searchParams.set("redirect", pathname)
+                    return NextResponse.redirect(redirectUrl)
+                }
+
+                // Only log unexpected errors or logs that aren't expected for guests
+                if (!isNoSession && !isInvalidRefresh) {
+                    console.debug("[MIDDLEWARE] Auth error:", authError.message)
+                }
+            }
+            user = authUser
+        }
 
         // ============================================
         // ADMIN ROUTE PROTECTION (SERVER-SIDE)
         // ============================================
-        if (pathname.startsWith("/admin")) {
+        if (isAdminRoute) {
             // Not authenticated -> redirect to auth
             if (!user) {
                 const redirectUrl = new URL("/auth", request.url)
