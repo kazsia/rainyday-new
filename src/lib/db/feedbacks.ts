@@ -126,20 +126,28 @@ export async function submitFeedback(data: {
 
         if (existing) throw new Error("You have already submitted feedback for this order.")
 
-        // 3. Get user info
-        const { data: { user } } = await supabase.auth.getUser()
+        // 3. Get user info (safe for guests)
+        let userId: string | undefined
+        try {
+            const { data: authData } = await supabase.auth.getUser()
+            userId = authData?.user?.id
+        } catch (e) {
+            console.log("[SUBMIT_FEEDBACK] Guest submission - no user session")
+        }
 
         // 4. Determine auto-approval status
         const settings = await getSiteSettings()
         const autoApprove = settings.feedbacks.enable_automatic
 
-        // 5. Insert feedback
-        const { data: feedback, error } = await supabase
+        // 5. Insert feedback using admin client to bypass RLS
+        // We have already validated that they own the invoice/order via search/status check
+        const adminSupabase = await createAdminClient()
+        const { data: feedback, error } = await adminSupabase
             .from("feedbacks")
             .insert({
                 invoice_id: invoice.id,
                 order_id: order.id,
-                customer_id: user?.id,
+                customer_id: userId,
                 email: order.email,
                 rating: data.rating,
                 title: data.title,
@@ -268,21 +276,9 @@ export async function adminAddManualFeedback(data: {
     message: string
 }) {
     try {
-        const supabase = await createAdminClient()
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        const adminSupabase = await createAdminClient();
 
-        console.log("[ADMIN_ADD_MANUAL] Key check:", {
-            hasKey: !!serviceKey,
-            keyLength: serviceKey?.length,
-            url: process.env.NEXT_PUBLIC_SUPABASE_URL
-        })
-
-        const logEntryCheck = `[${new Date().toISOString()}] ENV CHECK: hasKey=${!!serviceKey}, len=${serviceKey?.length}\n`
-        require('fs').appendFileSync('feedback-error.log', logEntryCheck)
-
-        console.log("[ADMIN_ADD_MANUAL] Attempting insert:", data)
-
-        const { data: feedback, error } = await supabase
+        const { data: feedback, error } = await adminSupabase
             .from("feedbacks")
             .insert({
                 email: data.email,
@@ -300,17 +296,13 @@ export async function adminAddManualFeedback(data: {
 
         if (error) {
             console.error("[ADMIN_ADD_MANUAL_ERROR]", error)
-            // Log to a file as well for agent to read
-            const logEntry = `[${new Date().toISOString()}] ERROR: ${JSON.stringify(error)}\n`
-            require('fs').appendFileSync('feedback-error.log', logEntry)
             throw error
         }
 
         return feedback as Feedback
     } catch (e: any) {
         console.error("[ADMIN_ADD_MANUAL_CRASH]", e)
-        const logEntry = `[${new Date().toISOString()}] CRASH: ${e.message || e}\n`
-        require('fs').appendFileSync('feedback-error.log', logEntry)
         throw e
     }
 }
+```

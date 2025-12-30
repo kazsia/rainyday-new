@@ -139,7 +139,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <div className="flex items-center gap-2 text-[var(--sa-fg-dim)] bg-white/[0.03] border border-white/[0.05] rounded-md px-2 py-1 w-fit group-hover:bg-white/[0.05] transition-colors">
-                                            {getPaymentLogo(order.payment_info)}
+                                            {getPaymentLogo(order.provider)}
                                             <span className="text-[9px] font-bold uppercase tracking-widest">{order.method}</span>
                                         </div>
                                     </td>
@@ -215,7 +215,7 @@ export function RecentOrdersSection({ recentOrders }: RecentOrdersSectionProps) 
 
                             <div className="flex items-center justify-between pt-1 mt-1 border-t border-white/[0.03]">
                                 <div className="flex items-center gap-1.5 text-[var(--sa-fg-dim)] bg-white/[0.03] border border-white/[0.05] px-2 py-0.5 rounded">
-                                    {getPaymentLogo(order.payment_info)}
+                                    {getPaymentLogo(order.provider)}
                                     <span className="text-[9px] font-bold uppercase tracking-widest">{order.method}</span>
                                 </div>
                                 <Button variant="ghost" className="h-6 px-2 text-[9px] text-[var(--sa-accent)] font-bold uppercase tracking-wider hover:bg-[var(--sa-accent)]/10" asChild>
