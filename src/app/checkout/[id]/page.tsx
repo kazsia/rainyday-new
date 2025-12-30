@@ -1049,49 +1049,86 @@ function CheckoutMainContent() {
       return
     }
 
-    try {
-      // Modern async clipboard API (requires HTTPS and user gesture)
-      if (navigator.clipboard && window.isSecureContext) {
+    // Method 1: Modern Clipboard API (only works on HTTPS)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
         await navigator.clipboard.writeText(text)
         toast.success("Copied!")
         return
+      } catch (e) {
+        console.log("Clipboard API failed, trying fallback")
       }
+    }
 
-      // Fallback for mobile browsers that don't support clipboard API
-      const textArea = document.createElement('textarea')
-      textArea.value = text
+    // Method 2: Input element approach (better iOS support than textarea)
+    const input = document.createElement('input')
+    input.setAttribute('type', 'text')
+    input.setAttribute('value', text)
+    input.setAttribute('readonly', 'readonly')
+    input.style.position = 'absolute'
+    input.style.left = '-9999px'
+    input.style.top = `${window.scrollY}px` // Prevent scroll jump on iOS
+    input.style.fontSize = '16px' // Prevent zoom on iOS
+    input.style.opacity = '0'
 
-      // Make it invisible but part of the document
-      textArea.style.position = 'fixed'
-      textArea.style.top = '0'
-      textArea.style.left = '0'
-      textArea.style.width = '2em'
-      textArea.style.height = '2em'
-      textArea.style.padding = '0'
-      textArea.style.border = 'none'
-      textArea.style.outline = 'none'
-      textArea.style.boxShadow = 'none'
-      textArea.style.background = 'transparent'
-      textArea.style.fontSize = '16px' // Prevent zoom on iOS
-      textArea.setAttribute('readonly', '')
+    document.body.appendChild(input)
 
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      textArea.setSelectionRange(0, text.length)
+    // iOS specific: need to use setSelectionRange
+    input.focus()
+    input.setSelectionRange(0, text.length)
 
-      const success = document.execCommand('copy')
-      document.body.removeChild(textArea)
+    let success = false
+    try {
+      success = document.execCommand('copy')
+    } catch (e) {
+      console.log("execCommand failed")
+    }
 
-      if (success) {
-        toast.success("Copied!")
-      } else {
-        throw new Error('execCommand failed')
-      }
-    } catch (err) {
-      console.error('Copy failed:', err)
-      // Last resort: show text in prompt for manual copy
-      toast.error("Tap and hold to select, then copy manually")
+    document.body.removeChild(input)
+
+    if (success) {
+      toast.success("Copied!")
+      return
+    }
+
+    // Method 3: ContentEditable div approach (another iOS fallback)
+    const div = document.createElement('div')
+    div.contentEditable = 'true'
+    div.textContent = text
+    div.style.position = 'absolute'
+    div.style.left = '-9999px'
+    div.style.top = `${window.scrollY}px`
+    div.style.fontSize = '16px'
+    div.style.opacity = '0'
+
+    document.body.appendChild(div)
+
+    const range = document.createRange()
+    range.selectNodeContents(div)
+    const selection = window.getSelection()
+    if (selection) {
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+
+    try {
+      success = document.execCommand('copy')
+    } catch (e) {
+      console.log("ContentEditable copy failed")
+    }
+
+    document.body.removeChild(div)
+
+    if (success) {
+      toast.success("Copied!")
+      return
+    }
+
+    // Method 4: Last resort - show a prompt with the text for manual copy
+    toast.info("Long-press below to copy:")
+    const result = window.prompt("Copy this value:", text)
+    if (result !== null) {
+      toast.success("Value available for copy")
     }
   }
 
