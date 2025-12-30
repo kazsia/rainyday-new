@@ -33,6 +33,7 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
   const params = React.use(paramsPromise)
   const { id } = params
   const [quantity, setQuantity] = React.useState(1)
+  const [inputValue, setInputValue] = React.useState("1")
   const [activeTab, setActiveTab] = React.useState("description")
   const [product, setProduct] = React.useState<any>(null)
   const [selectedVariant, setSelectedVariant] = React.useState<any>(null)
@@ -107,17 +108,28 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
   const isOutOfStock = !isUnlimited && (currentStock <= 0)
   const totalPrice = currentPrice * quantity
 
-  // Synchronize initial quantity with min_quantity and clamp when variant changes
+  // Synchronize initial quantity with min_quantity when variant changes (only on variant/product change)
+  const prevVariantId = React.useRef(selectedVariant?.id)
+  const prevProductId = React.useRef(product?.id)
+
   React.useEffect(() => {
-    const currentMin = selectedVariant?.min_quantity || product?.min_quantity || 1
-    const currentMax = selectedVariant?.max_quantity || product?.max_quantity || 1000000
-    const stock = selectedVariant ? selectedVariant.stock_count : product?.stock_count || 0
-    const unlimited = selectedVariant ? selectedVariant.is_unlimited : product?.is_unlimited || false
+    // Only run when variant or product actually changes (not on every stock recalc)
+    if (prevVariantId.current === selectedVariant?.id && prevProductId.current === product?.id) {
+      return
+    }
+    prevVariantId.current = selectedVariant?.id
+    prevProductId.current = product?.id
 
-    const maxQtyToClamp = unlimited ? currentMax : Math.min(currentMax, stock || 1)
+    const currentMin = effectiveVariant?.min_quantity || product?.min_quantity || 1
+    const newQty = Math.max(1, currentMin)
+    setQuantity(newQty)
+    setInputValue(String(newQty))
+  }, [selectedVariant?.id, product?.id, effectiveVariant?.min_quantity, product?.min_quantity])
 
-    setQuantity(prev => Math.min(Math.max(prev, currentMin), maxQtyToClamp))
-  }, [selectedVariant?.id, product?.id, isUnlimited, currentStock])
+  // Keep inputValue in sync when quantity changes from +/- buttons
+  React.useEffect(() => {
+    setInputValue(String(quantity))
+  }, [quantity])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -472,21 +484,20 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            value={quantity}
+                            value={inputValue}
+                            onFocus={() => setInputValue(String(quantity))}
                             onChange={(e) => {
-                              // Allow typing any digits, validation happens on blur
+                              // Allow typing any digits freely, validation happens on blur
                               const rawValue = e.target.value.replace(/[^0-9]/g, '')
-                              if (rawValue === '') {
-                                setQuantity(minQty)
-                              } else {
-                                setQuantity(parseInt(rawValue, 10))
-                              }
+                              setInputValue(rawValue)
                             }}
-                            onBlur={(e) => {
-                              // Clamp value on blur
+                            onBlur={() => {
+                              // Clamp value on blur and sync to quantity state
                               const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
-                              const val = parseInt(e.target.value, 10) || minQty
-                              setQuantity(Math.min(Math.max(minQty, val), maxQtyToClamp))
+                              const val = parseInt(inputValue, 10) || minQty
+                              const clampedVal = Math.min(Math.max(minQty, val), maxQtyToClamp)
+                              setQuantity(clampedVal)
+                              setInputValue(String(clampedVal))
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
                           />
