@@ -1043,9 +1043,41 @@ function CheckoutMainContent() {
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success("Copied to clipboard!")
+  const copyToClipboard = async (text: string) => {
+    try {
+      // Modern async clipboard API (requires HTTPS and user gesture)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        toast.success("Copied to clipboard!")
+        return
+      }
+
+      // Fallback for mobile browsers that don't support clipboard API
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-9999px'
+      textArea.style.top = '0'
+      textArea.setAttribute('readonly', '') // Prevent keyboard on mobile
+      document.body.appendChild(textArea)
+
+      // iOS specific handling
+      const range = document.createRange()
+      range.selectNodeContents(textArea)
+      const selection = window.getSelection()
+      if (selection) {
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+      textArea.setSelectionRange(0, 999999) // For mobile
+
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      toast.success("Copied to clipboard!")
+    } catch (err) {
+      console.error('Copy failed:', err)
+      toast.error("Failed to copy. Please select and copy manually.")
+    }
   }
 
   if (isLoadingOrder) {
@@ -1683,7 +1715,34 @@ function CheckoutMainContent() {
                         </div>
                         <Button
                           variant="outline"
-                          onClick={() => window.open(cryptoDetails?.payLink, '_blank')}
+                          onClick={() => {
+                            // Build crypto deep link for mobile wallet apps
+                            const currency = cryptoDetails?.payCurrency?.toLowerCase() || 'bitcoin'
+                            const address = cryptoDetails?.address || ''
+                            const amount = cryptoDetails?.amount || ''
+
+                            // Map currency to URI scheme
+                            const uriSchemes: Record<string, string> = {
+                              'btc': 'bitcoin',
+                              'bitcoin': 'bitcoin',
+                              'ltc': 'litecoin',
+                              'litecoin': 'litecoin',
+                              'eth': 'ethereum',
+                              'ethereum': 'ethereum',
+                              'doge': 'dogecoin',
+                              'dogecoin': 'dogecoin',
+                              'bch': 'bitcoincash',
+                            }
+
+                            const scheme = uriSchemes[currency] || currency
+
+                            // Construct URI: bitcoin:address?amount=0.001
+                            const walletUri = `${scheme}:${address}?amount=${amount}`
+
+                            // Try to open wallet app, fallback to payLink
+                            const link = cryptoDetails?.payLink || walletUri
+                            window.location.href = link
+                          }}
                           className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
                         >
                           Open Wallet
