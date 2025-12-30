@@ -1706,15 +1706,25 @@ function CheckoutMainContent() {
 
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                          className="flex items-center justify-between w-full h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] active:bg-[#7dd5dc] transition-all group/addr touch-manipulation"
-                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                        >
-                          <code className="text-sm font-bold text-black break-all text-left">{cryptoDetails?.address || 'Initializing...'}</code>
-                          <Copy className="w-5 h-5 text-black/60 group-hover/addr:text-black transition-colors flex-shrink-0 ml-2" />
-                        </button>
+                        <div className="flex items-center gap-2 w-full">
+                          <input
+                            type="text"
+                            readOnly
+                            value={cryptoDetails?.address || 'Initializing...'}
+                            className="flex-1 h-14 px-5 bg-[#a4f8ff] rounded-2xl text-sm font-bold text-black break-all select-all cursor-text"
+                            style={{ WebkitUserSelect: 'all', userSelect: 'all' }}
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(cryptoDetails?.address || '')}
+                            className="h-14 px-4 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#7dd5dc] rounded-2xl transition-all touch-manipulation flex items-center justify-center"
+                            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                            title="Copy address"
+                          >
+                            <Copy className="w-5 h-5 text-black/60 hover:text-black transition-colors" />
+                          </button>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -1763,15 +1773,25 @@ function CheckoutMainContent() {
                         <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
                         <p className="text-sm font-medium text-white/40">You can copy it below.</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] active:bg-[#7dd5dc] transition-all group/amt w-fit min-w-[200px] touch-manipulation"
-                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
-                        <Copy className="w-5 h-5 text-black/60 group-hover/amt:text-black transition-colors ml-6 flex-shrink-0" />
-                      </button>
+                      <div className="flex items-center gap-2 w-fit">
+                        <input
+                          type="text"
+                          readOnly
+                          value={cryptoDetails?.amount || '...'}
+                          className="h-14 px-5 bg-[#a4f8ff] rounded-2xl text-sm font-black text-black select-all cursor-text min-w-[150px]"
+                          style={{ WebkitUserSelect: 'all', userSelect: 'all' }}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
+                          className="h-14 px-4 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#7dd5dc] rounded-2xl transition-all touch-manipulation flex items-center justify-center"
+                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                          title="Copy amount"
+                        >
+                          <Copy className="w-5 h-5 text-black/60 hover:text-black transition-colors" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
