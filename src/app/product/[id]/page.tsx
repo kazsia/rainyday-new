@@ -531,29 +531,25 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             pattern="[0-9]*"
                             value={inputValue}
                             onChange={(e) => {
-                              // Allow typing any digits freely for good UX
                               const rawValue = e.target.value.replace(/[^0-9]/g, '')
-                              setInputValue(rawValue)
-                              // Update quantity for live preview (warnings will show)
-                              const val = parseInt(rawValue, 10)
-                              if (!isNaN(val) && val > 0) {
-                                setQuantity(val)
+                              if (rawValue === '') {
+                                setInputValue('')
+                                return
                               }
-                            }}
-                            onBlur={() => {
-                              // Clamp value on blur to enforce limits
-                              const val = parseInt(inputValue, 10)
+
+                              const val = parseInt(rawValue, 10)
                               const effectiveMax = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
 
-                              if (isNaN(val) || val < minQty) {
+                              // Clamp immediately - don't allow typing beyond limits
+                              const clampedVal = Math.min(Math.max(minQty, val), effectiveMax)
+                              setInputValue(String(clampedVal))
+                              setQuantity(clampedVal)
+                            }}
+                            onBlur={() => {
+                              // If empty, reset to min
+                              if (inputValue === '' || parseInt(inputValue, 10) < minQty) {
                                 setQuantity(minQty)
                                 setInputValue(String(minQty))
-                              } else if (val > effectiveMax) {
-                                setQuantity(effectiveMax)
-                                setInputValue(String(effectiveMax))
-                                toast.error(effectiveMax === currentStock && !isUnlimited
-                                  ? `Quantity adjusted to available stock (${effectiveMax})`
-                                  : `Quantity adjusted to maximum allowed (${effectiveMax})`)
                               }
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
