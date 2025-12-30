@@ -458,6 +458,52 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         </p>
                       )}
                     </div>
+
+                    {/* Quantity Warning Messages */}
+                    <AnimatePresence>
+                      {quantity < minQty && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mb-2"
+                        >
+                          <div className="px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                            <p className="text-[10px] font-bold text-orange-400">
+                              ⚠️ Minimum order quantity is {minQty}
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                      {!isUnlimited && quantity > currentStock && currentStock > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mb-2"
+                        >
+                          <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <p className="text-[10px] font-bold text-red-400">
+                              ⚠️ Only {currentStock} items available in stock
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                      {quantity > maxQty && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mb-2"
+                        >
+                          <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <p className="text-[10px] font-bold text-red-400">
+                              ⚠️ Maximum order quantity is {maxQty}
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <div className="relative group">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-primary/20 via-brand-primary/10 to-brand-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur transition-opacity duration-300" />
                       <div className="relative flex items-center bg-[#0d1a1d] rounded-2xl border border-white/[0.08] overflow-hidden transition-all group-hover:border-brand-primary/30">
