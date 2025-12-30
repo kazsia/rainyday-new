@@ -1044,39 +1044,54 @@ function CheckoutMainContent() {
   }
 
   const copyToClipboard = async (text: string) => {
+    if (!text) {
+      toast.error("Nothing to copy")
+      return
+    }
+
     try {
       // Modern async clipboard API (requires HTTPS and user gesture)
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text)
-        toast.success("Copied to clipboard!")
+        toast.success("Copied!")
         return
       }
 
       // Fallback for mobile browsers that don't support clipboard API
       const textArea = document.createElement('textarea')
       textArea.value = text
+
+      // Make it invisible but part of the document
       textArea.style.position = 'fixed'
-      textArea.style.left = '-9999px'
       textArea.style.top = '0'
-      textArea.setAttribute('readonly', '') // Prevent keyboard on mobile
+      textArea.style.left = '0'
+      textArea.style.width = '2em'
+      textArea.style.height = '2em'
+      textArea.style.padding = '0'
+      textArea.style.border = 'none'
+      textArea.style.outline = 'none'
+      textArea.style.boxShadow = 'none'
+      textArea.style.background = 'transparent'
+      textArea.style.fontSize = '16px' // Prevent zoom on iOS
+      textArea.setAttribute('readonly', '')
+
       document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      textArea.setSelectionRange(0, text.length)
 
-      // iOS specific handling
-      const range = document.createRange()
-      range.selectNodeContents(textArea)
-      const selection = window.getSelection()
-      if (selection) {
-        selection.removeAllRanges()
-        selection.addRange(range)
-      }
-      textArea.setSelectionRange(0, 999999) // For mobile
-
-      document.execCommand('copy')
+      const success = document.execCommand('copy')
       document.body.removeChild(textArea)
-      toast.success("Copied to clipboard!")
+
+      if (success) {
+        toast.success("Copied!")
+      } else {
+        throw new Error('execCommand failed')
+      }
     } catch (err) {
       console.error('Copy failed:', err)
-      toast.error("Failed to copy. Please select and copy manually.")
+      // Last resort: show text in prompt for manual copy
+      toast.error("Tap and hold to select, then copy manually")
     }
   }
 
@@ -1711,14 +1726,14 @@ function CheckoutMainContent() {
                             type="text"
                             readOnly
                             value={cryptoDetails?.address || 'Initializing...'}
-                            className="flex-1 h-14 px-4 bg-[#0b0f1a] border border-[#a4f8ff]/30 rounded-l-2xl text-xs font-bold text-[#a4f8ff] select-all cursor-text overflow-hidden text-ellipsis"
+                            className="flex-1 h-14 px-4 bg-[#020406] border border-[#a4f8ff]/30 rounded-l-2xl text-xs font-bold text-[#a4f8ff] select-all cursor-text overflow-hidden text-ellipsis"
                             style={{ WebkitUserSelect: 'all', userSelect: 'all', minWidth: 0 }}
                             onClick={(e) => (e.target as HTMLInputElement).select()}
                           />
                           <button
                             type="button"
                             onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                            className="h-14 px-4 bg-[#0b0f1a] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center flex-shrink-0"
+                            className="h-14 px-4 bg-[#020406] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center flex-shrink-0"
                             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                             title="Copy address"
                           >
@@ -1778,14 +1793,14 @@ function CheckoutMainContent() {
                           type="text"
                           readOnly
                           value={cryptoDetails?.amount || '...'}
-                          className="h-14 px-5 bg-[#0b0f1a] border border-[#a4f8ff]/30 rounded-l-2xl text-sm font-black text-[#a4f8ff] select-all cursor-text min-w-[150px]"
+                          className="h-14 px-5 bg-[#020406] border border-[#a4f8ff]/30 rounded-l-2xl text-sm font-black text-[#a4f8ff] select-all cursor-text min-w-[150px]"
                           style={{ WebkitUserSelect: 'all', userSelect: 'all' }}
                           onClick={(e) => (e.target as HTMLInputElement).select()}
                         />
                         <button
                           type="button"
                           onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                          className="h-14 px-4 bg-[#0b0f1a] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center"
+                          className="h-14 px-4 bg-[#020406] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center"
                           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                           title="Copy amount"
                         >
