@@ -469,11 +469,23 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                         </motion.button>
                         <div className="flex-1 relative">
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={quantity}
                             onChange={(e) => {
-                              const val = parseInt(e.target.value) || minQty
+                              // Allow typing any digits, validation happens on blur
+                              const rawValue = e.target.value.replace(/[^0-9]/g, '')
+                              if (rawValue === '') {
+                                setQuantity(minQty)
+                              } else {
+                                setQuantity(parseInt(rawValue, 10))
+                              }
+                            }}
+                            onBlur={(e) => {
+                              // Clamp value on blur
                               const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
+                              const val = parseInt(e.target.value, 10) || minQty
                               setQuantity(Math.min(Math.max(minQty, val), maxQtyToClamp))
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
