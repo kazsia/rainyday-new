@@ -1706,15 +1706,17 @@ function CheckoutMainContent() {
 
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
-                        <div
+                        <button
+                          type="button"
                           onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                          className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/addr"
+                          className="flex items-center justify-between w-full h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] active:bg-[#7dd5dc] transition-all group/addr touch-manipulation"
+                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                         >
-                          <code className="text-sm font-bold text-black break-all">{cryptoDetails?.address || 'Initializing...'}</code>
-                          <Copy className="w-4 h-4 text-black/60 group-hover/addr:text-black transition-colors" />
-                        </div>
-                        <Button
-                          variant="outline"
+                          <code className="text-sm font-bold text-black break-all text-left">{cryptoDetails?.address || 'Initializing...'}</code>
+                          <Copy className="w-5 h-5 text-black/60 group-hover/addr:text-black transition-colors flex-shrink-0 ml-2" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             // Build crypto deep link for mobile wallet apps
                             const currency = cryptoDetails?.payCurrency?.toLowerCase() || 'bitcoin'
@@ -1743,11 +1745,12 @@ function CheckoutMainContent() {
                             const link = cryptoDetails?.payLink || walletUri
                             window.location.href = link
                           }}
-                          className="w-fit h-12 px-6 border-white/10 text-white/60 hover:text-white hover:bg-white/5 rounded-2xl flex items-center gap-2 group/wallet font-bold uppercase tracking-widest text-[10px]"
+                          className="h-12 px-6 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 active:bg-white/10 rounded-2xl flex items-center gap-2 font-bold uppercase tracking-widest text-[10px] touch-manipulation"
+                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                         >
                           Open Wallet
-                          <ExternalLink className="w-4 h-4 group-hover/wallet:scale-110 transition-transform" />
-                        </Button>
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
@@ -1760,13 +1763,15 @@ function CheckoutMainContent() {
                         <h3 className="text-lg font-black text-white/90">Make sure to send the exact amount.</h3>
                         <p className="text-sm font-medium text-white/40">You can copy it below.</p>
                       </div>
-                      <div
+                      <button
+                        type="button"
                         onClick={() => copyToClipboard(cryptoDetails?.amount || '')}
-                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] transition-all group/amt w-fit min-w-[200px]"
+                        className="flex items-center justify-between h-14 px-5 bg-[#a4f8ff] rounded-2xl cursor-pointer hover:bg-[#8ae6ed] active:bg-[#7dd5dc] transition-all group/amt w-fit min-w-[200px] touch-manipulation"
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       >
                         <span className="text-sm font-black text-black">{cryptoDetails?.amount || '...'}</span>
-                        <Copy className="w-4 h-4 text-black/60 group-hover/amt:text-black transition-colors ml-6" />
-                      </div>
+                        <Copy className="w-5 h-5 text-black/60 group-hover/amt:text-black transition-colors ml-6 flex-shrink-0" />
+                      </button>
                     </div>
                   </div>
 
