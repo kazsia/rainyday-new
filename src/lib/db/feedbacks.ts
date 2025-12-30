@@ -305,4 +305,3 @@ export async function adminAddManualFeedback(data: {
         throw e
     }
 }
-```
