@@ -532,6 +532,8 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             value={inputValue}
                             onChange={(e) => {
                               const rawValue = e.target.value.replace(/[^0-9]/g, '')
+
+                              // Allow empty or partial typing
                               if (rawValue === '') {
                                 setInputValue('')
                                 return
@@ -540,14 +542,19 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                               const val = parseInt(rawValue, 10)
                               const effectiveMax = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
 
-                              // Clamp immediately - don't allow typing beyond limits
-                              const clampedVal = Math.min(Math.max(minQty, val), effectiveMax)
-                              setInputValue(String(clampedVal))
-                              setQuantity(clampedVal)
+                              // Only clamp if exceeding max - allow typing lower values freely
+                              if (val > effectiveMax) {
+                                setInputValue(String(effectiveMax))
+                                setQuantity(effectiveMax)
+                              } else {
+                                setInputValue(rawValue)
+                                setQuantity(val)
+                              }
                             }}
                             onBlur={() => {
-                              // If empty, reset to min
-                              if (inputValue === '' || parseInt(inputValue, 10) < minQty) {
+                              // On blur: enforce min, or reset to min if empty
+                              const val = parseInt(inputValue, 10)
+                              if (isNaN(val) || val < minQty) {
                                 setQuantity(minQty)
                                 setInputValue(String(minQty))
                               }
