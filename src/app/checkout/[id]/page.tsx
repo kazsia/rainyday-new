@@ -1706,19 +1706,19 @@ function CheckoutMainContent() {
 
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
-                        <div className="flex items-center gap-2 w-full">
+                        <div className="flex items-center w-full">
                           <input
                             type="text"
                             readOnly
                             value={cryptoDetails?.address || 'Initializing...'}
-                            className="flex-1 h-14 px-5 bg-[#a4f8ff] rounded-2xl text-sm font-bold text-black break-all select-all cursor-text"
-                            style={{ WebkitUserSelect: 'all', userSelect: 'all' }}
+                            className="flex-1 h-14 px-4 bg-[#a4f8ff] rounded-l-2xl text-xs font-bold text-black select-all cursor-text overflow-hidden text-ellipsis"
+                            style={{ WebkitUserSelect: 'all', userSelect: 'all', minWidth: 0 }}
                             onClick={(e) => (e.target as HTMLInputElement).select()}
                           />
                           <button
                             type="button"
                             onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                            className="h-14 px-4 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#7dd5dc] rounded-2xl transition-all touch-manipulation flex items-center justify-center"
+                            className="h-14 px-4 bg-[#a4f8ff] hover:bg-[#8ae6ed] active:bg-[#7dd5dc] rounded-r-2xl transition-all touch-manipulation flex items-center justify-center flex-shrink-0"
                             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                             title="Copy address"
                           >
