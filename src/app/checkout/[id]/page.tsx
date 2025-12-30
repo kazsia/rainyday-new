@@ -1721,19 +1721,19 @@ function CheckoutMainContent() {
 
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-white/40">Or copy the address below.</p>
-                        <div className="flex items-center w-full">
-                          <input
-                            type="text"
+                        <div className="flex items-stretch w-full">
+                          <textarea
                             readOnly
                             value={cryptoDetails?.address || 'Initializing...'}
-                            className="flex-1 h-14 px-4 bg-[#020406] border border-[#a4f8ff]/30 rounded-l-2xl text-xs font-bold text-[#a4f8ff] select-all cursor-text overflow-hidden text-ellipsis"
+                            rows={2}
+                            className="flex-1 py-3 px-4 bg-[#020406] border border-[#a4f8ff]/30 rounded-l-2xl text-xs font-bold text-[#a4f8ff] select-all cursor-text resize-none break-all leading-relaxed"
                             style={{ WebkitUserSelect: 'all', userSelect: 'all', minWidth: 0 }}
-                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
                           />
                           <button
                             type="button"
                             onClick={() => copyToClipboard(cryptoDetails?.address || '')}
-                            className="h-14 px-4 bg-[#020406] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center flex-shrink-0"
+                            className="px-4 bg-[#020406] border border-l-0 border-[#a4f8ff]/30 hover:bg-[#a4f8ff]/10 active:bg-[#a4f8ff]/20 rounded-r-2xl transition-all touch-manipulation flex items-center justify-center flex-shrink-0"
                             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                             title="Copy address"
                           >
