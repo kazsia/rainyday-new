@@ -126,11 +126,6 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
     setInputValue(String(newQty))
   }, [selectedVariant?.id, product?.id, effectiveVariant?.min_quantity, product?.min_quantity])
 
-  // Keep inputValue in sync when quantity changes from +/- buttons
-  React.useEffect(() => {
-    setInputValue(String(quantity))
-  }, [quantity])
-
   const handleAddToCart = () => {
     if (!product) return
     if (isOutOfStock) {
@@ -467,12 +462,16 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-primary/20 via-brand-primary/10 to-brand-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur transition-opacity duration-300" />
                       <div className="relative flex items-center bg-[#0d1a1d] rounded-2xl border border-white/[0.08] overflow-hidden transition-all group-hover:border-brand-primary/30">
                         <motion.button
-                          onClick={() => setQuantity(Math.max(minQty, quantity - 1))}
+                          onClick={() => {
+                            const newVal = Math.max(1, quantity - 1)
+                            setQuantity(newVal)
+                            setInputValue(String(newVal))
+                          }}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity <= minQty}
+                          disabled={quantity <= 1}
                           className={cn(
                             "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity <= minQty
+                            quantity <= 1
                               ? "text-white/10 cursor-not-allowed"
                               : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                           )}
@@ -485,36 +484,35 @@ export default function ProductPage({ params: paramsPromise }: { params: Promise
                             inputMode="numeric"
                             pattern="[0-9]*"
                             value={inputValue}
-                            onFocus={() => setInputValue(String(quantity))}
                             onChange={(e) => {
-                              // Allow typing any digits freely, validation happens on blur
+                              // Allow typing any digits freely
                               const rawValue = e.target.value.replace(/[^0-9]/g, '')
                               setInputValue(rawValue)
+                              // Sync to quantity immediately (no clamping)
+                              const val = parseInt(rawValue, 10)
+                              if (!isNaN(val) && val > 0) {
+                                setQuantity(val)
+                              }
                             }}
                             onBlur={() => {
-                              // Clamp value on blur and sync to quantity state
-                              const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
-                              const val = parseInt(inputValue, 10) || minQty
-                              const clampedVal = Math.min(Math.max(minQty, val), maxQtyToClamp)
-                              setQuantity(clampedVal)
-                              setInputValue(String(clampedVal))
+                              // If empty or invalid, reset to 1
+                              const val = parseInt(inputValue, 10)
+                              if (isNaN(val) || val < 1) {
+                                setQuantity(1)
+                                setInputValue("1")
+                              }
                             }}
                             className="w-full bg-transparent text-center text-xl font-black text-white outline-none py-3"
                           />
                         </div>
                         <motion.button
                           onClick={() => {
-                            const maxQtyToClamp = isUnlimited ? maxQty : Math.min(maxQty, currentStock)
-                            setQuantity(Math.min(quantity + 1, maxQtyToClamp))
+                            const newVal = quantity + 1
+                            setQuantity(newVal)
+                            setInputValue(String(newVal))
                           }}
                           whileTap={{ scale: 0.9 }}
-                          disabled={quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))}
-                          className={cn(
-                            "w-14 h-14 flex items-center justify-center transition-all",
-                            quantity >= (isUnlimited ? maxQty : Math.min(maxQty, currentStock))
-                              ? "text-white/10 cursor-not-allowed"
-                              : "text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
-                          )}
+                          className="w-14 h-14 flex items-center justify-center transition-all text-white/40 hover:text-brand-primary hover:bg-brand-primary/10"
                         >
                           <Plus className="w-4 h-4" />
                         </motion.button>
