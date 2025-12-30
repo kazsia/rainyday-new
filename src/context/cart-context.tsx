@@ -12,6 +12,7 @@ export interface CartItem {
     variantName?: string
     min_quantity?: number
     max_quantity?: number
+    stock_count?: number
     custom_fields?: any[]
     is_unlimited?: boolean
     delivery_type?: string

@@ -198,15 +198,29 @@ function CheckoutMainContent() {
           setEmail(order.email || "")
 
           // Sync cart if empty or different
-          const orderItems = order.order_items.map((item: any) => ({
-            id: item.product_id,
-            variantId: item.variant_id,
-            variantName: item.variant?.name,
-            title: item.product?.name,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.product?.image_url
-          }))
+          const orderItems = order.order_items.map((item: any) => {
+            const product = item.product
+            const variant = item.variant
+            // Use variant values if available, otherwise fall back to product values
+            const stockDeliveryEnabled = product?.payment_restrictions_enabled
+            // When Stock & Delivery is enabled, use product-level values; otherwise use variant if available
+            const effectiveSource = stockDeliveryEnabled ? product : (variant || product)
+
+            return {
+              id: item.product_id,
+              variantId: item.variant_id,
+              variantName: variant?.name,
+              title: product?.name,
+              price: item.price,
+              quantity: item.quantity,
+              image: product?.image_url,
+              // Include stock constraints
+              min_quantity: effectiveSource?.min_quantity || product?.min_quantity || 1,
+              max_quantity: effectiveSource?.max_quantity || product?.max_quantity || 1000000,
+              stock_count: effectiveSource?.stock_count || 0,
+              is_unlimited: effectiveSource?.is_unlimited || false,
+            }
+          })
           setCart(orderItems)
         }
       } catch (error) {
@@ -224,9 +238,18 @@ function CheckoutMainContent() {
     const newQuantity = item.quantity + delta
     const minQty = item.min_quantity || 1
     const maxQty = item.max_quantity || 1000000
+    const stockCount = item.stock_count || 0
+    const isUnlimited = item.is_unlimited || false
 
-    if (delta > 0 && newQuantity > maxQty) {
-      toast.error(`Maximum order quantity for this item is ${maxQty}`)
+    // Calculate effective max (consider both max_quantity and stock if not unlimited)
+    const effectiveMax = isUnlimited ? maxQty : Math.min(maxQty, stockCount)
+
+    if (delta > 0 && newQuantity > effectiveMax) {
+      if (!isUnlimited && stockCount < maxQty) {
+        toast.error(`Only ${stockCount} items available in stock`)
+      } else {
+        toast.error(`Maximum order quantity for this item is ${maxQty}`)
+      }
       return
     }
 
